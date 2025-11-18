@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris-peli</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+        }
+        
+        .game-container {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+        
+        .game-board {
+            background: #1a1a2e;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        canvas {
+            display: block;
+            border: 2px solid #16213e;
+            border-radius: 5px;
+        }
+        
+        .info-panel {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            min-width: 200px;
+        }
+        
+        .info-panel h2 {
+            margin-top: 0;
+            color: #667eea;
+            font-size: 24px;
+        }
+        
+        .score {
+            font-size: 36px;
+            font-weight: bold;
+            color: #764ba2;
+            margin: 15px 0;
+        }
+        
+        .info-item {
+            margin: 15px 0;
+            color: #333;
+        }
+        
+        .info-item label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            color: #667eea;
+        }
+        
+        .info-item value {
+            font-size: 20px;
+            color: #764ba2;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        .controls {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #333;
+        }
+        
+        .controls div {
+            margin: 8px 0;
+        }
+        
+        .game-over {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            z-index: 1000;
+        }
+        
+        .game-over h1 {
+            color: #764ba2;
+            margin-top: 0;
+        }
+        
+        .game-over .final-score {
+            font-size: 48px;
+            color: #667eea;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-board">
+            <canvas id="gameCanvas" width="300" height="600"></canvas>
+        </div>
+        
+        <div class="info-panel">
+            <h2>WOODBLOCK GALORE</h2>
+            <div class="info-item">
+                <label>Pisteet:</label>
+                <div class="score" id="score">0</div>
+            </div>
+            <div class="info-item">
+                <label>Rivit:</label>
+                <value id="lines">0</value>
+            </div>
+            <div class="info-item">
+                <label>Nopeus:</label>
+                <value id="speed">100%</value>
+            </div>
+            <div class="info-item">
+                <label>Seuraava:</label>
+                <canvas id="nextCanvas" width="120" height="120" style="background: #f0f0f0; border-radius: 5px; margin-top: 10px;"></canvas>
+            </div>
+            <button id="startButton">Aloita peli</button>
+        </div>
+    </div>
+    
+    <script>
+        // Estetään turhat script error -virheilmoitukset
+        window.addEventListener('error', function(e) {
+            if (e.message === 'Script error.') {
+                e.preventDefault();
+                return true;
+            }
+        });
+        
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const nextCanvas = document.getElementById('nextCanvas');
+        const nextCtx = nextCanvas.getContext('2d');
+        const startButton = document.getElementById('startButton');
+        const scoreElement = document.getElementById('score');
+        const linesElement = document.getElementById('lines');
+        const speedElement = document.getElementById('speed');
+        
+        const COLS = 10;
+        const ROWS = 20;
+        const BLOCK_SIZE = 30;
+        
+        // Tetris-palikat (I, O, T, S, Z, J, L)
+        const SHAPES = [
+            [[1, 1, 1, 1]], // I
+            [[1, 1], [1, 1]], // O
+            [[0, 1, 0], [1, 1, 1]], // T
+            [[0, 1, 1], [1, 1, 0]], // S
+            [[1, 1, 0], [0, 1, 1]], // Z
+            [[1, 0, 0], [1, 1, 1]], // J
+            [[0, 0, 1], [1, 1, 1]]  // L
+        ];
+        
+        const COLORS = [
+            '#d4a574', // Vaaleanruskea (I)
+            '#d4a574', // Vaaleanruskea (O)
+            '#d4a574', // Vaaleanruskea (T)
+            '#d4a574', // Vaaleanruskea (S)
+            '#d4a574', // Vaaleanruskea (Z)
+            '#d4a574', // Vaaleanruskea (J)
+            '#d4a574'  // Vaaleanruskea (L)
+        ];
+        
+        let board = [];
+        let currentPiece = null;
+        let nextPiece = null;
+        let currentX = 0;
+        let currentY = 0;
+        let score = 0;
+        let lines = 0;
+        let gameSpeed = 1000;
+        let gameLoop = null;
+        let gameOver = false;
+        let dropCounter = 0;
+        let lastTime = 0;
+        let lockDelay = false;
+        let lockDelayTimer = 0;
+        let baseLineScore = 10;
+        
+        function initBoard() {
+            board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+        }
+        
+        function createPiece() {
+            const shapeIndex = Math.floor(Math.random() * SHAPES.length);
+            return {
+                shape: SHAPES[shapeIndex],
+                color: COLORS[shapeIndex]
+            };
+        }
+        
+        function drawBlock(x, y, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+            ctx.strokeStyle = '#1a1a2e';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+        }
+        
+        function drawBoard() {
+            ctx.fillStyle = '#0f1419';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            for (let y = 0; y < ROWS; y++) {
+                for (let x = 0; x < COLS; x++) {
+                    if (board[y][x]) {
+                        drawBlock(x, y, board[y][x]);
+                    }
+                }
+            }
+            
+            if (currentPiece) {
+                const shape = currentPiece.shape;
+                for (let y = 0; y < shape.length; y++) {
+                    for (let x = 0; x < shape[y].length; x++) {
+                        if (shape[y][x]) {
+                            drawBlock(currentX + x, currentY + y, currentPiece.color);
+                        }
+                    }
+                }
+            }
+        }
+        
+        function drawNextPiece() {
+            nextCtx.fillStyle = '#f0f0f0';
+            nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+            
+            if (nextPiece) {
+                const shape = nextPiece.shape;
+                const blockSize = 25;
+                const offsetX = (nextCanvas.width - shape[0].length * blockSize) / 2;
+                const offsetY = (nextCanvas.height - shape.length * blockSize) / 2;
+                
+                for (let y = 0; y < shape.length; y++) {
+                    for (let x = 0; x < shape[0].length; x++) {
+                        if (shape[y][x]) {
+                            nextCtx.fillStyle = nextPiece.color;
+                            nextCtx.fillRect(
+                                offsetX + x * blockSize,
+                                offsetY + y * blockSize,
+                                blockSize,
+                                blockSize
+                            );
+                            nextCtx.strokeStyle = '#1a1a2e';
+                            nextCtx.lineWidth = 2;
+                            nextCtx.strokeRect(
+                                offsetX + x * blockSize,
+                                offsetY + y * blockSize,
+                                blockSize,
+                                blockSize
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        
+        function collides(piece, offsetX, offsetY) {
+            const shape = piece.shape;
+            for (let y = 0; y < shape.length; y++) {
+                for (let x = 0; x < shape[y].length; x++) {
+                    if (shape[y][x]) {
+                        const newX = currentX + x + offsetX;
+                        const newY = currentY + y + offsetY;
+                        
+                        // Tarkista vain sivurajat ja pohja
+                        if (newX < 0 || newX >= COLS || newY >= ROWS) {
+                            return true;
+                        }
+                        
+                        // Tarkista törmäys muihin palikoihin vain jos ollaan pelilaudan sisällä
+                        if (newY >= 0 && board[newY][newX]) {
+                            return true;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+        
+        function merge() {
+            const shape = currentPiece.shape;
+            let gameOverFlag = false;
+            
+            for (let y = 0; y < shape.length; y++) {
+                for (let x = 0; x < shape[y].length; x++) {
+                    if (shape[y][x]) {
+                        const boardY = currentY + y;
+                        const boardX = currentX + x;
+                        
+                        // Jos palikka on ylärajan yläpuolella kun se asettuu, peli loppuu
+                        if (boardY < 0) {
+                            gameOverFlag = true;
+                        }
+                        
+                        if (boardY >= 0 && boardY < ROWS) {
+                            board[boardY][boardX] = currentPiece.color;
+                        }
+                    }
+                }
+            }
+            
+            if (gameOverFlag) {
+                endGame();
+            }
+        }
+        
+        function rotate() {
+            const rotated = {
+                shape: currentPiece.shape[0].map((_, i) =>
+                    currentPiece.shape.map(row => row[i]).reverse()
+                ),
+                color: currentPiece.color
+            };
+            
+            // Yritä kääntöä normaalisti
+            if (!collides(rotated, 0, 0)) {
+                currentPiece = rotated;
+                if (lockDelay && !collides(currentPiece, 0, 1)) {
+                    lockDelay = false;
+                    lockDelayTimer = 0;
+                }
+                return;
+            }
+            
+            // Jos ei onnistu, yritä siirtää sivulle (wall kick)
+            const kicks = [
+                [-1, 0],  // vasen
+                [1, 0],   // oikea
+                [-2, 0],  // kaksi vasemmalle
+                [2, 0],   // kaksi oikealle
+                [0, -1],  // ylös
+                [-1, -1], // vasen ylös
+                [1, -1]   // oikea ylös
+            ];
+            
+            // Tallenna alkuperäinen sijainti
+            const originalPiece = currentPiece;
+            currentPiece = rotated;
+            
+            for (const [kickX, kickY] of kicks) {
+                if (!collides(currentPiece, kickX, kickY)) {
+                    currentX += kickX;
+                    currentY += kickY;
+                    if (lockDelay && !collides(currentPiece, 0, 1)) {
+                        lockDelay = false;
+                        lockDelayTimer = 0;
+                    }
+                    return;
+                }
+            }
+            
+            // Jos mikään kick ei toiminut, palauta alkuperäinen
+            currentPiece = originalPiece;
+        }
+        
+        function clearLines() {
+            let linesCleared = 0;
+            
+            for (let y = ROWS - 1; y >= 0; y--) {
+                if (board[y].every(cell => cell !== 0)) {
+                    board.splice(y, 1);
+                    board.unshift(Array(COLS).fill(0));
+                    linesCleared++;
+                    y++;
+                }
+            }
+            
+            if (linesCleared > 0) {
+                // Laske pisteet: jokainen rivi antaa baseLineScore pistettä
+                for (let i = 0; i < linesCleared; i++) {
+                    score += Math.round(baseLineScore);
+                    baseLineScore *= 1.10; // Kasvatetaan 10% seuraavaa riviä varten
+                }
+                
+                lines += linesCleared;
+                gameSpeed *= Math.pow(0.90, linesCleared);
+                
+                scoreElement.textContent = score;
+                linesElement.textContent = lines;
+                speedElement.textContent = Math.round((1000 / gameSpeed) * 100) + '%';
+            }
+        }
+        
+        function spawnPiece() {
+            if (nextPiece === null) {
+                nextPiece = createPiece();
+            }
+            
+            currentPiece = nextPiece;
+            nextPiece = createPiece();
+            currentX = Math.floor(COLS / 2) - Math.floor(currentPiece.shape[0].length / 2);
+            currentY = 0;
+            lockDelay = false;
+            lockDelayTimer = 0;
+            
+            drawNextPiece();
+            
+            // Tarkista onko uusi palikka törmäyskurssilla olemassa olevien palikoiden kanssa
+            const shape = currentPiece.shape;
+            for (let y = 0; y < shape.length; y++) {
+                for (let x = 0; x < shape[y].length; x++) {
+                    if (shape[y][x]) {
+                        const boardY = currentY + y;
+                        const boardX = currentX + x;
+                        // Jos palikka törmää heti spawnatessa, peli loppuu
+                        if (boardY >= 0 && board[boardY][boardX]) {
+                            endGame();
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        
+        function drop() {
+            if (!collides(currentPiece, 0, 1)) {
+                currentY++;
+                lockDelay = false;
+                lockDelayTimer = 0;
+            } else {
+                if (!lockDelay) {
+                    lockDelay = true;
+                    lockDelayTimer = 0;
+                } else if (lockDelayTimer > 500) { // 500ms viive
+                    merge();
+                    clearLines();
+                    spawnPiece();
+                }
+            }
+        }
+        
+        function moveLeft() {
+            if (!collides(currentPiece, -1, 0)) {
+                currentX--;
+                if (lockDelay && !collides(currentPiece, 0, 1)) {
+                    lockDelay = false;
+                    lockDelayTimer = 0;
+                }
+            }
+        }
+        
+        function moveRight() {
+            if (!collides(currentPiece, 1, 0)) {
+                currentX++;
+                if (lockDelay && !collides(currentPiece, 0, 1)) {
+                    lockDelay = false;
+                    lockDelayTimer = 0;
+                }
+            }
+        }
+        
+        function hardDrop() {
+            while (!collides(currentPiece, 0, 1)) {
+                currentY++;
+            }
+            merge();
+            clearLines();
+            spawnPiece();
+        }
+        
+        function update(time = 0) {
+            if (gameOver) return;
+            
+            const deltaTime = time - lastTime;
+            lastTime = time;
+            dropCounter += deltaTime;
+            
+            if (lockDelay) {
+                lockDelayTimer += deltaTime;
+            }
+            
+            if (dropCounter > gameSpeed) {
+                drop();
+                dropCounter = 0;
+            }
+            
+            drawBoard();
+            requestAnimationFrame(update);
+        }
+        
+        function startGame() {
+            initBoard();
+            score = 0;
+            lines = 0;
+            gameSpeed = 1000;
+            gameOver = false;
+            dropCounter = 0;
+            lastTime = 0;
+            nextPiece = null;
+            baseLineScore = 10;
+            lockDelay = false;
+            lockDelayTimer = 0;
+            
+            scoreElement.textContent = '0';
+            linesElement.textContent = '0';
+            speedElement.textContent = '100%';
+            
+            spawnPiece();
+            requestAnimationFrame(update);
+            
+            startButton.textContent = 'Aloita uusi peli';
+        }
+        
+        function endGame() {
+            gameOver = true;
+            
+            const gameOverDiv = document.createElement('div');
+            gameOverDiv.className = 'game-over';
+            gameOverDiv.innerHTML = `
+                <h1>PELI PÄÄTTYI</h1>
+                <div class="final-score">${score}</div>
+                <div>Rivit: ${lines}</div>
+                <button onclick="this.parentElement.remove(); startGame()">Pelaa uudelleen</button>
+            `;
+            document.body.appendChild(gameOverDiv);
+        }
+        
+        document.addEventListener('keydown', event => {
+            if (gameOver) return;
+            
+            switch(event.key) {
+                case 'ArrowLeft':
+                    event.preventDefault();
+                    moveLeft();
+                    break;
+                case 'ArrowRight':
+                    event.preventDefault();
+                    moveRight();
+                    break;
+                case 'ArrowDown':
+                    event.preventDefault();
+                    hardDrop();
+                    break;
+                case 'ArrowUp':
+                    event.preventDefault();
+                    rotate();
+                    break;
+            }
+            drawBoard();
+        });
+        
+        startButton.addEventListener('click', startGame);
+        
+        // Piirrä tyhjä pelilauta
+        drawBoard();
+    </script>
+</body>
+</html>

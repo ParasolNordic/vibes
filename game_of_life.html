@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<title>Game of Life – yksinkertainen versio</title>
+<style>
+  body { background: #111; color: #eee; font-family: sans-serif; text-align: center; }
+  canvas { background: #000; display: block; margin: 10px auto; border: 1px solid #444; }
+  button { margin: 5px; padding: 5px 10px; font-size: 14px; }
+</style>
+</head>
+<body>
+<h1>Conway's Game of Life</h1>
+<canvas id="game" width="500" height="500"></canvas>
+<div>
+  <button id="start">▶ Start</button>
+  <button id="stop">⏸ Stop</button>
+  <button id="step">Step</button>
+  <button id="clear">Clear</button>
+  <button id="random">Random</button>
+</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const rows = 50, cols = 50;
+const cellSize = canvas.width / cols;
+let grid = createGrid(rows, cols);
+let running = false;
+let timer = null;
+
+// Luo tyhjä ruudukko
+function createGrid(r, c) {
+  return Array.from({ length: r }, () => Array(c).fill(0));
+}
+
+// Piirto
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      if (grid[y][x]) {
+        ctx.fillStyle = '#0f0';
+        ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+      }
+    }
+  }
+}
+
+// Laskenta seuraavaan sukupolveen
+function nextGen() {
+  const newGrid = createGrid(rows, cols);
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const neighbors = countNeighbors(grid, x, y);
+      if (grid[y][x] && (neighbors === 2 || neighbors === 3)) {
+        newGrid[y][x] = 1;
+      } else if (!grid[y][x] && neighbors === 3) {
+        newGrid[y][x] = 1;
+      }
+    }
+  }
+  grid = newGrid;
+  draw();
+}
+
+function countNeighbors(g, x, y) {
+  let sum = 0;
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const nx = x + dx, ny = y + dy;
+      if (nx >= 0 && nx < cols && ny >= 0 && ny < rows) {
+        sum += g[ny][nx];
+      }
+    }
+  }
+  return sum;
+}
+
+// Klikkaamalla voi elävöittää / kuolettaa soluja
+canvas.addEventListener('click', e => {
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor((e.clientX - rect.left) / cellSize);
+  const y = Math.floor((e.clientY - rect.top) / cellSize);
+  grid[y][x] = grid[y][x] ? 0 : 1;
+  draw();
+});
+
+// Nappien toiminnot
+document.getElementById('start').onclick = () => {
+  if (!running) {
+    running = true;
+    timer = setInterval(nextGen, 100);
+  }
+};
+document.getElementById('stop').onclick = () => {
+  running = false;
+  clearInterval(timer);
+};
+document.getElementById('step').onclick = nextGen;
+document.getElementById('clear').onclick = () => {
+  grid = createGrid(rows, cols);
+  draw();
+};
+document.getElementById('random').onclick = () => {
+  grid = createGrid(rows, cols).map(row => row.map(() => Math.random() < 0.3 ? 1 : 0));
+  draw();
+};
+
+// Piirrä aluksi tyhjä ruudukko
+draw();
+</script>
+</body>
+</html>
