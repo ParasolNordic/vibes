@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Woodblock Galore</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            background: 
+                radial-gradient(ellipse at 20% 30%, rgba(45, 90, 61, 0.3) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(26, 61, 46, 0.4) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(35, 74, 53, 0.2) 0%, transparent 60%),
+                linear-gradient(135deg, #2d5a3d 0%, #1f4a35 15%, #1a3d2e 30%, #234a35 45%, #1f4430 60%, #2a5540 75%, #1e4533 90%, #2d5a3d 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            padding-top: 10px;
+        }
+        
+        .game-area {
+            position: relative;
+            margin-bottom: 10px;
+        }
+        
+        .game-board {
+            background: #1a1a2e;
+            padding: 8px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            position: relative;
+            pointer-events: none;
+        }
+        
+        #gameCanvas {
+            display: block;
+            border: 2px solid #16213e;
+            border-radius: 5px;
+            pointer-events: auto;
+        }
+        
+        .next-piece-box {
+            position: absolute;
+            top: 8px;
+            right: -44px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2px;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            width: 39px;
+        }
+        
+        .next-piece-box label {
+            display: none;
+        }
+        
+        .next-piece-box button {
+            width: 100%;
+            padding: 3px 0;
+            margin-top: 2px;
+            font-size: 10px;
+            border-radius: 3px;
+            line-height: 1;
+        }
+        
+        #nextCanvas {
+            background: #f0f0f0;
+            border-radius: 2px;
+            display: block;
+        }
+        
+        .info-panel {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 15px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            width: 340px;
+        }
+        
+        .title {
+            text-align: center;
+            color: #1a4030;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 8px;
+            text-align: center;
+        }
+        
+        .stat label {
+            display: block;
+            font-size: 9px;
+            color: #000000;
+            font-weight: bold;
+        }
+        
+        .stat value {
+            display: block;
+            font-size: 16px;
+            color: #000000;
+            font-weight: bold;
+        }
+        
+        button {
+            width: 100%;
+            padding: 10px;
+            font-size: 15px;
+            font-weight: bold;
+            color: #ffffff;
+            background: linear-gradient(135deg, #9d7f52 0%, #7a5f3d 20%, #5e4a2f 40%, #6b5638 60%, #8b6f47 80%, #9d7f52 100%);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        button:active {
+            transform: scale(0.98);
+        }
+        
+        .center-button {
+            position: absolute;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            padding: 10px;
+            font-size: 15px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+            white-space: nowrap;
+            pointer-events: auto;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        
+        .game-over-screen {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            z-index: 1000;
+        }
+        
+        .game-over-screen h1 {
+            color: #764ba2;
+            margin-bottom: 20px;
+        }
+        
+        .game-over-screen .final-score {
+            font-size: 48px;
+            color: #667eea;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-area">
+        <div class="game-board">
+            <canvas id="gameCanvas" width="300" height="600"></canvas>
+            <button id="startBtn" class="center-button">Aloita peli</button>
+        </div>
+        <div class="next-piece-box">
+            <label>Seuraava</label>
+            <canvas id="nextCanvas" width="35" height="35"></canvas>
+            <button id="pauseBtn" style="display:none;">II</button>
+        </div>
+    </div>
+    
+    <div class="info-panel">
+        <div class="title">WOODBLOCK GALORE</div>
+        
+        <div class="stats">
+            <div class="stat">
+                <label>Pisteet</label>
+                <value id="score">0</value>
+            </div>
+            <div class="stat">
+                <label>Rivit</label>
+                <value id="lines">0</value>
+            </div>
+            <div class="stat">
+                <label>Nopeus</label>
+                <value id="speed">100%</value>
+            </div>
+            <div class="stat">
+                <label>Taso</label>
+                <value id="level">1</value>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('Script starting...');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const nextCanvas = document.getElementById('nextCanvas');
+        const nextCtx = nextCanvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        
+        console.log('Elements found:', {canvas, nextCanvas, startBtn, pauseBtn});
+        
+        const COLS = 10;
+        const ROWS = 20;
+        const BLOCK = 30;
+        
+        const SHAPES = [
+            [[1,1,1,1]],
+            [[1,1],[1,1]],
+            [[0,1,0],[1,1,1]],
+            [[0,1,1],[1,1,0]],
+            [[1,1,0],[0,1,1]],
+            [[1,0,0],[1,1,1]],
+            [[0,0,1],[1,1,1]]
+        ];
+        
+        const COLOR = '#d4a574';
+        
+        let board, current, next, x, y;
+        let score, lines, speed, level;
+        let gameOver, lockDelay, lockTimer;
+        let dropTime, lastTime, baseScore;
+        let paused = false;
+        
+        function init() {
+            board = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+            score = 0;
+            lines = 0;
+            speed = 1000;
+            level = 1;
+            gameOver = false;
+            lockDelay = false;
+            lockTimer = 0;
+            dropTime = 0;
+            lastTime = 0;
+            baseScore = 10;
+            next = null;
+            
+            document.getElementById('score').textContent = '0';
+            document.getElementById('lines').textContent = '0';
+            document.getElementById('speed').textContent = '100%';
+            document.getElementById('level').textContent = '1';
+        }
+        
+        function newPiece() {
+            const i = Math.floor(Math.random() * SHAPES.length);
+            return { shape: SHAPES[i], color: COLOR };
+        }
+        
+        function spawn() {
+            if (!next) next = newPiece();
+            current = next;
+            next = newPiece();
+            x = Math.floor(COLS/2) - Math.floor(current.shape[0].length/2);
+            y = 0;
+            lockDelay = false;
+            lockTimer = 0;
+            
+            drawNext();
+            
+            // Check game over
+            for (let row = 0; row < current.shape.length; row++) {
+                for (let col = 0; col < current.shape[row].length; col++) {
+                    if (current.shape[row][col] && board[y + row] && board[y + row][x + col]) {
+                        endGame();
+                        return;
+                    }
+                }
+            }
+        }
+        
+        function collide(dx, dy) {
+            for (let row = 0; row < current.shape.length; row++) {
+                for (let col = 0; col < current.shape[row].length; col++) {
+                    if (current.shape[row][col]) {
+                        let newX = x + col + dx;
+                        let newY = y + row + dy;
+                        if (newX < 0 || newX >= COLS || newY >= ROWS) return true;
+                        if (newY >= 0 && board[newY][newX]) return true;
+                    }
+                }
+            }
+            return false;
+        }
+        
+        function merge() {
+            let overflow = false;
+            for (let row = 0; row < current.shape.length; row++) {
+                for (let col = 0; col < current.shape[row].length; col++) {
+                    if (current.shape[row][col]) {
+                        let by = y + row;
+                        let bx = x + col;
+                        if (by < 0) overflow = true;
+                        if (by >= 0 && by < ROWS) board[by][bx] = current.color;
+                    }
+                }
+            }
+            if (overflow) endGame();
+        }
+        
+        function clearLines() {
+            let cleared = 0;
+            for (let row = ROWS - 1; row >= 0; row--) {
+                if (board[row].every(cell => cell !== 0)) {
+                    board.splice(row, 1);
+                    board.unshift(Array(COLS).fill(0));
+                    cleared++;
+                    row++;
+                }
+            }
+            if (cleared > 0) {
+                for (let i = 0; i < cleared; i++) {
+                    score += Math.round(baseScore);
+                    baseScore *= 1.10;
+                }
+                
+                // Tetris-bonus: 4 riviä kerralla = +20 pistettä ja ääni
+                if (cleared === 4) {
+                    score += 20;
+                    playTetrisSound();
+                }
+                
+                lines += cleared;
+                speed *= Math.pow(0.90, cleared);
+                level = Math.floor(lines / 10) + 1;
+                
+                document.getElementById('score').textContent = score;
+                document.getElementById('lines').textContent = lines;
+                document.getElementById('speed').textContent = Math.round((1000/speed)*100) + '%';
+                document.getElementById('level').textContent = level;
+            }
+        }
+        
+        function playTetrisSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // Kilahtava ääni
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (e) {
+                console.log('Audio not supported:', e);
+            }
+        }
+        
+        function rotate() {
+            const rotated = {
+                shape: current.shape[0].map((_, i) => 
+                    current.shape.map(row => row[i]).reverse()
+                ),
+                color: current.color
+            };
+            
+            const oldCurrent = current;
+            current = rotated;
+            
+            if (collide(0, 0)) {
+                const kicks = [[-1,0],[1,0],[-2,0],[2,0],[0,-1],[-1,-1],[1,-1]];
+                let kicked = false;
+                for (let [kx, ky] of kicks) {
+                    if (!collide(kx, ky)) {
+                        x += kx;
+                        y += ky;
+                        kicked = true;
+                        break;
+                    }
+                }
+                if (!kicked) current = oldCurrent;
+            }
+            
+            if (lockDelay && !collide(0, 1)) {
+                lockDelay = false;
+                lockTimer = 0;
+            }
+        }
+        
+        function moveLeft() {
+            if (!collide(-1, 0)) {
+                x--;
+                if (lockDelay && !collide(0, 1)) {
+                    lockDelay = false;
+                    lockTimer = 0;
+                }
+            }
+        }
+        
+        function moveRight() {
+            if (!collide(1, 0)) {
+                x++;
+                if (lockDelay && !collide(0, 1)) {
+                    lockDelay = false;
+                    lockTimer = 0;
+                }
+            }
+        }
+        
+        function drop() {
+            if (!collide(0, 1)) {
+                y++;
+                lockDelay = false;
+                lockTimer = 0;
+            } else {
+                if (!lockDelay) {
+                    lockDelay = true;
+                    lockTimer = 0;
+                } else if (lockTimer > 500) {
+                    merge();
+                    clearLines();
+                    spawn();
+                }
+            }
+        }
+        
+        function hardDrop() {
+            while (!collide(0, 1)) y++;
+            merge();
+            clearLines();
+            spawn();
+        }
+        
+        function draw() {
+            ctx.fillStyle = '#0f1419';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            for (let row = 0; row < ROWS; row++) {
+                for (let col = 0; col < COLS; col++) {
+                    if (board[row][col]) {
+                        ctx.fillStyle = board[row][col];
+                        ctx.fillRect(col * BLOCK, row * BLOCK, BLOCK, BLOCK);
+                        ctx.strokeStyle = '#1a1a2e';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(col * BLOCK, row * BLOCK, BLOCK, BLOCK);
+                    }
+                }
+            }
+            
+            if (current) {
+                for (let row = 0; row < current.shape.length; row++) {
+                    for (let col = 0; col < current.shape[row].length; col++) {
+                        if (current.shape[row][col]) {
+                            ctx.fillStyle = current.color;
+                            ctx.fillRect((x + col) * BLOCK, (y + row) * BLOCK, BLOCK, BLOCK);
+                            ctx.strokeStyle = '#1a1a2e';
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect((x + col) * BLOCK, (y + row) * BLOCK, BLOCK, BLOCK);
+                        }
+                    }
+                }
+            }
+        }
+        
+        function drawNext() {
+            console.log('Drawing next piece:', next);
+            nextCtx.fillStyle = '#f0f0f0';
+            nextCtx.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
+            
+            if (next) {
+                // Lasketaan maksimikoko 1px marginaalilla
+                const maxWidth = nextCanvas.width - 2; // 2px yhteensä (1px per puoli)
+                const maxHeight = nextCanvas.height - 2;
+                const blockWidth = Math.floor(maxWidth / next.shape[0].length);
+                const blockHeight = Math.floor(maxHeight / next.shape.length);
+                const b = Math.min(blockWidth, blockHeight);
+                
+                const ox = Math.floor((nextCanvas.width - next.shape[0].length * b) / 2);
+                const oy = Math.floor((nextCanvas.height - next.shape.length * b) / 2);
+                
+                console.log('Next piece details:', {blockSize: b, offsetX: ox, offsetY: oy, shape: next.shape});
+                
+                for (let row = 0; row < next.shape.length; row++) {
+                    for (let col = 0; col < next.shape[row].length; col++) {
+                        if (next.shape[row][col]) {
+                            nextCtx.fillStyle = next.color;
+                            nextCtx.fillRect(ox + col * b, oy + row * b, b, b);
+                            nextCtx.strokeStyle = '#1a1a2e';
+                            nextCtx.lineWidth = 0.5;
+                            nextCtx.strokeRect(ox + col * b, oy + row * b, b, b);
+                        }
+                    }
+                }
+            } else {
+                console.log('No next piece to draw');
+            }
+        }
+        
+        function update(time) {
+            if (gameOver || paused) return;
+            
+            const dt = time - lastTime;
+            lastTime = time;
+            dropTime += dt;
+            
+            if (lockDelay) lockTimer += dt;
+            
+            if (dropTime > speed) {
+                drop();
+                dropTime = 0;
+            }
+            
+            draw();
+            requestAnimationFrame(update);
+        }
+        
+        function startGame() {
+            console.log('Game starting!');
+            
+            // Poista mahdollinen game over screen
+            const gameOverDiv = document.querySelector('.game-over-screen');
+            if (gameOverDiv) gameOverDiv.remove();
+            
+            init();
+            spawn();
+            paused = false;
+            startBtn.style.display = 'none';
+            pauseBtn.style.display = 'block';
+            pauseBtn.textContent = 'II';
+            requestAnimationFrame(update);
+        }
+        
+        function endGame() {
+            gameOver = true;
+            pauseBtn.style.display = 'none';
+            pauseBtn.textContent = 'II';
+            startBtn.style.display = 'block';
+            startBtn.textContent = 'Pelaa uudelleen';
+            const div = document.createElement('div');
+            div.className = 'game-over-screen';
+            div.innerHTML = `
+                <h1>PELI PÄÄTTYI</h1>
+                <div class="final-score">${score}</div>
+                <div>Rivit: ${lines}</div>
+                <div>Taso: ${level}</div>
+            `;
+            document.body.appendChild(div);
+        }
+        
+        // Controls
+        let touchX, touchY, touchTime, swiping, lastMove;
+        
+        canvas.addEventListener('touchstart', (e) => {
+            if (gameOver || startBtn.style.display !== 'none') {
+                // Jos peli ei ole käynnissä, älä käsittele canvas touch-eventtiä
+                return;
+            }
+            e.preventDefault();
+            const t = e.touches[0];
+            touchX = t.clientX;
+            touchY = t.clientY;
+            touchTime = Date.now();
+            swiping = false;
+            lastMove = 0;
+        }, {passive: false});
+        
+        canvas.addEventListener('touchmove', (e) => {
+            if (gameOver || startBtn.style.display !== 'none') return;
+            e.preventDefault();
+            
+            const t = e.touches[0];
+            const dx = t.clientX - touchX;
+            const dy = t.clientY - touchY;
+            const now = Date.now();
+            
+            if (now - lastMove < 16) return;
+            lastMove = now;
+            
+            if (!swiping && dy > 40 && Math.abs(dy) > Math.abs(dx)) {
+                swiping = true;
+                hardDrop();
+                draw();
+            } else if (!swiping && dx < -25 && Math.abs(dx) > Math.abs(dy)) {
+                swiping = true;
+                moveLeft();
+                draw();
+                touchX = t.clientX;
+                touchY = t.clientY;
+                setTimeout(() => swiping = false, 100);
+            } else if (!swiping && dx > 25 && Math.abs(dx) > Math.abs(dy)) {
+                swiping = true;
+                moveRight();
+                draw();
+                touchX = t.clientX;
+                touchY = t.clientY;
+                setTimeout(() => swiping = false, 100);
+            }
+        }, {passive: false});
+        
+        canvas.addEventListener('touchend', (e) => {
+            if (gameOver || swiping || startBtn.style.display !== 'none') return;
+            e.preventDefault();
+            
+            const t = e.changedTouches[0];
+            const dx = t.clientX - touchX;
+            const dy = t.clientY - touchY;
+            const dur = Date.now() - touchTime;
+            
+            if (dur < 250 && Math.abs(dx) < 15 && Math.abs(dy) < 15) {
+                rotate();
+                draw();
+            }
+        }, {passive: false});
+        
+        document.addEventListener('keydown', (e) => {
+            if (gameOver) return;
+            if (e.key === 'ArrowLeft') { e.preventDefault(); moveLeft(); }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); moveRight(); }
+            else if (e.key === 'ArrowDown') { e.preventDefault(); hardDrop(); }
+            else if (e.key === 'ArrowUp') { e.preventDefault(); rotate(); }
+            draw();
+        });
+        
+        // Start button - sekä click että touch
+        startBtn.onclick = function(e) {
+            console.log('START BUTTON CLICKED!');
+            e.stopPropagation();
+            startGame();
+        };
+        
+        startBtn.addEventListener('touchstart', function(e) {
+            console.log('START BUTTON TOUCHED!');
+            e.stopPropagation();
+            e.preventDefault();
+        }, {passive: false});
+        
+        startBtn.addEventListener('touchend', function(e) {
+            console.log('START BUTTON TOUCH END!');
+            e.stopPropagation();
+            e.preventDefault();
+            startGame();
+        }, {passive: false});
+        
+        console.log('Event listeners attached, startBtn:', startBtn);
+        
+        pauseBtn.onclick = function() {
+            paused = !paused;
+            pauseBtn.textContent = paused ? '▶' : 'II';
+            if (!paused) {
+                lastTime = performance.now();
+                requestAnimationFrame(update);
+            }
+        };
+        
+        console.log('Calling initial draw...');
+        draw();
+        console.log('Initial draw complete');
+    </script>
+</body>
+</html>
