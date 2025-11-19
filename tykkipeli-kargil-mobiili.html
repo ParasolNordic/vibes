@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tykkipeli - Kargil Road Arced Fire</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background-color: #1a1a2e;
+            font-family: Arial, sans-serif;
+            color: white;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #gameContainer {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        #gameCanvas {
+            background-color: #16213e;
+            cursor: crosshair;
+            touch-action: none;
+            max-width: 100vw;
+            max-height: 100vh;
+        }
+        
+        #gameInfo {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 14px;
+            background-color: rgba(15, 52, 96, 0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .player1 { color: #00ff00; }
+        .player2 { color: #ff0000; }
+        
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('kargil.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        
+        #startScreen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            z-index: -1;
+        }
+        
+        #textContainer {
+            background-color: rgba(50, 50, 50, 0.85);
+            padding: 30px 40px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        
+        #startScreen h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+        
+        #startScreen p {
+            font-size: 13px;
+            margin: 8px 0;
+            text-align: center;
+            color: #ddd;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
+        
+        #newGameBtn {
+            margin-top: 25px;
+            padding: 15px 50px;
+            font-size: 20px;
+            background-color: #e94560;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+        
+        #newGameBtn:hover, #newGameBtn:active {
+            background-color: #c23555;
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7);
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        @media screen and (orientation: portrait) {
+            #gameContainer::before {
+                content: "Käännä laite vaakasuuntaan ↻";
+                position: absolute;
+                font-size: 20px;
+                text-align: center;
+                z-index: 50;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="gameInfo"></div>
+        
+        <div id="startScreen">
+            <div id="textContainer">
+                <h1>Tykkipeli - Kargil Road Arced Fire</h1>
+                <p><strong>Näppäimistö:</strong> ⬆️ ⬇️ = Säädä | VÄLILYÖNTI = Ammu</p>
+                <p><strong>Kosketusnäyttö:</strong> Vedä ylös/alas = Säädä | Napauta = Ammu</p>
+                <p><span class="player1">Pelaaja 1 (Vihreä)</span> | <span class="player2">Pelaaja 2 (Punainen)</span></p>
+                <button id="newGameBtn">Aloita peli</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const infoDiv = document.getElementById('gameInfo');
+        const startScreen = document.getElementById('startScreen');
+        const newGameBtn = document.getElementById('newGameBtn');
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            if (game.terrain.length > 0) {
+                draw();
+            }
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        let audioContext = null;
+        
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+            }
+        }
+        
+        function playShootSound() {
+            if (!audioContext) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+        
+        function playExplosionSound() {
+            if (!audioContext) return;
+            const oscillator1 = audioContext.createOscillator();
+            const gainNode1 = audioContext.createGain();
+            
+            oscillator1.type = 'sawtooth';
+            oscillator1.connect(gainNode1);
+            gainNode1.connect(audioContext.destination);
+            
+            oscillator1.frequency.setValueAtTime(100, audioContext.currentTime);
+            oscillator1.frequency.exponentialRampToValueAtTime(40, audioContext.currentTime + 0.3);
+            
+            gainNode1.gain.setValueAtTime(0.5, audioContext.currentTime);
+            gainNode1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            oscillator1.start(audioContext.currentTime);
+            oscillator1.stop(audioContext.currentTime + 0.3);
+            
+            const oscillator2 = audioContext.createOscillator();
+            const gainNode2 = audioContext.createGain();
+            
+            oscillator2.type = 'square';
+            oscillator2.connect(gainNode2);
+            gainNode2.connect(audioContext.destination);
+            
+            oscillator2.frequency.setValueAtTime(800, audioContext.currentTime);
+            oscillator2.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.2);
+            
+            gainNode2.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+            
+            oscillator2.start(audioContext.currentTime);
+            oscillator2.stop(audioContext.currentTime + 0.2);
+            
+            const bufferSize = audioContext.sampleRate * 0.3;
+            const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+            const data = buffer.getChannelData(0);
+            
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            
+            const noise = audioContext.createBufferSource();
+            const noiseGain = audioContext.createGain();
+            
+            noise.buffer = buffer;
+            noise.connect(noiseGain);
+            noiseGain.connect(audioContext.destination);
+            
+            noiseGain.gain.setValueAtTime(0.2, audioContext.currentTime);
+            noiseGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+            
+            noise.start(audioContext.currentTime);
+        }
+        
+        function playGroundImpactSound() {
+            if (!audioContext) return;
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(120, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(40, audioContext.currentTime + 0.15);
+            
+            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.15);
+            
+            const bufferSize = audioContext.sampleRate * 0.1;
+            const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+            const data = buffer.getChannelData(0);
+            
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = Math.random() * 2 - 1;
+            }
+            
+            const noise = audioContext.createBufferSource();
+            const noiseGain = audioContext.createGain();
+            
+            noise.buffer = buffer;
+            noise.connect(noiseGain);
+            noiseGain.connect(audioContext.destination);
+            
+            noiseGain.gain.setValueAtTime(0.1, audioContext.currentTime);
+            noiseGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            
+            noise.start(audioContext.currentTime);
+        }
+        
+        let game = {
+            currentPlayer: 1,
+            player1: { x: 0, cannon: null, angle: -45, power: 25 },
+            player2: { x: 0, cannon: null, angle: -135, power: 25 },
+            terrain: [],
+            terrainTexture: null,
+            trajectories: [],
+            projectile: null,
+            gameOver: false,
+            animationId: null,
+            explosion: null,
+            touchStartY: null
+        };
+        
+        function generateTerrain() {
+            game.player1.x = canvas.width * 0.1 + Math.random() * canvas.width * 0.05;
+            game.player2.x = canvas.width * 0.85 + Math.random() * canvas.width * 0.05;
+            
+            game.terrain = [];
+            
+            const leftHeight = canvas.height * 0.67 + Math.random() * canvas.height * 0.15;
+            const rightHeight = canvas.height * 0.67 + Math.random() * canvas.height * 0.15;
+            
+            let y = leftHeight;
+            
+            for (let x = 0; x < canvas.width; x += 10) {
+                let targetHeight;
+                
+                if (x < game.player1.x + 70) {
+                    targetHeight = leftHeight;
+                } else if (x > game.player2.x - 70) {
+                    targetHeight = rightHeight;
+                } else {
+                    const centerFactor = Math.sin((x / canvas.width) * Math.PI * 2) * canvas.height * 0.15;
+                    targetHeight = canvas.height * 0.75 + centerFactor + (Math.random() - 0.5) * canvas.height * 0.1;
+                    targetHeight = Math.max(canvas.height * 0.3, Math.min(canvas.height * 0.95, targetHeight));
+                }
+                
+                const diff = targetHeight - y;
+                y += diff * 0.1 + (Math.random() - 0.5) * 60;
+                
+                y = Math.max(canvas.height * 0.15, Math.min(canvas.height * 0.95, y));
+                
+                game.terrain.push({ x, y });
+            }
+            
+            generateTerrainTexture();
+        }
+        
+        function generateTerrainTexture() {
+            game.terrainTexture = {
+                verticalLines: [],
+                highlights: [],
+                rocks: []
+            };
+            
+            for (let i = 0; i < game.terrain.length - 1; i++) {
+                const p1 = game.terrain[i];
+                if (i % 3 === 0) {
+                    game.terrainTexture.verticalLines.push({
+                        x: p1.x,
+                        y1: p1.y,
+                        y2: p1.y + 20 + Math.random() * 20
+                    });
+                }
+            }
+            
+            for (let i = 1; i < game.terrain.length - 1; i++) {
+                const p1 = game.terrain[i - 1];
+                const p2 = game.terrain[i];
+                const p3 = game.terrain[i + 1];
+                
+                if (p2.y < p1.y && p2.y < p3.y && i % 5 === 0) {
+                    game.terrainTexture.highlights.push({
+                        x: p2.x,
+                        y: p2.y
+                    });
+                }
+            }
+            
+            for (let i = 0; i < game.terrain.length; i += 8) {
+                const p = game.terrain[i];
+                const numRocks = Math.floor(Math.random() * 3);
+                for (let j = 0; j < numRocks; j++) {
+                    game.terrainTexture.rocks.push({
+                        x: p.x + (Math.random() - 0.5) * 30,
+                        y: p.y + Math.random() * 40,
+                        size: 2 + Math.random() * 3
+                    });
+                }
+            }
+        }
+        
+        function getTerrainHeight(x) {
+            if (x < 0 || x >= canvas.width) return canvas.height;
+            
+            const index = Math.floor(x / 10);
+            if (index >= game.terrain.length - 1) return game.terrain[game.terrain.length - 1].y;
+            
+            const t1 = game.terrain[index];
+            const t2 = game.terrain[index + 1];
+            const ratio = (x - t1.x) / (t2.x - t1.x);
+            return t1.y + (t2.y - t1.y) * ratio;
+        }
+        
+        function placeCannons() {
+            game.player1.cannon = {
+                x: game.player1.x,
+                y: getTerrainHeight(game.player1.x),
+                size: 20
+            };
+            game.player2.cannon = {
+                x: game.player2.x,
+                y: getTerrainHeight(game.player2.x),
+                size: 20
+            };
+        }
+        
+        function draw() {
+            ctx.fillStyle = '#16213e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.save();
+            
+            const gradient = ctx.createLinearGradient(0, canvas.height * 0.5, 0, canvas.height);
+            gradient.addColorStop(0, '#228b22');
+            gradient.addColorStop(0.5, '#1a6b1a');
+            gradient.addColorStop(1, '#0d4d0d');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height);
+            for (let point of game.terrain) {
+                ctx.lineTo(point.x, point.y);
+            }
+            ctx.lineTo(canvas.width, canvas.height);
+            ctx.closePath();
+            ctx.fill();
+            
+            if (game.terrainTexture) {
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.lineWidth = 1;
+                for (let line of game.terrainTexture.verticalLines) {
+                    ctx.beginPath();
+                    ctx.moveTo(line.x, line.y1);
+                    ctx.lineTo(line.x, line.y2);
+                    ctx.stroke();
+                }
+                
+                ctx.strokeStyle = 'rgba(100, 200, 100, 0.15)';
+                ctx.lineWidth = 2;
+                for (let highlight of game.terrainTexture.highlights) {
+                    ctx.beginPath();
+                    ctx.moveTo(highlight.x - 10, highlight.y + 15);
+                    ctx.lineTo(highlight.x, highlight.y);
+                    ctx.lineTo(highlight.x + 10, highlight.y + 15);
+                    ctx.stroke();
+                }
+                
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                for (let rock of game.terrainTexture.rocks) {
+                    ctx.beginPath();
+                    ctx.arc(rock.x, rock.y, rock.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            ctx.restore();
+            
+            for (let traj of game.trajectories) {
+                ctx.strokeStyle = traj.player === 1 ? '#00cc00' : '#cc0000';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                for (let i = 0; i < traj.points.length; i++) {
+                    const p = traj.points[i];
+                    if (i === 0) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
+            }
+            
+            drawCannon(game.player1, 1);
+            drawCannon(game.player2, 2);
+            
+            if (game.projectile) {
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(game.projectile.x, game.projectile.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            if (game.explosion) {
+                const exp = game.explosion;
+                const progress = (Date.now() - exp.startTime) / exp.duration;
+                
+                if (progress < 1) {
+                    const radius = exp.maxRadius * progress;
+                    const alpha = 1 - progress;
+                    
+                    ctx.beginPath();
+                    ctx.arc(exp.x, exp.y, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 200, 0, ${alpha * 0.6})`;
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.arc(exp.x, exp.y, radius * 0.7, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 100, 0, ${alpha * 0.8})`;
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.arc(exp.x, exp.y, radius * 0.4, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 50, 0, ${alpha})`;
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.arc(exp.x, exp.y, radius * 0.2, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+                    ctx.fill();
+                } else {
+                    game.explosion = null;
+                }
+            }
+        }
+        
+        function drawCannon(player, playerNum) {
+            const cannon = player.cannon;
+            const color = playerNum === 1 ? '#00ff00' : '#ff0000';
+            const isActive = game.currentPlayer === playerNum && !game.gameOver;
+            
+            ctx.fillStyle = color;
+            ctx.fillRect(cannon.x - cannon.size/2, cannon.y - cannon.size, 
+                         cannon.size, cannon.size);
+            
+            const barrelLength = 30;
+            const angle = player.angle * Math.PI / 180;
+            const barrelStartY = cannon.y - cannon.size + 5;
+            const endX = cannon.x + Math.cos(angle) * barrelLength;
+            const endY = barrelStartY + Math.sin(angle) * barrelLength;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = isActive ? 5 : 3;
+            ctx.beginPath();
+            ctx.moveTo(cannon.x, barrelStartY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            
+            if (isActive) {
+                ctx.fillStyle = 'white';
+                ctx.font = '14px Arial';
+                ctx.fillText(`${Math.abs(player.angle).toFixed(0)}°`, 
+                            cannon.x - 15, barrelStartY - 10);
+            }
+        }
+        
+        function shoot() {
+            if (game.projectile || game.gameOver) return;
+            
+            const player = game.currentPlayer === 1 ? game.player1 : game.player2;
+            const angle = player.angle * Math.PI / 180;
+            
+            const powerVariation = player.power * (0.98 + Math.random() * 0.04);
+            
+            const barrelStartY = player.cannon.y - player.cannon.size + 5;
+            
+            game.projectile = {
+                x: player.cannon.x,
+                y: barrelStartY,
+                vx: Math.cos(angle) * powerVariation,
+                vy: Math.sin(angle) * powerVariation,
+                trajectory: [{ x: player.cannon.x, y: barrelStartY }]
+            };
+            
+            playShootSound();
+            
+            updateInfo('Laukaus ammuttu!');
+            animateProjectile();
+        }
+        
+        function animateProjectile() {
+            if (!game.projectile) return;
+            
+            const p = game.projectile;
+            const gravity = 0.5;
+            
+            p.vy += gravity;
+            p.x += p.vx;
+            p.y += p.vy;
+            
+            p.trajectory.push({ x: p.x, y: p.y });
+            
+            if (checkCollision()) {
+                return;
+            }
+            
+            if (p.x < 0 || p.x > canvas.width || p.y > canvas.height) {
+                missedShot();
+                return;
+            }
+            
+            draw();
+            game.animationId = requestAnimationFrame(animateProjectile);
+        }
+        
+        function checkCollision() {
+            const p = game.projectile;
+            
+            const opponent = game.currentPlayer === 1 ? game.player2 : game.player1;
+            const opponentCannon = opponent.cannon;
+            
+            const cannonCenterY = opponentCannon.y - opponentCannon.size/2;
+            
+            const distance = Math.sqrt(
+                Math.pow(p.x - opponentCannon.x, 2) + 
+                Math.pow(p.y - cannonCenterY, 2)
+            );
+            
+            if (distance < opponentCannon.size/2 + 8) {
+                gameWon();
+                return true;
+            }
+            
+            const terrainHeight = getTerrainHeight(p.x);
+            if (p.y >= terrainHeight) {
+                hitTerrain(p.x, terrainHeight);
+                return true;
+            }
+            
+            return false;
+        }
+        
+        function hitTerrain(x, y) {
+            cancelAnimationFrame(game.animationId);
+            
+            playGroundImpactSound();
+            
+            const craterRadius = 30;
+            for (let i = 0; i < game.terrain.length; i++) {
+                const t = game.terrain[i];
+                const dist = Math.abs(t.x - x);
+                if (dist < craterRadius) {
+                    const depth = (craterRadius - dist) / craterRadius * 40;
+                    t.y = Math.min(t.y + depth, canvas.height - 20);
+                }
+            }
+            
+            game.trajectories.push({
+                player: game.currentPlayer,
+                points: game.projectile.trajectory
+            });
+            
+            game.projectile = null;
+            
+            game.currentPlayer = game.currentPlayer === 1 ? 2 : 1;
+            updateInfo(`Pelaaja ${game.currentPlayer} vuoro`);
+            
+            draw();
+        }
+        
+        function missedShot() {
+            cancelAnimationFrame(game.animationId);
+            
+            game.trajectories.push({
+                player: game.currentPlayer,
+                points: game.projectile.trajectory
+            });
+            
+            game.projectile = null;
+            
+            game.currentPlayer = game.currentPlayer === 1 ? 2 : 1;
+            updateInfo(`Pelaaja ${game.currentPlayer} vuoro`);
+            
+            draw();
+        }
+        
+        function gameWon() {
+            cancelAnimationFrame(game.animationId);
+            
+            playExplosionSound();
+            
+            const opponent = game.currentPlayer === 1 ? game.player2 : game.player1;
+            game.explosion = {
+                x: opponent.cannon.x,
+                y: opponent.cannon.y - opponent.cannon.size/2,
+                maxRadius: 60,
+                startTime: Date.now(),
+                duration: 800
+            };
+            
+            game.trajectories.push({
+                player: game.currentPlayer,
+                points: game.projectile.trajectory
+            });
+            
+            game.projectile = null;
+            
+            const animateExplosion = () => {
+                draw();
+                if (game.explosion) {
+                    requestAnimationFrame(animateExplosion);
+                } else {
+                    game.gameOver = true;
+                    const color = game.currentPlayer === 1 ? 'player1' : 'player2';
+                    updateInfo(`<span class="${color}">Pelaaja ${game.currentPlayer} VOITTI! 💥</span>`, true);
+                    startScreen.classList.remove('hidden');
+                }
+            };
+            
+            animateExplosion();
+        }
+        
+        function updateInfo(text, isHtml = false) {
+            if (isHtml) {
+                infoDiv.innerHTML = text;
+            } else {
+                const color = game.currentPlayer === 1 ? 'player1' : 'player2';
+                infoDiv.innerHTML = `<span class="${color}">${text}</span>`;
+            }
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (game.projectile || game.gameOver) return;
+            
+            const player = game.currentPlayer === 1 ? game.player1 : game.player2;
+            
+            if (e.code === 'ArrowUp') {
+                e.preventDefault();
+                player.angle = Math.max(player.angle - 1, game.currentPlayer === 1 ? -90 : -180);
+                draw();
+            } else if (e.code === 'ArrowDown') {
+                e.preventDefault();
+                player.angle = Math.min(player.angle + 1, game.currentPlayer === 1 ? 0 : -90);
+                draw();
+            } else if (e.code === 'Space') {
+                e.preventDefault();
+                shoot();
+            }
+        });
+        
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            initAudio();
+            
+            if (game.projectile || game.gameOver) return;
+            
+            const touch = e.touches[0];
+            game.touchStartY = touch.clientY;
+        }, { passive: false });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            
+            if (game.projectile || game.gameOver || game.touchStartY === null) return;
+            
+            const touch = e.touches[0];
+            const deltaY = game.touchStartY - touch.clientY;
+            
+            const player = game.currentPlayer === 1 ? game.player1 : game.player2;
+            
+            const angleChange = deltaY * 0.1;
+            player.angle = Math.max(
+                game.currentPlayer === 1 ? -90 : -180,
+                Math.min(
+                    game.currentPlayer === 1 ? 0 : -90,
+                    player.angle - angleChange
+                )
+            );
+            
+            game.touchStartY = touch.clientY;
+            draw();
+        }, { passive: false });
+        
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            
+            if (game.projectile || game.gameOver) return;
+            
+            if (game.touchStartY !== null) {
+                shoot();
+            }
+            
+            game.touchStartY = null;
+        }, { passive: false });
+        
+        canvas.addEventListener('click', (e) => {
+            if (game.projectile || game.gameOver) return;
+            shoot();
+        });
+        
+        newGameBtn.addEventListener('click', () => {
+            initAudio();
+            
+            if (game.animationId) cancelAnimationFrame(game.animationId);
+            
+            game = {
+                currentPlayer: 1,
+                player1: { x: 0, cannon: null, angle: -45, power: 25 },
+                player2: { x: 0, cannon: null, angle: -135, power: 25 },
+                terrain: [],
+                terrainTexture: null,
+                trajectories: [],
+                projectile: null,
+                gameOver: false,
+                animationId: null,
+                explosion: null,
+                touchStartY: null
+            };
+            
+            generateTerrain();
+            placeCannons();
+            draw();
+            updateInfo('Pelaaja 1 vuoro - aloita!');
+            startScreen.classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
