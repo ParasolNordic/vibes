@@ -161,6 +161,7 @@
             currentPlayer: 1,
             gameOver: false,
             touchStartY: null,
+            touchMoved: false,
             explosion: null
         };
         
@@ -247,7 +248,7 @@
                 if (active) {
                     ctx.fillStyle = 'white';
                     ctx.font = '14px Arial';
-                    ctx.fillText(Math.abs(p.angle) + '°', p.x - 15, startY - 10);
+                    ctx.fillText(Math.round(Math.abs(p.angle)) + '°', p.x - 15, startY - 10);
                 }
             });
             
@@ -323,6 +324,12 @@
             p.y += p.vy;
             p.trail.push({ x: p.x, y: p.y });
             
+            // Check out of bounds FIRST (before anything else)
+            if (p.x < 0 || p.x > canvas.width || p.y > canvas.height || p.y < 0) {
+                miss();
+                return;
+            }
+            
             // Check hit opponent
             const opp = game.currentPlayer === 1 ? game.player2 : game.player1;
             const dist = Math.sqrt((p.x - opp.x) ** 2 + (p.y - opp.y + 10) ** 2);
@@ -331,15 +338,9 @@
                 return;
             }
             
-            // Check hit terrain
+            // Check hit terrain (only if in bounds)
             if (p.y >= getTerrainHeight(p.x)) {
                 hitGround();
-                return;
-            }
-            
-            // Check out of bounds
-            if (p.x < 0 || p.x > canvas.width || p.y > canvas.height) {
-                miss();
                 return;
             }
             
@@ -375,7 +376,9 @@
         }
         
         function miss() {
-            game.trajectories.push({ player: game.currentPlayer, points: game.projectile.trail });
+            if (game.projectile && game.projectile.trail) {
+                game.trajectories.push({ player: game.currentPlayer, points: game.projectile.trail });
+            }
             game.projectile = null;
             game.currentPlayer = game.currentPlayer === 1 ? 2 : 1;
             updateInfo('Pelaaja ' + game.currentPlayer + ' vuoro');
@@ -441,6 +444,7 @@
             e.preventDefault();
             if (game.projectile || game.gameOver) return;
             game.touchStartY = e.touches[0].clientY;
+            game.touchMoved = false;
         });
         
         canvas.addEventListener('touchmove', e => {
@@ -448,6 +452,12 @@
             if (game.projectile || game.gameOver || !game.touchStartY) return;
             
             const deltaY = game.touchStartY - e.touches[0].clientY;
+            
+            // Jos liikuttu yli 5 pikseliä, merkitään että käyttäjä raahasi
+            if (Math.abs(deltaY) > 5) {
+                game.touchMoved = true;
+            }
+            
             const p = game.currentPlayer === 1 ? game.player1 : game.player2;
             const change = deltaY * 0.1;
             
@@ -463,8 +473,14 @@
         canvas.addEventListener('touchend', e => {
             e.preventDefault();
             if (game.projectile || game.gameOver) return;
-            if (game.touchStartY) shoot();
+            
+            // Ammu vain jos käyttäjä ei raahannut (eli napautti)
+            if (game.touchStartY && !game.touchMoved) {
+                shoot();
+            }
+            
             game.touchStartY = null;
+            game.touchMoved = false;
         });
         
         canvas.addEventListener('click', () => {
@@ -480,6 +496,8 @@
             game.projectile = null;
             game.gameOver = false;
             game.explosion = null;
+            game.touchStartY = null;
+            game.touchMoved = false;
             generateTerrain();
             draw();
             updateInfo('Pelaaja 1 vuoro - aloita!');
