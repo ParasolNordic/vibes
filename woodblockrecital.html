@@ -709,7 +709,23 @@ Vastaa sinutellen maksimissaan 500 merkkiä. Jatkuvaa tekstiä, ei tähtimerkkej
                 const data = await response.json();
                 console.log('LLM response data:', data);
                 
-                let analysis = data.result?.response || data.response || 'Analyysi ei saatavilla';
+                // Workers AI palauttaa rakenteen:
+                // { response: "...", ... } TAI
+                // { content: [{ text: "..." }], ... }
+                let analysis = 'Analyysi ei saatavilla';
+                
+                if (data.response) {
+                    // Suora response-kenttä
+                    analysis = data.response;
+                } else if (data.content && Array.isArray(data.content) && data.content[0]?.text) {
+                    // Content-array rakenne
+                    analysis = data.content[0].text;
+                } else if (data.result?.response) {
+                    // Result.response rakenne
+                    analysis = data.result.response;
+                }
+                
+                console.log('Parsittu analyysi:', analysis);
                 
                 // Varmista että ei katkea kesken lauseen
                 if (analysis.length > 600) {
@@ -721,7 +737,7 @@ Vastaa sinutellen maksimissaan 500 merkkiä. Jatkuvaa tekstiä, ei tähtimerkkej
                     }
                 }
                 
-                console.log('Analyysi vastaanotettu:', analysis);
+                console.log('Lopullinen analyysi:', analysis);
                 return analysis;
                 
             } catch (error) {
