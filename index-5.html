@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pelit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            padding: 40px;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .game-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .game-image {
+            width: 240px;
+            height: 160px;
+            border: 3px solid #c00000;
+            display: block;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .game-image:hover {
+            transform: scale(1.05);
+        }
+
+        .game-title {
+            font-family: Impact, 'Arial Black', sans-serif;
+            font-size: 48px;
+            font-weight: 900;
+            color: #000000;
+            margin-left: 40px;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-item">
+            <a href="tykkipeli-mobiilia.html">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAACgCAYAAAAiS1nAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADk0lEQVR4nO3dMW4TURSF4TtKQUOBxAZYAhtgAWyBJbAEtgArYAm0bIEVsAVKKhoqpETC/BQUSIkYz4zvzLn3fVLKJLbjr56eX+w4MwMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoBOttRtjzB1jzM0xxk37ewEA9Oe+tfbUGPPQWvthjLn7SuLP5xcA0J+X1tpLa+2ltfbYWnv+RuLP5+8AoD9/jz/+3PLc/FNr7XyMeW6tfTfG3CzkL/8CgJ48fSy/7/5Za+3cGPN7Y8z9SuLP518B0JN/xl/oF/NvrbXTSgLH/BsA+vW09Eu81lp7WlmAmn8PQJ+WFuCkBbj5PQD9qS7AqQtw8nsB+rK2ACcvwM3vCejH1gU4aQFufm9A+/YuwMkLcPP7BNq1ZgFOXoCb3y/QnjULcPIC3PwegjbsWYCTF+Dm9xO0Ye8CnLwAN7+voF17F+DkBbj5/QXtOLIAJy/Aze8zaEP1Apy8ADe/36B+exfg5AW4+X0H9Tq6ACcvwM3vP6jT0QU4eQFufh9CfY4uwMkLcPP7EepydAFOXoCb35dQj70LcPIC3Pz+hDrsXYCTF+Dm9ynUoboAJy/Aze9XqMPRBTh5AW5+30L99i7AyQtw8/sX6nN0AU5egJvfx1CXowtw8gLc/H6GehxdgJMX4Ob3NdSjugAnL8DN72+ow94FOHkBbn6fQ/n2LsDJC3Dz+x3Kt3cBTl6Am9/3ULa9C3DyAtz8/oey7V2AkxfgVsP7AOqwdwFOXoBbDe8HqEP1Apy8ADe/D6FcexfglAU45j0BZdq7ACcvwM3vRyjT3gU4eQFufk9Cmc5egJMX4Ob3JpTn7AWYBQhozdEFOGUBjnlvQllqWICTF+Dm9yiU5ewFmAUIaE11AU5egJvfq1COvQtw8gLc/J6FcpyxALMAAa1YW4CTF+Dm9y6U4YwFmAUIaMGeBTh5AW5+D0P7jizAyQtw83sZ2nZ0AU5egJvf09Cuvee/yQtw83sc2rRnAU5egJvf69CmMxZgFiCgZkcX4OQFuPk9D+05sgAnL8DN731oz94FOHkBbn4PRPvO/gNO8gLc/D6INp2xALMAAa3ZuwAnL8DN742o39oC3LwAN7/voR5rC3DyAtz8foj6HVmAkxfg5vdG1OvoApy8ADe/R6Jd1QU4eQFufs9Eu/YuwMkLcPP7J9qzdwFOXoCb30fRliMLcPIC3Py+CgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPDf+QtHW+tI9PbODgAAAABJRU5ErkJggg==" alt="Tykkipeli" class="game-image">
+            </a>
+            <div class="game-title">KARGIL ROAD ARCED FIRE</div>
+        </div>
+
+        <div class="game-item">
+            <a href="tykkipeli-kolme-tykkia.html">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAACgCAYAAAAiS1nAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAADqklEQVR4nO3dMW4TURSF4TtKQUOBxAJYAhtgAWyBJbAElsAKWAItW2AFbIGSioYKKZEwPwUFUiLGM+M7c+593yelbMd2/NXT84sdZwYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoButteNxnO+M4/nxPJd/BwDoRGvtpLX20Fp7aK09ttYef5L48/kFAPTnubX23Fp7aa09tNae/5D48/kFAPTn3/GPP7c8N//UWjseY55aa9+NMXcL+cu/AKAnT5/K77t/1lo7b4z5vTHmfiXx5/OvAOjJP+Mv9Iv5t9baaSWBY/4NAP162vgl3lpr7WFlAWr+PQB9WlqAkxbg5vcA9Kd6AU5dgJvfC9CXrQtw6gLc/J6AduxZgJMW4Ob3BrRh7wKctAA3v0egfkcW4KQFuPk9Am3YswAnLcDN7xVow9YFOHkBbn7PQP32LsBJC3Dzewfat3cBTlqAm98/0Ia9C3DSAtz8PoI6VS/ASQtw8/sJ2rB3AU5agJvfU1CnvQtw0gLc/L6COu1dgJMW4Ob3FtRp7wKctAA3v7+gTnsX4KQFuPk9BnU6sgAnLcDN7zOo094FOGkBbn6vQZ32LsBJC3DzewzqVL0AJy3Aze85qM/eBThpAW5+30F99i7ASQtw8/sP6rN3AU5agJvfh1CfvQtw0gLc/F6EOlUvwEkLcPP7EeqzdwFOWoCb33tQl70LcNIC3Pz+g7rsXYCTFuDm9yHUZe8CnLQAN78XoS57F+CkBbj5/Qj12LsAJy3Aze9JqMfeBThpAW5+X0I99i7ASQtw8/sS6rF3AU5agJvfm1CPvQtw0gLc/N6EOuxdgJMW4Ob3J9Rh7wKctAA3v0ehDnsX4KQFuPm9CnXYuwAnLcDN71eow94FOGkBbn7PQh32LsBJC3Dz+xbK13kBTl6Am9+7UL7OC3DyAtz8/oXydV6Akxfg5vcwlK/zApy8ADe/h6F8nRfg5AW4+X0M5eu8ACcvwM3vZShf5wU4eQFufj9D+TovwMkLcPP7GsrXeQFOXoCb39tQts4LcPIC3Pz+hvJ1XoCTF+Dm9ziUr/MCnLwAN7/PoWydF+DkBbj5vQ5l67wAJy/Aze93KFvnBTh5AW5+z0PZOi/AyQtw8/seytZ5AU5egJvf+1C2zgtw8gLc/P6HsnVegJMX4Ob3P5St8wKcvAA3vweiXJ0X4OQFuPl9EGXrvAAnL8DN74coW+cFOHkBbn4vRLk6L8DJC3Dz+yIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAID/zgfQjd5E01JE/AAAAABJRU5ErkJggg==" alt="Kargil Road Triple Tap" class="game-image">
+            </a>
+            <div class="game-title">KARGIL ROAD - Triple Tap</div>
+        </div>
+
+        <div class="game-item">
+            <a href="woodblockrecital.html">
+                <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAPAAAACgCAYAAAAiS1nAAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAEJElEQVR4nO3dMW4UQRBAUe9ICRwgIeEAnIAb7AlygjkBR+AEHAHJkBBZIgKJ/wkokLDGu7sz1dWv3qekHWu9Hr/Z6u6xvbsBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgEG11u4bY+4aY26PM67fBQD043lr7aW19tJae2mtPX8j8NfXJwDQn9fW2mtr7a219tJae/pG4K+vTwCgP/8+nvhzy3Pzz621+8aYp9ba98aYuxXil38BQE+evpff9/+otXbfGPN7Y8zjSuKvrz8CoE8fbv/JHNw/9t+ntdbef8f1N5Hez78H0K89C/CeBbj5fQF92rsA71mAm98f0J69C/CeBbj5PQL9OLIAZ13h/R6Bthxdflku7+b3CrTjp+V39wK8ZwFufr9AG/YuwHsW4Ob3DbRh7wK8ZwFuft9AG/YuwHsW4Ob3D7Rh7wK8ZwFufh9BG/YuwHsW4Ob3E7Rh7wK8ZwFufk9BG/YuwHsW4Ob3FdQv6wqft0AnvregDXsX4D0LcPP7C+qXdYXPW6CT31/Qhr0L8J4FuPl9Bm3YuwDvWYCb32/Qhr0L8J4FuPl9B204ugBnXeH9foM2HF1+sy7we/4OQLv2LsB7FuDm9x+0Ye8CvGcBbn4fQhv2LsB7FuDm9yO0Ye8CvGcBbn5fQhv2LsB7FuDm9ye04egCnHWF9/sU2rB3Ad6zADe/X6ENRxfgrCu8369Qv6wFOOsK7/ct1G/vArxnAW5+/0L9si7AWVd4v4ehfnsX4D0LcPP7GOqXdYXPW6CT3stQv6wrfN4CnfSehvplXeHzFuik9zbU78jym3WF9/sb6pd1hc9boJPe41C/rCt83gKd9F6H+h1ZfrOu8H6vQxuOrsBZV3i/56F+WVf4vAU66X0P9cu6wuct0EnvfWhD1gKddYX3+x/ql3WFz1ugk94D0YasK3zeAp30XohyZV3h8xbopPdElCvrCp+3QCe9N6Jcexfgnf8Gb/5egTYcWYCzrvB+v0Obsq7weQt00vsl2rR3Ad6zADe/b6JNRxfgrCu8379Qr70L8J4FuPl9DPXKusLnLdBJ72eo194FeM8C3Px+hvplXeHzFuik9zXUb+8CvGcBbn5/Q/32LsB7FuDm9znUb+8CvGcBbn6/Q/32LsB7FuDm9z3Ub+8CvGcBbn7/Q/32LsB7FuDm90DUbe8CvGcBbn4fRN32LsB7FuDm90PUbe8CvGcBbn5fRN32LsB7FuDm90fUbe8CvGcBbn6fRN32LsB7FuDm90vUbe8CvGcBbn7fRN32LsB7FuDm90/Ube8CvGcBbn4fRd32LsB7FuDm91PUbe8CvGcBbn5fRd32LsB7FuDm91fUbe8CvGcBbn6fRd32LsB7FuDm91sAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwhf0HikPF7t0SergAAAAASUVORK5CYII=" alt="Woodblock Recital" class="game-image">
+            </a>
+            <div class="game-title">WOODBLOCK RECITAL</div>
+        </div>
+
+        <div class="game-item">
+            <a href="game_of_life.html">
+                <img src="data:image/png;base64,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" alt="Game of Life" class="game-image">
+            </a>
+            <div class="game-title">GAME OF LIFE</div>
+        </div>
+    </div>
+</body>
+</html>
