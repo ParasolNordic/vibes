@@ -177,7 +177,6 @@
         let conn = null;
         let myPlayer = 0;
         let isHost = false;
-        let connectionReady = false;
         
         // Check for room ID in URL
         window.addEventListener('load', () => {
@@ -215,13 +214,14 @@
                     alert('Yhteys katkesi!');
                 });
                 
-                // Send ready signal immediately - connection is open on host side
+                // Send ready signal - don't wait, connection is ready
                 setTimeout(() => {
                     console.log('Host: Sending ready signal');
-                    sendMessage({ type: 'ready', player: 1 });
-                    connectionReady = true;
-                    updateConnectionStatus('🟢 Yhdistetty!', '#4CAF50');
-                }, 100);
+                    if (conn && conn.open) {
+                        conn.send({ type: 'ready', player: 1 });
+                        updateConnectionStatus('🟢 Yhdistetty!', '#4CAF50');
+                    }
+                }, 200);
             });
         }
         
@@ -250,12 +250,11 @@
                     console.log('Guest: Connection opened');
                     updateConnectionStatus('🟢 Yhdistetty!', '#4CAF50');
                     
-                    // Send ready signal
+                    // Send ready signal directly
                     setTimeout(() => {
                         console.log('Guest: Sending ready signal');
-                        sendMessage({ type: 'ready', player: 2 });
-                        connectionReady = true;
-                    }, 100);
+                        conn.send({ type: 'ready', player: 2 });
+                    }, 200);
                 });
                 
                 conn.on('data', handleMessage);
@@ -293,10 +292,15 @@
         }
         
         function sendMessage(data) {
-            if (conn && connectionReady) {
-                conn.send(data);
+            if (conn && conn.open) {
+                try {
+                    conn.send(data);
+                    console.log('Sent:', data.type);
+                } catch (err) {
+                    console.error('Send failed:', err);
+                }
             } else {
-                console.warn('Cannot send - connection not ready');
+                console.warn('Cannot send - connection not open');
             }
         }
         
