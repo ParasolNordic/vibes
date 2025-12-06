@@ -217,21 +217,29 @@
             });
             
             peer.on('connection', (connection) => {
+                console.log('Incoming connection from guest');
                 conn = connection;
                 setupConnection();
-                updateConnectionStatus('🟢 Yhdistetty!', '#4CAF50');
                 
-                // Host generates terrain and sends it to guest
-                setTimeout(() => {
-                    generateTerrain();
-                    sendToOpponent({ 
-                        type: 'terrain', 
-                        data: game.terrain,
-                        player1x: game.player1.x,
-                        player2x: game.player2.x
-                    });
-                    startGame();
-                }, 500);
+                // Wait for connection to be fully open before sending data
+                connection.on('open', () => {
+                    console.log('Connection fully established, sending terrain');
+                    updateConnectionStatus('🟢 Yhdistetty!', '#4CAF50');
+                    
+                    // Host generates terrain and sends it to guest
+                    setTimeout(() => {
+                        generateTerrain();
+                        const terrainData = { 
+                            type: 'terrain', 
+                            data: game.terrain,
+                            player1x: game.player1.x,
+                            player2x: game.player2.x
+                        };
+                        console.log('Sending terrain data:', terrainData);
+                        sendToOpponent(terrainData);
+                        startGame();
+                    }, 500);
+                });
             });
             
             peer.on('error', (err) => {
@@ -252,11 +260,15 @@
                 return;
             }
             
+            console.log('Joining room:', roomId);
+            updateConnectionStatus('🟡 Yhdistetään...', 'orange');
+            
             peer = new Peer();
             isHost = false;
             myPlayer = 2;
             
             peer.on('open', () => {
+                console.log('Peer opened, connecting to:', roomId);
                 conn = peer.connect(roomId);
                 setupConnection();
             });
@@ -270,17 +282,27 @@
         
         function setupConnection() {
             conn.on('open', () => {
+                console.log('Connection opened, myPlayer:', myPlayer);
                 updateConnectionStatus('🟢 Yhdistetty!', '#4CAF50');
                 document.getElementById('statusText').textContent = 'Yhdistetty! Peli alkaa...';
+                
+                // Jos olet vieras, pyydä terrain dataa
+                if (!isHost) {
+                    console.log('Guest waiting for terrain data...');
+                }
             });
             
             conn.on('data', (data) => {
+                console.log('Received data:', data.type, data);
+                
                 if (data.type === 'terrain') {
+                    console.log('Setting up terrain for guest');
                     game.terrain = data.data;
                     game.player1.x = data.player1x;
                     game.player2.x = data.player2x;
                     game.player1.y = getTerrainHeight(game.player1.x);
                     game.player2.y = getTerrainHeight(game.player2.x);
+                    console.log('Starting game for guest');
                     startGame();
                 } else if (data.type === 'shot') {
                     handleOpponentShot(data);
@@ -294,6 +316,11 @@
             conn.on('close', () => {
                 updateConnectionStatus('🔴 Yhteys katkesi', 'red');
                 alert('Yhteys toiseen pelaajaan katkesi!');
+            });
+            
+            conn.on('error', (err) => {
+                console.error('Connection error:', err);
+                updateConnectionStatus('🔴 Yhteysvirhe', 'red');
             });
         }
         
