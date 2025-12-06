@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tankkipeli - 2 Pelaajaa</title>
+    <title>Tankkipeli - 2-3 pelaajaa</title>
     <style>
         * {
             margin: 0;
@@ -69,7 +69,7 @@
 </head>
 <body>
     <div id="menu" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #000; padding: 20px;">
-        <img src="tankkk.JPG" style="max-height: 60vh; width: auto; display: block; margin-bottom: 30px;">
+        <img src="tankkk.JPG" style="max-height: 70vh; width: auto; display: block; margin-bottom: 15px;">
         <div style="display: flex; gap: 30px;">
             <button onclick="selectPlayers(2)" style="font-size: 24px; padding: 20px 40px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 10px; font-family: 'Courier New', monospace; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">2 PELAAJAA</button>
             <button onclick="selectPlayers(3)" style="font-size: 24px; padding: 20px 40px; cursor: pointer; background: #2196F3; color: white; border: none; border-radius: 10px; font-family: 'Courier New', monospace; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">3 PELAAJAA</button>
@@ -77,7 +77,7 @@
     </div>
     
     <div id="bounceMenu" style="display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #000; padding: 20px;">
-        <img src="tankkk.JPG" style="max-height: 55vh; width: auto; display: block; margin-bottom: 20px;">
+        <img src="tankkk.JPG" style="max-height: 70vh; width: auto; display: block; margin-bottom: 15px;">
         <h2 style="color: white; margin-bottom: 20px; font-family: 'Courier New', monospace; font-size: 28px;">Valitse pelityyppi:</h2>
         <div style="display: flex; gap: 30px;">
             <button onclick="startGame(true)" style="font-size: 22px; padding: 18px 35px; cursor: pointer; background: #FF9800; color: white; border: none; border-radius: 10px; font-family: 'Courier New', monospace; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">AMMUKSET KIMPOAVAT</button>
