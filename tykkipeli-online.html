@@ -219,27 +219,8 @@
             peer.on('connection', (connection) => {
                 console.log('Incoming connection from guest');
                 conn = connection;
-                updateConnectionStatus('🟢 Yhdistetty!', '#4CAF50');
                 
-                // Connection is already open on the host side when received
-                // Generate and send terrain immediately
-                setTimeout(() => {
-                    console.log('Generating and sending terrain to guest');
-                    generateTerrain();
-                    const terrainData = { 
-                        type: 'terrain', 
-                        data: game.terrain,
-                        player1x: game.player1.x,
-                        player2x: game.player2.x,
-                        canvasWidth: canvas.width,
-                        canvasHeight: canvas.height
-                    };
-                    console.log('Sending terrain data:', terrainData);
-                    connection.send(terrainData);
-                    console.log('Starting game for host');
-                    startGame();
-                }, 1000);
-                
+                // Setup listeners first
                 connection.on('data', (data) => {
                     console.log('Host received data:', data.type);
                     if (data.type === 'shot') {
@@ -258,8 +239,34 @@
                 
                 connection.on('error', (err) => {
                     console.error('Host connection error:', err);
-                    updateConnectionStatus('🔴 Yhteysvirhe', 'red');
                 });
+                
+                // Wait for connection to be truly ready
+                // PeerJS connections need a moment even on host side
+                const sendTerrain = () => {
+                    if (connection.open) {
+                        console.log('Connection is open, generating and sending terrain');
+                        updateConnectionStatus('🟢 Yhdistetty!', '#4CAF50');
+                        generateTerrain();
+                        const terrainData = { 
+                            type: 'terrain', 
+                            data: game.terrain,
+                            player1x: game.player1.x,
+                            player2x: game.player2.x,
+                            canvasWidth: canvas.width,
+                            canvasHeight: canvas.height
+                        };
+                        console.log('Sending terrain data:', terrainData);
+                        connection.send(terrainData);
+                        console.log('Starting game for host');
+                        startGame();
+                    } else {
+                        console.log('Connection not ready yet, waiting...');
+                        setTimeout(sendTerrain, 100);
+                    }
+                };
+                
+                setTimeout(sendTerrain, 500);
             });
             
             peer.on('error', (err) => {
