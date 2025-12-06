@@ -122,19 +122,6 @@
             font-size: 12px;
             z-index: 100;
         }
-        .loading {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border: 2px solid #f3f3f3;
-            border-top: 2px solid #3498db;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body>
@@ -185,11 +172,12 @@
             if (game.terrain.length > 0) draw();
         });
         
-        // Networking
+        // Networking - SIMPLIFIED
         let peer = null;
         let conn = null;
-        let myPlayer = 0; // 1 = host (player1), 2 = guest (player2)
+        let myPlayer = 0;
         let isHost = false;
+        let connectionReady = false;
         
         // Check for room ID in URL
         window.addEventListener('load', () => {
@@ -198,7 +186,6 @@
             if (roomId) {
                 document.getElementById('roomInput').value = roomId;
                 showJoinInput();
-                // Auto-join after 500ms
                 setTimeout(() => joinRoom(), 500);
             }
         });
@@ -214,61 +201,27 @@
                 document.getElementById('linkBox').style.display = 'block';
                 document.getElementById('menuButtons').style.display = 'none';
                 updateConnectionStatus('🟡 Odottaa pelaajaa...', 'orange');
+                console.log('Room created:', id);
             });
             
             peer.on('connection', (connection) => {
-                console.log('Incoming connection from guest');
+                console.log('Guest connected');
                 conn = connection;
                 
-                // Setup listeners first
-                connection.on('data', (data) => {
-                    console.log('Host received data:', data.type);
-                    if (data.type === 'shot') {
-                        handleOpponentShot(data);
-                    } else if (data.type === 'angleChange') {
-                        const p = data.player === 1 ? game.player1 : game.player2;
-                        p.angle = data.angle;
-                        draw();
-                    }
-                });
-                
-                connection.on('close', () => {
+                // Setup message handler
+                conn.on('data', handleMessage);
+                conn.on('close', () => {
                     updateConnectionStatus('🔴 Yhteys katkesi', 'red');
-                    alert('Yhteys toiseen pelaajaan katkesi!');
+                    alert('Yhteys katkesi!');
                 });
                 
-                connection.on('error', (err) => {
-                    console.error('Host connection error:', err);
-                });
-                
-                // Even for host, we MUST wait for 'open' event
-                connection.on('open', () => {
-                    console.log('HOST: Connection open event fired!');
+                // Send ready signal immediately - connection is open on host side
+                setTimeout(() => {
+                    console.log('Host: Sending ready signal');
+                    sendMessage({ type: 'ready', player: 1 });
+                    connectionReady = true;
                     updateConnectionStatus('🟢 Yhdistetty!', '#4CAF50');
-                    
-                    // Small delay to ensure guest is ready
-                    setTimeout(() => {
-                        console.log('Generating and sending terrain to guest');
-                        generateTerrain();
-                        const terrainData = { 
-                            type: 'terrain', 
-                            data: game.terrain,
-                            player1x: game.player1.x,
-                            player2x: game.player2.x,
-                            canvasWidth: canvas.width,
-                            canvasHeight: canvas.height
-                        };
-                        console.log('Sending terrain data:', terrainData);
-                        connection.send(terrainData);
-                        console.log('Starting game for host');
-                        startGame();
-                    }, 300);
-                });
-            });
-            
-            peer.on('error', (err) => {
-                console.error('Peer error:', err);
-                updateConnectionStatus('🔴 Virhe yhteydessä', 'red');
+                }, 100);
             });
         }
         
@@ -285,83 +238,105 @@
             }
             
             console.log('Joining room:', roomId);
-            updateConnectionStatus('🟡 Yhdistetään...', 'orange');
-            
             peer = new Peer();
             isHost = false;
             myPlayer = 2;
             
             peer.on('open', () => {
-                console.log('Peer opened, connecting to:', roomId);
-                conn = peer.connect(roomId);
-                setupConnection();
-            });
-            
-            peer.on('error', (err) => {
-                console.error('Peer error:', err);
-                alert('Virhe yhdistäessä! Tarkista huoneen ID.');
-                updateConnectionStatus('🔴 Virhe yhteydessä', 'red');
+                console.log('Connecting to host...');
+                conn = peer.connect(roomId, { reliable: true });
+                
+                conn.on('open', () => {
+                    console.log('Guest: Connection opened');
+                    updateConnectionStatus('🟢 Yhdistetty!', '#4CAF50');
+                    
+                    // Send ready signal
+                    setTimeout(() => {
+                        console.log('Guest: Sending ready signal');
+                        sendMessage({ type: 'ready', player: 2 });
+                        connectionReady = true;
+                    }, 100);
+                });
+                
+                conn.on('data', handleMessage);
+                conn.on('close', () => {
+                    updateConnectionStatus('🔴 Yhteys katkesi', 'red');
+                    alert('Yhteys katkesi!');
+                });
             });
         }
         
-        function setupConnection() {
-            conn.on('open', () => {
-                console.log('Connection opened, myPlayer:', myPlayer);
-                updateConnectionStatus('🟢 Yhdistetty!', '#4CAF50');
-                
-                if (!isHost) {
-                    console.log('Guest waiting for terrain data...');
-                }
-            });
-            
-            conn.on('data', (data) => {
-                console.log('Guest received data:', data.type, data);
-                
-                if (data.type === 'terrain') {
-                    console.log('Setting up terrain for guest');
-                    console.log('Host canvas:', data.canvasWidth, 'x', data.canvasHeight);
-                    console.log('My canvas:', canvas.width, 'x', canvas.height);
-                    
-                    // Skaalataan maasto jos canvaksen koot eroavat
-                    const scaleX = canvas.width / data.canvasWidth;
-                    const scaleY = canvas.height / data.canvasHeight;
-                    
-                    game.terrain = data.data.map(point => ({
-                        x: point.x * scaleX,
-                        y: point.y * scaleY
-                    }));
-                    
-                    game.player1.x = data.player1x * scaleX;
-                    game.player2.x = data.player2x * scaleX;
-                    game.player1.y = getTerrainHeight(game.player1.x);
-                    game.player2.y = getTerrainHeight(game.player2.x);
-                    
-                    console.log('Scaled terrain, starting game for guest');
-                    startGame();
-                } else if (data.type === 'shot') {
-                    handleOpponentShot(data);
-                } else if (data.type === 'angleChange') {
-                    const p = data.player === 1 ? game.player1 : game.player2;
-                    p.angle = data.angle;
-                    draw();
-                }
-            });
-            
-            conn.on('close', () => {
-                updateConnectionStatus('🔴 Yhteys katkesi', 'red');
-                alert('Yhteys toiseen pelaajaan katkesi!');
-            });
-            
-            conn.on('error', (err) => {
-                console.error('Guest connection error:', err);
-                updateConnectionStatus('🔴 Yhteysvirhe', 'red');
-            });
-        }
+        let playersReady = { 1: false, 2: false };
         
-        function sendToOpponent(data) {
-            if (conn && conn.open) {
-                conn.send(data);
+        function handleMessage(data) {
+            console.log('Received:', data.type);
+            
+            if (data.type === 'ready') {
+                playersReady[data.player] = true;
+                console.log('Player', data.player, 'is ready');
+                
+                // Both players ready - host starts game
+                if (playersReady[1] && playersReady[2] && isHost) {
+                    console.log('Both players ready, starting game');
+                    setTimeout(startMultiplayerGame, 500);
+                }
+            } else if (data.type === 'terrain') {
+                console.log('Received terrain data');
+                receiveTerrain(data);
+            } else if (data.type === 'shot') {
+                handleOpponentShot(data);
+            } else if (data.type === 'angleChange') {
+                const p = data.player === 1 ? game.player1 : game.player2;
+                p.angle = data.angle;
+                draw();
             }
+        }
+        
+        function sendMessage(data) {
+            if (conn && connectionReady) {
+                conn.send(data);
+            } else {
+                console.warn('Cannot send - connection not ready');
+            }
+        }
+        
+        function startMultiplayerGame() {
+            console.log('Host: Generating terrain');
+            generateTerrain();
+            
+            const terrainData = {
+                type: 'terrain',
+                terrain: game.terrain,
+                player1x: game.player1.x,
+                player2x: game.player2.x,
+                canvasWidth: canvas.width,
+                canvasHeight: canvas.height
+            };
+            
+            console.log('Host: Sending terrain');
+            sendMessage(terrainData);
+            
+            console.log('Host: Starting game');
+            startGame();
+        }
+        
+        function receiveTerrain(data) {
+            console.log('Guest: Processing terrain');
+            const scaleX = canvas.width / data.canvasWidth;
+            const scaleY = canvas.height / data.canvasHeight;
+            
+            game.terrain = data.terrain.map(p => ({
+                x: p.x * scaleX,
+                y: p.y * scaleY
+            }));
+            
+            game.player1.x = data.player1x * scaleX;
+            game.player2.x = data.player2x * scaleX;
+            game.player1.y = getTerrainHeight(game.player1.x);
+            game.player2.y = getTerrainHeight(game.player2.x);
+            
+            console.log('Guest: Starting game');
+            startGame();
         }
         
         function updateConnectionStatus(text, color) {
@@ -372,7 +347,7 @@
         function copyLink() {
             const linkText = document.getElementById('linkUrl').textContent;
             navigator.clipboard.writeText(linkText).then(() => {
-                alert('Linkki kopioitu! Jaa se kaverillesi.');
+                alert('Linkki kopioitu!');
             });
         }
         
@@ -533,17 +508,14 @@
             ctx.save();
             ctx.translate(p.x, p.y);
             
-            // Body
             ctx.fillStyle = color;
             ctx.fillRect(-15, -10, 30, 10);
             
-            // Turret
             ctx.fillStyle = color;
             ctx.beginPath();
             ctx.arc(0, -10, 8, 0, Math.PI * 2);
             ctx.fill();
             
-            // Barrel
             ctx.strokeStyle = color;
             ctx.lineWidth = 3;
             ctx.beginPath();
@@ -553,7 +525,6 @@
             ctx.lineTo(Math.cos(angle) * barrelLength, -10 + Math.sin(angle) * barrelLength);
             ctx.stroke();
             
-            // Angle indicator
             ctx.fillStyle = 'white';
             ctx.font = '10px Arial';
             ctx.textAlign = 'center';
@@ -582,8 +553,7 @@
                 trail: [{ x: p.x, y: startY }]
             };
             
-            // Send shot to opponent
-            sendToOpponent({
+            sendMessage({
                 type: 'shot',
                 player: game.currentPlayer,
                 x: p.x,
@@ -598,10 +568,8 @@
         }
         
         function handleOpponentShot(data) {
-            if (game.projectile) return; // Already shooting
+            if (game.projectile) return;
             
-            // Skaalaa koordinaatit jos tarvitaan
-            // (Tämä toimii vain jos molemmat pelaajat ovat yhdistäneet samaan aikaan)
             game.currentPlayer = data.player;
             game.projectile = {
                 x: data.x,
@@ -625,7 +593,6 @@
             p.y += p.vy;
             p.trail.push({ x: p.x, y: p.y });
             
-            // Check hit opponent
             const opp = game.currentPlayer === 1 ? game.player2 : game.player1;
             const dist = Math.sqrt((p.x - opp.x) ** 2 + (p.y - opp.y + 10) ** 2);
             if (dist < 18) {
@@ -633,7 +600,6 @@
                 return;
             }
             
-            // Check hit terrain
             if (p.x >= 0 && p.x <= canvas.width) {
                 if (p.y >= getTerrainHeight(p.x)) {
                     hitGround();
@@ -641,7 +607,6 @@
                 }
             }
             
-            // Check out of bounds
             if (p.x < -100 || p.x > canvas.width + 100 || p.y > canvas.height + 100) {
                 miss();
                 return;
@@ -654,7 +619,6 @@
         function hitGround() {
             playSound('hit');
             
-            // Create crater
             const craterX = game.projectile.x;
             const craterRadius = 30;
             
@@ -726,7 +690,6 @@
             info.innerHTML = '<span class="' + color + '">' + text + '</span>';
         }
         
-        // Keyboard
         document.addEventListener('keydown', e => {
             if (game.projectile || game.gameOver) return;
             if (game.currentPlayer !== myPlayer) return;
@@ -736,12 +699,12 @@
             if (e.code === 'ArrowUp') {
                 e.preventDefault();
                 p.angle = Math.max(p.angle - 1, game.currentPlayer === 1 ? -90 : -180);
-                sendToOpponent({ type: 'angleChange', player: game.currentPlayer, angle: p.angle });
+                sendMessage({ type: 'angleChange', player: game.currentPlayer, angle: p.angle });
                 draw();
             } else if (e.code === 'ArrowDown') {
                 e.preventDefault();
                 p.angle = Math.min(p.angle + 1, game.currentPlayer === 1 ? 0 : -90);
-                sendToOpponent({ type: 'angleChange', player: game.currentPlayer, angle: p.angle });
+                sendMessage({ type: 'angleChange', player: game.currentPlayer, angle: p.angle });
                 draw();
             } else if (e.code === 'Space') {
                 e.preventDefault();
@@ -749,7 +712,6 @@
             }
         });
         
-        // Touch
         canvas.addEventListener('touchstart', e => {
             e.preventDefault();
             if (game.projectile || game.gameOver) return;
@@ -777,7 +739,7 @@
                 Math.min(game.currentPlayer === 1 ? 0 : -90, p.angle - change)
             );
             
-            sendToOpponent({ type: 'angleChange', player: game.currentPlayer, angle: p.angle });
+            sendMessage({ type: 'angleChange', player: game.currentPlayer, angle: p.angle });
             game.touchStartY = e.touches[0].clientY;
             draw();
         });
