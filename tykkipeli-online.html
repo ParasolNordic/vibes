@@ -224,7 +224,12 @@
                 // Host generates terrain and sends it to guest
                 setTimeout(() => {
                     generateTerrain();
-                    sendToOpponent({ type: 'terrain', data: game.terrain });
+                    sendToOpponent({ 
+                        type: 'terrain', 
+                        data: game.terrain,
+                        player1x: game.player1.x,
+                        player2x: game.player2.x
+                    });
                     startGame();
                 }, 500);
             });
@@ -272,6 +277,8 @@
             conn.on('data', (data) => {
                 if (data.type === 'terrain') {
                     game.terrain = data.data;
+                    game.player1.x = data.player1x;
+                    game.player2.x = data.player2x;
                     game.player1.y = getTerrainHeight(game.player1.x);
                     game.player2.y = getTerrainHeight(game.player2.x);
                     startGame();
