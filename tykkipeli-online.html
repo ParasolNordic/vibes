@@ -241,12 +241,14 @@
                     console.error('Host connection error:', err);
                 });
                 
-                // Wait for connection to be truly ready
-                // PeerJS connections need a moment even on host side
-                const sendTerrain = () => {
-                    if (connection.open) {
-                        console.log('Connection is open, generating and sending terrain');
-                        updateConnectionStatus('🟢 Yhdistetty!', '#4CAF50');
+                // Even for host, we MUST wait for 'open' event
+                connection.on('open', () => {
+                    console.log('HOST: Connection open event fired!');
+                    updateConnectionStatus('🟢 Yhdistetty!', '#4CAF50');
+                    
+                    // Small delay to ensure guest is ready
+                    setTimeout(() => {
+                        console.log('Generating and sending terrain to guest');
                         generateTerrain();
                         const terrainData = { 
                             type: 'terrain', 
@@ -260,13 +262,8 @@
                         connection.send(terrainData);
                         console.log('Starting game for host');
                         startGame();
-                    } else {
-                        console.log('Connection not ready yet, waiting...');
-                        setTimeout(sendTerrain, 100);
-                    }
-                };
-                
-                setTimeout(sendTerrain, 500);
+                    }, 300);
+                });
             });
             
             peer.on('error', (err) => {
