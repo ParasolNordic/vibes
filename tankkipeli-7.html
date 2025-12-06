@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tankkipeli - 2 Pelaajaa</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #1a1a1a;
+            font-family: 'Courier New', monospace;
+            color: #fff;
+        }
+        
+        #info {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        #scores {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 10px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .player1-score {
+            color: #00FF00;
+        }
+        
+        .player2-score {
+            color: #FF5722;
+        }
+        
+        .player3-score {
+            color: #2196F3;
+        }
+        
+        #controls {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        
+        #gameCanvas {
+            border: 3px solid #333;
+            background: #000;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+        }
+        
+        #message {
+            margin-top: 20px;
+            font-size: 20px;
+            min-height: 30px;
+            color: #FFD700;
+        }
+    </style>
+</head>
+<body>
+    <div id="menu" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #000;">
+        <div style="position: relative; max-width: 80%; max-height: 70vh;">
+            <img src="/mnt/user-data/uploads/tankkk.JPG" style="width: 100%; height: auto; display: block;">
+            <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: flex; gap: 30px; justify-content: center; padding: 0 20px;">
+                <button onclick="selectPlayers(2)" style="font-size: 24px; padding: 20px 40px; cursor: pointer; background: #4CAF50; color: white; border: none; border-radius: 10px; font-family: 'Courier New', monospace; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">2 PELAAJAA</button>
+                <button onclick="selectPlayers(3)" style="font-size: 24px; padding: 20px 40px; cursor: pointer; background: #2196F3; color: white; border: none; border-radius: 10px; font-family: 'Courier New', monospace; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">3 PELAAJAA</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="bounceMenu" style="display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #000;">
+        <div style="position: relative; max-width: 80%; max-height: 70vh;">
+            <img src="/mnt/user-data/uploads/tankkk.JPG" style="width: 100%; height: auto; display: block;">
+            <div style="position: absolute; bottom: 80px; left: 0; right: 0; text-align: center;">
+                <h2 style="color: white; margin: 0; font-family: 'Courier New', monospace; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); font-size: 28px;">Valitse pelityyppi:</h2>
+            </div>
+            <div style="position: absolute; bottom: 20px; left: 0; right: 0; display: flex; gap: 30px; justify-content: center; padding: 0 20px;">
+                <button onclick="startGame(true)" style="font-size: 22px; padding: 18px 35px; cursor: pointer; background: #FF9800; color: white; border: none; border-radius: 10px; font-family: 'Courier New', monospace; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">AMMUKSET KIMPOAVAT</button>
+                <button onclick="startGame(false)" style="font-size: 22px; padding: 18px 35px; cursor: pointer; background: #9C27B0; color: white; border: none; border-radius: 10px; font-family: 'Courier New', monospace; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">AMMUKSET EIVÄT KIMPOA</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="gameContainer" style="display: none;">
+    <div id="info">
+        <div id="scores">
+            <div class="player1-score">Pelaaja 1: <span id="p1Score">0</span></div>
+            <div class="player2-score">Pelaaja 2: <span id="p2Score">0</span></div>
+            <div class="player3-score" id="p3ScoreContainer">Pelaaja 3: <span id="p3Score">0</span></div>
+        </div>
+        <div id="controls">
+            P1: WASD + SPACE | P2: Nuolinäppäimet + ENTER | P3: HJKU + 7
+        </div>
+    </div>
+    
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    
+    <div id="message"></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const messageEl = document.getElementById('message');
+        const p1ScoreEl = document.getElementById('p1Score');
+        const p2ScoreEl = document.getElementById('p2Score');
+        const p3ScoreEl = document.getElementById('p3Score');
+        const p3ScoreContainer = document.getElementById('p3ScoreContainer');
+        
+        // Pelin tila
+        let scores = { p1: 0, p2: 0, p3: 0 };
+        let gameOver = false;
+        let alivePlayers = 3;
+        let playerCount = 3; // Oletuksena 3 pelaajaa
+        let gameStarted = false;
+        let bounceEnabled = true; // Kimpoavatko ammukset
+        
+        // Funktio pelaajamäärän valintaan
+        function selectPlayers(numPlayers) {
+            playerCount = numPlayers;
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById('bounceMenu').style.display = 'flex';
+        }
+        
+        // Funktio pelin käynnistämiseen valitulla pelaajamäärällä ja kimpoamisasetuksella
+        function startGame(bounce) {
+            bounceEnabled = bounce;
+            document.getElementById('bounceMenu').style.display = 'none';
+            document.getElementById('gameContainer').style.display = 'flex';
+            document.getElementById('gameContainer').style.flexDirection = 'column';
+            document.getElementById('gameContainer').style.alignItems = 'center';
+            document.getElementById('gameContainer').style.justifyContent = 'center';
+            document.getElementById('gameContainer').style.minHeight = '100vh';
+            
+            if (playerCount === 2) {
+                p3ScoreContainer.style.display = 'none';
+                player3.alive = false; // Poista kolmas pelaaja käytöstä
+            }
+            
+            if (!gameStarted) {
+                gameStarted = true;
+                generateWalls();
+                gameLoop();
+            }
+        }
+        
+        // Näppäimien tila
+        const keys = {};
+        
+        // Tankin luokka
+        class Tank {
+            constructor(x, y, color, controls) {
+                this.x = x;
+                this.y = y;
+                this.width = 30;
+                this.height = 30;
+                this.color = color;
+                this.angle = 0;
+                this.speed = 2.5;
+                this.rotationSpeed = 0.05;
+                this.controls = controls;
+                this.canShoot = true;
+                this.shootCooldown = 0;
+                this.alive = true;
+            }
+            
+            update() {
+                if (!this.alive) return;
+                
+                // Kääntyminen
+                if (keys[this.controls.left]) {
+                    this.angle -= this.rotationSpeed;
+                }
+                if (keys[this.controls.right]) {
+                    this.angle += this.rotationSpeed;
+                }
+                
+                // Liikkuminen
+                let newX = this.x;
+                let newY = this.y;
+                
+                if (keys[this.controls.up]) {
+                    newX += Math.cos(this.angle) * this.speed;
+                    newY += Math.sin(this.angle) * this.speed;
+                }
+                if (keys[this.controls.down]) {
+                    newX -= Math.cos(this.angle) * this.speed;
+                    newY -= Math.sin(this.angle) * this.speed;
+                }
+                
+                // Tarkista törmäys seiniin
+                if (!this.checkWallCollision(newX, newY)) {
+                    this.x = newX;
+                    this.y = newY;
+                }
+                
+                // Pidä tankit kentällä
+                this.x = Math.max(this.width/2, Math.min(canvas.width - this.width/2, this.x));
+                this.y = Math.max(this.height/2, Math.min(canvas.height - this.height/2, this.y));
+                
+                // Ammunta
+                if (this.shootCooldown > 0) {
+                    this.shootCooldown--;
+                } else {
+                    this.canShoot = true;
+                }
+                
+                if (keys[this.controls.shoot] && this.canShoot) {
+                    this.shoot();
+                    this.canShoot = false;
+                    this.shootCooldown = 30;
+                }
+            }
+            
+            checkWallCollision(x, y) {
+                for (let wall of walls) {
+                    if (x + this.width/2 > wall.x && 
+                        x - this.width/2 < wall.x + wall.width &&
+                        y + this.height/2 > wall.y && 
+                        y - this.height/2 < wall.y + wall.height) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            
+            shoot() {
+                const bulletSpeed = 5;
+                const bullet = new Bullet(
+                    this.x + Math.cos(this.angle) * this.width/2,
+                    this.y + Math.sin(this.angle) * this.height/2,
+                    Math.cos(this.angle) * bulletSpeed,
+                    Math.sin(this.angle) * bulletSpeed,
+                    this.color
+                );
+                bullets.push(bullet);
+            }
+            
+            draw() {
+                if (!this.alive) return;
+                
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+                
+                // Tankki runko (vartalo)
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+                
+                // Tummempi sävy yksityiskohtiin
+                const r = parseInt(this.color.slice(1,3), 16);
+                const g = parseInt(this.color.slice(3,5), 16);
+                const b = parseInt(this.color.slice(5,7), 16);
+                const darkerColor = `rgb(${Math.max(0, r-40)}, ${Math.max(0, g-40)}, ${Math.max(0, b-40)})`;
+                
+                // Telat (vasen ja oikea puoli)
+                ctx.fillStyle = darkerColor;
+                ctx.fillRect(-this.width/2 - 3, -this.height/2 + 3, 3, this.height - 6);
+                ctx.fillRect(this.width/2, -this.height/2 + 3, 3, this.height - 6);
+                
+                // Torni (pienempi neliö keskellä)
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.width/4, -this.height/3, this.width/2, this.height * 0.66);
+                
+                // Tykkiputki (pitkä putki edessä)
+                ctx.fillStyle = darkerColor;
+                ctx.fillRect(0, -3, this.width/2 + 8, 6);
+                
+                // Torni kupoli
+                ctx.beginPath();
+                ctx.arc(0, 0, this.width/5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Reunukset
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(-this.width/2, -this.height/2, this.width, this.height);
+                ctx.strokeRect(-this.width/4, -this.height/3, this.width/2, this.height * 0.66);
+                
+                ctx.restore();
+            }
+            
+            hit() {
+                this.alive = false;
+            }
+            
+            reset(x, y) {
+                this.x = x;
+                this.y = y;
+                this.angle = 0;
+                this.alive = true;
+                this.canShoot = true;
+                this.shootCooldown = 0;
+            }
+        }
+        
+        // Ammus luokka
+        class Bullet {
+            constructor(x, y, vx, vy, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.radius = 4;
+                this.color = color;
+                this.bounces = 3;
+                this.active = true;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                if (bounceEnabled) {
+                    // Kimpoaminen seinistä (kentän reunat)
+                    if (this.x - this.radius <= 0 || this.x + this.radius >= canvas.width) {
+                        this.vx *= -1;
+                        this.bounces--;
+                        this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
+                    }
+                    if (this.y - this.radius <= 0 || this.y + this.radius >= canvas.height) {
+                        this.vy *= -1;
+                        this.bounces--;
+                        this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
+                    }
+                    
+                    // Kimpoaminen tiiliseinistä
+                    for (let wall of walls) {
+                        if (this.checkWallCollision(wall)) {
+                            this.bounceOffWall(wall);
+                            this.bounces--;
+                        }
+                    }
+                    
+                    // Poista ammus jos kimpoamiset loppu
+                    if (this.bounces <= 0) {
+                        this.active = false;
+                    }
+                } else {
+                    // Ei kimpoamista - ammus häviää kun osuu seinään tai reunaan
+                    if (this.x - this.radius <= 0 || this.x + this.radius >= canvas.width ||
+                        this.y - this.radius <= 0 || this.y + this.radius >= canvas.height) {
+                        this.active = false;
+                    }
+                    
+                    // Tarkista törmäys seiniin
+                    for (let wall of walls) {
+                        if (this.checkWallCollision(wall)) {
+                            this.active = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            checkWallCollision(wall) {
+                let closestX = Math.max(wall.x, Math.min(this.x, wall.x + wall.width));
+                let closestY = Math.max(wall.y, Math.min(this.y, wall.y + wall.height));
+                
+                let distX = this.x - closestX;
+                let distY = this.y - closestY;
+                
+                return (distX * distX + distY * distY) < (this.radius * this.radius);
+            }
+            
+            bounceOffWall(wall) {
+                let closestX = Math.max(wall.x, Math.min(this.x, wall.x + wall.width));
+                let closestY = Math.max(wall.y, Math.min(this.y, wall.y + wall.height));
+                
+                let distX = this.x - closestX;
+                let distY = this.y - closestY;
+                
+                if (Math.abs(distX) > Math.abs(distY)) {
+                    this.vx *= -1;
+                    this.x += this.vx * 2;
+                } else {
+                    this.vy *= -1;
+                    this.y += this.vy * 2;
+                }
+            }
+            
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        }
+        
+        // Rakennus luokka (kerrostalot, varastot jne)
+        class Wall {
+            constructor(x, y, width, height) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.type = Math.random() < 0.5 ? 'building' : 'warehouse';
+                this.windows = [];
+                
+                // Luo ikkunat kerrostaloihin
+                if (this.type === 'building') {
+                    const rows = Math.floor(this.height / 20);
+                    const cols = Math.floor(this.width / 20);
+                    for (let r = 0; r < rows; r++) {
+                        for (let c = 0; c < cols; c++) {
+                            if (Math.random() > 0.3) {
+                                this.windows.push({
+                                    x: this.x + c * 20 + 5,
+                                    y: this.y + r * 20 + 5,
+                                    lit: Math.random() > 0.5
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            
+            draw() {
+                if (this.type === 'building') {
+                    // Kerrostalo
+                    const buildingColors = ['#4A4A4A', '#5A5A5A', '#6A6A6A', '#7A5A4A'];
+                    ctx.fillStyle = buildingColors[Math.floor(this.x + this.y) % buildingColors.length];
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    
+                    // Ikkunat
+                    this.windows.forEach(window => {
+                        ctx.fillStyle = window.lit ? '#FFEB3B' : '#2C2C2C';
+                        ctx.fillRect(window.x, window.y, 8, 8);
+                    });
+                    
+                    // Rakennuksen reunat
+                    ctx.strokeStyle = '#1A1A1A';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(this.x, this.y, this.width, this.height);
+                    
+                } else {
+                    // Varasto/tehdas
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    
+                    // Katto
+                    ctx.fillStyle = '#654321';
+                    ctx.fillRect(this.x, this.y, this.width, this.height * 0.2);
+                    
+                    // Ovet/aukot
+                    ctx.fillStyle = '#2C2C2C';
+                    ctx.fillRect(this.x + this.width * 0.4, this.y + this.height * 0.5, this.width * 0.2, this.height * 0.5);
+                    
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(this.x, this.y, this.width, this.height);
+                }
+            }
+        }
+        
+        // Peliobjektit
+        const player1 = new Tank(100, 150, '#00FF00', {
+            up: 'w',
+            down: 's',
+            left: 'a',
+            right: 'd',
+            shoot: ' '
+        });
+        
+        const player2 = new Tank(700, 300, '#FF5722', {
+            up: 'ArrowUp',
+            down: 'ArrowDown',
+            left: 'ArrowLeft',
+            right: 'ArrowRight',
+            shoot: 'Enter'
+        });
+        
+        const player3 = new Tank(400, 500, '#2196F3', {
+            up: 'u',
+            down: 'j',
+            left: 'h',
+            right: 'k',
+            shoot: '7'
+        });
+        
+        player2.angle = Math.PI;
+        
+        const bullets = [];
+        let walls = [];
+        
+        // Funktio joka luo satunnaisen tiiliseinäkentän
+        function generateWalls() {
+            walls = [];
+            
+            // Määritetään turvavyöhykkeet tankeille
+            const player1SafeZone = { x: 50, y: 100, width: 100, height: 100 };
+            const player2SafeZone = { x: 650, y: 250, width: 100, height: 100 };
+            const player3SafeZone = { x: 350, y: 450, width: 100, height: 100 };
+            
+            // Luo 8-15 satunnaista seinää
+            const wallCount = Math.floor(Math.random() * 8) + 8;
+            
+            for (let i = 0; i < wallCount; i++) {
+                let validPosition = false;
+                let x, y, width, height;
+                let attempts = 0;
+                
+                while (!validPosition && attempts < 50) {
+                    // Satunnaiset mitat
+                    width = Math.random() < 0.3 ? 
+                        Math.floor(Math.random() * 100) + 60 :  // Pitkä seinä
+                        Math.floor(Math.random() * 60) + 60;     // Keskikokoinen
+                    
+                    height = Math.random() < 0.3 ? 
+                        Math.floor(Math.random() * 100) + 60 :  // Korkea seinä
+                        Math.floor(Math.random() * 60) + 40;     // Matala
+                    
+                    // Satunnainen sijainti
+                    x = Math.floor(Math.random() * (canvas.width - width - 100)) + 50;
+                    y = Math.floor(Math.random() * (canvas.height - height - 100)) + 50;
+                    
+                    // Tarkista ettei ole pelaajien turvavyöhykkeillä
+                    const notInP1Zone = !(x < player1SafeZone.x + player1SafeZone.width &&
+                                         x + width > player1SafeZone.x &&
+                                         y < player1SafeZone.y + player1SafeZone.height &&
+                                         y + height > player1SafeZone.y);
+                    
+                    const notInP2Zone = !(x < player2SafeZone.x + player2SafeZone.width &&
+                                         x + width > player2SafeZone.x &&
+                                         y < player2SafeZone.y + player2SafeZone.height &&
+                                         y + height > player2SafeZone.y);
+                    
+                    const notInP3Zone = !(x < player3SafeZone.x + player3SafeZone.width &&
+                                         x + width > player3SafeZone.x &&
+                                         y < player3SafeZone.y + player3SafeZone.height &&
+                                         y + height > player3SafeZone.y);
+                    
+                    // Tarkista ettei ole liian lähellä muita seiniä
+                    let tooClose = false;
+                    for (let wall of walls) {
+                        if (x < wall.x + wall.width + 30 &&
+                            x + width > wall.x - 30 &&
+                            y < wall.y + wall.height + 30 &&
+                            y + height > wall.y - 30) {
+                            tooClose = true;
+                            break;
+                        }
+                    }
+                    
+                    if (notInP1Zone && notInP2Zone && notInP3Zone && !tooClose) {
+                        validPosition = true;
+                    }
+                    
+                    attempts++;
+                }
+                
+                if (validPosition) {
+                    walls.push(new Wall(x, y, width, height));
+                }
+            }
+        }
+        
+        // Näppäinten kuuntelijat
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+            }
+            
+            // R = uusi peli
+            if (e.key === 'r' || e.key === 'R') {
+                resetGame();
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+        
+        // Törmäystarkistus ammuksille ja tankeille
+        function checkCollisions() {
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                
+                if (!bullet.active) {
+                    bullets.splice(i, 1);
+                    continue;
+                }
+                
+                // Tarkista osuma pelaaja 1:een
+                if (player1.alive && checkBulletTankCollision(bullet, player1) && bullet.color !== player1.color) {
+                    player1.hit();
+                    bullets.splice(i, 1);
+                    checkGameOver();
+                    continue;
+                }
+                
+                // Tarkista osuma pelaaja 2:een
+                if (player2.alive && checkBulletTankCollision(bullet, player2) && bullet.color !== player2.color) {
+                    player2.hit();
+                    bullets.splice(i, 1);
+                    checkGameOver();
+                    continue;
+                }
+                
+                // Tarkista osuma pelaaja 3:een
+                if (player3.alive && checkBulletTankCollision(bullet, player3) && bullet.color !== player3.color) {
+                    player3.hit();
+                    bullets.splice(i, 1);
+                    checkGameOver();
+                    continue;
+                }
+            }
+        }
+        
+        function checkBulletTankCollision(bullet, tank) {
+            const dx = bullet.x - tank.x;
+            const dy = bullet.y - tank.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            return distance < bullet.radius + tank.width/2;
+        }
+        
+        function checkGameOver() {
+            let alivePlayers = [];
+            
+            if (player1.alive) alivePlayers.push(1);
+            if (player2.alive) alivePlayers.push(2);
+            if (playerCount === 3 && player3.alive) alivePlayers.push(3);
+            
+            if (alivePlayers.length === 1) {
+                endRound(alivePlayers[0]);
+            }
+        }
+        
+        function endRound(winner) {
+            gameOver = true;
+            
+            if (winner === 1) {
+                scores.p1++;
+                messageEl.textContent = '🎉 Pelaaja 1 voitti! Paina R aloittaaksesi uuden kierroksen, vassakuu.';
+            } else if (winner === 2) {
+                scores.p2++;
+                messageEl.textContent = '🎉 Pelaaja 2 voitti! Paina R aloittaaksesi uuden kierroksen, vassakuu.';
+            } else {
+                scores.p3++;
+                messageEl.textContent = '🎉 Pelaaja 3 voitti! Paina R aloittaaksesi uuden kierroksen, vassakuu.';
+            }
+            
+            p1ScoreEl.textContent = scores.p1;
+            p2ScoreEl.textContent = scores.p2;
+            p3ScoreEl.textContent = scores.p3;
+        }
+        
+        function resetGame() {
+            gameOver = false;
+            player1.reset(100, 150);
+            player2.reset(700, 300);
+            
+            if (playerCount === 3) {
+                player3.reset(400, 500);
+            }
+            
+            player2.angle = Math.PI;
+            bullets.length = 0;
+            messageEl.textContent = '';
+            generateWalls(); // Luo uudet satunnaiset rakennukset
+        }
+        
+        // Piirretään kaupunkitausta
+        function drawCityBackground() {
+            // Tummanvihreä nurmi/maasto tausta
+            ctx.fillStyle = '#1a3a1a';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Piirretään harmaat kadut
+            ctx.fillStyle = '#4a4a4a';
+            
+            // Vaakasuuntaiset tiet (harvemmin)
+            for (let y = 150; y < canvas.height; y += 220) {
+                ctx.fillRect(0, y - 15, canvas.width, 30);
+            }
+            
+            // Pystysuuntaiset tiet (harvemmin)
+            for (let x = 200; x < canvas.width; x += 280) {
+                ctx.fillRect(x - 15, 0, 30, canvas.height);
+            }
+            
+            // Tiemerkinnät (keltaiset katkoviivat)
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([20, 15]);
+            
+            // Vaakasuuntaiset tiemerkinnät
+            for (let y = 150; y < canvas.height; y += 220) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+            
+            // Pystysuuntaiset tiemerkinnät
+            for (let x = 200; x < canvas.width; x += 280) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            ctx.setLineDash([]);
+        }
+        
+        // Pelin pääsilmukka
+        function gameLoop() {
+            // Tyhjennä canvas ja piirrä kaupunkitausta
+            drawCityBackground();
+            
+            // Piirrä rakennukset
+            walls.forEach(wall => wall.draw());
+            
+            if (!gameOver) {
+                // Päivitä tankit
+                player1.update();
+                player2.update();
+                if (playerCount === 3) {
+                    player3.update();
+                }
+                
+                // Päivitä ammukset
+                bullets.forEach(bullet => bullet.update());
+                
+                // Tarkista törmäykset
+                checkCollisions();
+            }
+            
+            // Piirrä ammukset
+            bullets.forEach(bullet => bullet.draw());
+            
+            // Piirrä tankit
+            player1.draw();
+            player2.draw();
+            if (playerCount === 3) {
+                player3.draw();
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Peli odottaa pelaajan valintaa
+    </script>
+</body>
+</html>
