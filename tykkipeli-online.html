@@ -219,7 +219,6 @@
             peer.on('connection', (connection) => {
                 console.log('Incoming connection from guest');
                 conn = connection;
-                setupConnection();
                 
                 // Wait for connection to be fully open before sending data
                 connection.on('open', () => {
@@ -233,12 +232,35 @@
                             type: 'terrain', 
                             data: game.terrain,
                             player1x: game.player1.x,
-                            player2x: game.player2.x
+                            player2x: game.player2.x,
+                            canvasWidth: canvas.width,
+                            canvasHeight: canvas.height
                         };
                         console.log('Sending terrain data:', terrainData);
-                        sendToOpponent(terrainData);
+                        connection.send(terrainData);
                         startGame();
                     }, 500);
+                });
+                
+                connection.on('data', (data) => {
+                    console.log('Host received data:', data.type);
+                    if (data.type === 'shot') {
+                        handleOpponentShot(data);
+                    } else if (data.type === 'angleChange') {
+                        const p = data.player === 1 ? game.player1 : game.player2;
+                        p.angle = data.angle;
+                        draw();
+                    }
+                });
+                
+                connection.on('close', () => {
+                    updateConnectionStatus('🔴 Yhteys katkesi', 'red');
+                    alert('Yhteys toiseen pelaajaan katkesi!');
+                });
+                
+                connection.on('error', (err) => {
+                    console.error('Host connection error:', err);
+                    updateConnectionStatus('🔴 Yhteysvirhe', 'red');
                 });
             });
             
@@ -284,25 +306,35 @@
             conn.on('open', () => {
                 console.log('Connection opened, myPlayer:', myPlayer);
                 updateConnectionStatus('🟢 Yhdistetty!', '#4CAF50');
-                document.getElementById('statusText').textContent = 'Yhdistetty! Peli alkaa...';
                 
-                // Jos olet vieras, pyydä terrain dataa
                 if (!isHost) {
                     console.log('Guest waiting for terrain data...');
                 }
             });
             
             conn.on('data', (data) => {
-                console.log('Received data:', data.type, data);
+                console.log('Guest received data:', data.type, data);
                 
                 if (data.type === 'terrain') {
                     console.log('Setting up terrain for guest');
-                    game.terrain = data.data;
-                    game.player1.x = data.player1x;
-                    game.player2.x = data.player2x;
+                    console.log('Host canvas:', data.canvasWidth, 'x', data.canvasHeight);
+                    console.log('My canvas:', canvas.width, 'x', canvas.height);
+                    
+                    // Skaalataan maasto jos canvaksen koot eroavat
+                    const scaleX = canvas.width / data.canvasWidth;
+                    const scaleY = canvas.height / data.canvasHeight;
+                    
+                    game.terrain = data.data.map(point => ({
+                        x: point.x * scaleX,
+                        y: point.y * scaleY
+                    }));
+                    
+                    game.player1.x = data.player1x * scaleX;
+                    game.player2.x = data.player2x * scaleX;
                     game.player1.y = getTerrainHeight(game.player1.x);
                     game.player2.y = getTerrainHeight(game.player2.x);
-                    console.log('Starting game for guest');
+                    
+                    console.log('Scaled terrain, starting game for guest');
                     startGame();
                 } else if (data.type === 'shot') {
                     handleOpponentShot(data);
@@ -319,7 +351,7 @@
             });
             
             conn.on('error', (err) => {
-                console.error('Connection error:', err);
+                console.error('Guest connection error:', err);
                 updateConnectionStatus('🔴 Yhteysvirhe', 'red');
             });
         }
@@ -566,6 +598,8 @@
         function handleOpponentShot(data) {
             if (game.projectile) return; // Already shooting
             
+            // Skaalaa koordinaatit jos tarvitaan
+            // (Tämä toimii vain jos molemmat pelaajat ovat yhdistäneet samaan aikaan)
             game.currentPlayer = data.player;
             game.projectile = {
                 x: data.x,
