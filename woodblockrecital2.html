@@ -1189,7 +1189,7 @@ ${prompt}`
             const dy = t.clientY - touchY;
             const dur = Date.now() - touchTime;
             
-            if (dur < 200 && Math.abs(dx) < 12 && Math.abs(dy) < 12) {
+            if (dur < 150 && Math.abs(dx) < 8 && Math.abs(dy) < 8) {
                 rotate();
                 draw();
             }
