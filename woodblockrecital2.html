@@ -409,7 +409,13 @@
         const BLOCK = 30;
         
         const SHAPES = [
-            [[1,1,1,1]],
+            // I-palikka (4x4 matriisi, keskellä)
+            [
+                [0,0,0,0],
+                [1,1,1,1],
+                [0,0,0,0],
+                [0,0,0,0]
+            ],
             [[1,1],[1,1]],
             [[0,1,0],[1,1,1]],
             [[0,1,1],[1,1,0]],
@@ -694,27 +700,27 @@ Vastaa sinutellen maksimissaan 500 merkkiä. Jatkuvaa tekstiä, ei tähtimerkkej
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        max_tokens: 1000,
+                        max_tokens: 2500,  // Nostettu jotta koko vastaus mahtuu
                         messages: [
                             {
                                 role: 'user',
                                 content: `Olet kokenut Tetris-analysoija joka saa strukturoidun JSON-datan pelistä. Anna syvällinen, analyyttinen arvio pelaajan suorituksesta. 
 
-VASTAUKSEN RAKENNE (max 1000 merkkiä):
-1. YLEISKATSAUS (2-3 lausetta): Kokonaispisteet, aika, taso, yleisarvio
-2. VAHVUUDET (3-4 lausetta): Mitä pelaaja tekee hyvin, viittaa numeroihin
-3. KEHITYSKOHTEET (3-4 lausetta): Mitä pitää parantaa, miksi, numeroilla
-4. YKSITYISKOHTAINEN STRATEGIA-ANALYYSI (4-5 lausetta):
-   - Kääntöjen käyttö ja tehokkuus
-   - Sijoitusmallit (reunat vs keskusta)
-   - Rivityhjennysstrategia (Tetris-combot vs yksittäiset)
-   - Kehitys pelin aikana (alku vs loppu)
-5. KONKREETTISET PARANNUSOHJEET (5-7 vinkkiä):
+VASTAUKSEN RAKENNE (max 1500 merkkiä):
+1. YLEISKATSAUS (2 lausetta): Kokonaispisteet, aika, taso
+2. TÄRKEIN KEHITYSKOHDE (2 lausetta): Suurin ongelma numeroilla
+3. PARANNUSOHJEET - TÄRKEIN OSA (8-10 vinkkiä):
    - Numeroi vinkit (1. 2. 3. jne.)
    - Jokainen vinkki konkreettinen ja toteutettava
-   - Perustele DATAN numeroilla
+   - Perustele numeroilla
+   - Aloita tärkeimmistä vinkeistä!
+4. VAHVUUDET (1-2 lausetta): Lyhyesti mitä toimii hyvin
 
-Kirjoita sinutellen, käytä konkreettisia NUMEROITA datasta (prosentit, ajat, määrät). Viimeinen virke kokonainen. Jatkuvaa tekstiä, käytä numeroituja listoja vain vinkeissä.
+TÄRKEÄÄ: 
+- PARANNUSOHJEET ovat tärkein osa - anna 8-10 konkreettista vinkkiä
+- Lopeta AINA täydelliseen lauseeseen, älä katkaise kesken
+- Viittaa NUMEROIHIN datasta jatkuvasti
+- Kirjoita sinutellen
 
 ${prompt}`
                             }
@@ -739,16 +745,7 @@ ${prompt}`
                 
                 console.log('Parsittu analyysi:', analysis);
                 
-                // Varmista että ei katkea kesken lauseen (max 1200 merkkiä)
-                if (analysis.length > 1200) {
-                    const cutPoint = analysis.lastIndexOf('.', 1200);
-                    if (cutPoint > 900) {
-                        analysis = analysis.substring(0, cutPoint + 1);
-                    } else {
-                        analysis = analysis.substring(0, 1197) + '...';
-                    }
-                }
-                
+                // Ei katkaise tekstiä - näytetään koko analyysi
                 console.log('Lopullinen analyysi:', analysis);
                 return analysis;
                 
@@ -851,6 +848,12 @@ ${prompt}`
             if (!collide(0, 0, rotated)) {
                 current.shape = rotated;
                 current.rotation = ((current.rotation || 0) + 1) % 4;
+                
+                // KORJAUS: Pysäytetään automaattinen putoaminen hetkeksi pyörityksen jälkeen
+                lockDelay = false;
+                lockTimer = 0;
+                dropTime = 0; // Nollataan dropTimer jotta palikka ei putoa heti pyörityksen jälkeen
+                
                 recordMove('rotate');
             }
         }
@@ -1155,24 +1158,25 @@ ${prompt}`
             if (now - lastMove < 16) return;
             lastMove = now;
             
-            if (!swiping && dy > 40 && Math.abs(dy) > Math.abs(dx)) {
+            // Herkempi vaste: Pienennetty kynnysarvoja liikkumiselle
+            if (!swiping && dy > 25 && Math.abs(dy) > Math.abs(dx)) {
                 swiping = true;
                 hardDrop();
                 draw();
-            } else if (!swiping && dx < -25 && Math.abs(dx) > Math.abs(dy)) {
+            } else if (!swiping && dx < -12 && Math.abs(dx) > Math.abs(dy)) {
                 swiping = true;
                 moveLeft();
                 draw();
                 touchX = t.clientX;
                 touchY = t.clientY;
-                setTimeout(() => swiping = false, 100);
-            } else if (!swiping && dx > 25 && Math.abs(dx) > Math.abs(dy)) {
+                setTimeout(() => swiping = false, 60); // Nopeampi toisto
+            } else if (!swiping && dx > 12 && Math.abs(dx) > Math.abs(dy)) {
                 swiping = true;
                 moveRight();
                 draw();
                 touchX = t.clientX;
                 touchY = t.clientY;
-                setTimeout(() => swiping = false, 100);
+                setTimeout(() => swiping = false, 60); // Nopeampi toisto
             }
         }, {passive: false});
         
@@ -1185,7 +1189,7 @@ ${prompt}`
             const dy = t.clientY - touchY;
             const dur = Date.now() - touchTime;
             
-            if (dur < 250 && Math.abs(dx) < 15 && Math.abs(dy) < 15) {
+            if (dur < 300 && Math.abs(dx) < 20 && Math.abs(dy) < 20) {
                 rotate();
                 draw();
             }
