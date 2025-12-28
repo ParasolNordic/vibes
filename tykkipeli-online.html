@@ -4,13 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tykkipeli Online</title>
-    <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #1a1a2e; overflow: hidden; font-family: Arial; }
         #menu { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); display: flex; align-items: center; 
+            background: rgba(0,0,0,0.95); display: flex; align-items: center; 
             justify-content: center; z-index: 1000; color: white; text-align: center;
         }
         #menu.hidden { display: none; }
@@ -21,6 +20,12 @@
         #linkDisplay { 
             background: rgba(255,255,255,0.1); padding: 15px; margin: 15px;
             border-radius: 5px; word-break: break-all; font-size: 12px;
+            max-width: 400px;
+        }
+        #status {
+            color: yellow;
+            margin: 10px;
+            font-size: 14px;
         }
         canvas { display: block; background: #16213e; }
         #info { 
@@ -35,8 +40,9 @@
     <div id="menu">
         <div>
             <h1>🎮 Tykkipeli Online</h1>
+            <div id="status">Ladataan...</div>
             <p style="margin: 20px;">⬆️⬇️ = Kulma | VÄLI/Napautus = Ammu</p>
-            <div id="buttons">
+            <div id="buttons" style="display:none;">
                 <button class="btn" onclick="host()">Luo peli</button><br>
                 <button class="btn" onclick="showJoin()">Liity</button>
             </div>
@@ -46,7 +52,7 @@
                 <button class="btn" onclick="copyLink()">Kopioi</button>
             </div>
             <div id="joinInput" style="display:none;">
-                <input id="roomId" placeholder="ID" style="padding:10px;font-size:16px;width:200px;"><br>
+                <input id="roomId" placeholder="Room ID" style="padding:10px;font-size:16px;width:250px;"><br>
                 <button class="btn" onclick="join()">Liity</button>
             </div>
         </div>
@@ -54,7 +60,29 @@
     <canvas id="c"></canvas>
     <div id="info"></div>
 
+<script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
 <script>
+// Check if PeerJS loaded
+window.addEventListener('load', function() {
+    if (typeof Peer === 'undefined') {
+        document.getElementById('status').textContent = 'VIRHE: PeerJS ei latautunut!';
+        document.getElementById('status').style.color = 'red';
+        return;
+    }
+    
+    document.getElementById('status').textContent = 'Valmis!';
+    document.getElementById('status').style.color = '#0f0';
+    document.getElementById('buttons').style.display = 'block';
+    
+    // Auto-join from URL
+    const rid = new URLSearchParams(location.search).get('room');
+    if (rid) { 
+        document.getElementById('roomId').value = rid; 
+        showJoin(); 
+        setTimeout(join, 500); 
+    }
+});
+
 const c = document.getElementById('c');
 const ctx = c.getContext('2d');
 c.width = innerWidth;
@@ -67,138 +95,186 @@ const g = {
     ter: [], traj: [], proj: null, turn: 1, over: false, exp: null
 };
 
-onload = () => {
-    const rid = new URLSearchParams(location.search).get('room');
-    if (rid) { 
-        document.getElementById('roomId').value = rid; 
-        showJoin(); 
-        setTimeout(join, 300); 
-    }
-};
+function setStatus(txt) {
+    document.getElementById('status').textContent = txt;
+}
 
 function host() {
+    setStatus('Luodaan huonetta...');
     document.getElementById('buttons').style.display = 'none';
     document.getElementById('hostWait').style.display = 'block';
     
-    peer = new Peer();
-    isHost = true;
-    me = 1;
-    
-    peer.on('open', id => {
-        document.getElementById('linkDisplay').textContent = 
-            location.origin + location.pathname + '?room=' + id;
-        console.log('Room:', id);
-    });
-    
-    peer.on('connection', connection => {
-        console.log('Guest connected!');
-        conn = connection;
+    try {
+        peer = new Peer();
+        isHost = true;
+        me = 1;
         
-        // Setup listener
-        conn.on('data', msg);
+        peer.on('open', function(id) {
+            const url = location.origin + location.pathname + '?room=' + id;
+            document.getElementById('linkDisplay').textContent = url;
+            setStatus('Odotetaan pelaajaa...');
+        });
         
-        // Connection is ALREADY OPEN on host side
-        // Send immediately with small delay
-        setTimeout(() => {
-            if (!gameStarted) {
-                console.log('Generating terrain...');
-                genTerrain();
-                const data = {
-                    t: 'start',
-                    ter: g.ter,
-                    p1x: g.p1.x,
-                    p2x: g.p2.x,
-                    w: c.width,
-                    h: c.height
-                };
-                console.log('Sending start data');
-                conn.send(data);
-                console.log('Starting host game');
-                startGame();
-            }
-        }, 500);
-    });
+        peer.on('connection', function(connection) {
+            setStatus('Pelaaja liittyi!');
+            conn = connection;
+            
+            conn.on('data', function(data) {
+                handleMessage(data);
+            });
+            
+            conn.on('error', function(err) {
+                setStatus('Virhe: ' + err);
+            });
+            
+            // Send terrain after delay
+            setTimeout(function() {
+                if (!gameStarted) {
+                    setStatus('Aloitetaan peli...');
+                    genTerrain();
+                    
+                    try {
+                        conn.send({
+                            t: 'start',
+                            ter: g.ter,
+                            p1x: g.p1.x,
+                            p2x: g.p2.x,
+                            w: c.width,
+                            h: c.height
+                        });
+                        startGame();
+                    } catch(e) {
+                        setStatus('Lähetysvirhe: ' + e.message);
+                    }
+                }
+            }, 800);
+        });
+        
+        peer.on('error', function(err) {
+            setStatus('Peer-virhe: ' + err.type);
+        });
+        
+    } catch(e) {
+        setStatus('Virhe: ' + e.message);
+    }
 }
 
 function showJoin() {
     document.getElementById('buttons').style.display = 'none';
     document.getElementById('joinInput').style.display = 'block';
+    setStatus('Anna huoneen ID');
 }
 
 function join() {
     const rid = document.getElementById('roomId').value.trim();
-    if (!rid) return alert('Anna ID!');
+    if (!rid) {
+        alert('Anna huoneen ID!');
+        return;
+    }
     
-    console.log('Connecting to:', rid);
-    peer = new Peer();
-    isHost = false;
-    me = 2;
+    setStatus('Yhdistetään...');
     
-    peer.on('open', () => {
-        console.log('Peer ready, connecting...');
-        conn = peer.connect(rid, { reliable: true });
+    try {
+        peer = new Peer();
+        isHost = false;
+        me = 2;
         
-        conn.on('open', () => {
-            console.log('Connection open!');
+        peer.on('open', function() {
+            setStatus('Luodaan yhteyttä...');
+            conn = peer.connect(rid, { reliable: true });
+            
+            conn.on('open', function() {
+                setStatus('Yhdistetty! Odotetaan peliä...');
+            });
+            
+            conn.on('data', function(data) {
+                handleMessage(data);
+            });
+            
+            conn.on('error', function(err) {
+                setStatus('Yhteys epäonnistui: ' + err);
+            });
         });
         
-        conn.on('data', msg);
+        peer.on('error', function(err) {
+            setStatus('Virhe: ' + err.type);
+            alert('Yhteys epäonnistui! Tarkista ID.');
+        });
         
-        conn.on('error', e => console.error('Connection error:', e));
-    });
-    
-    peer.on('error', e => {
-        console.error('Peer error:', e);
-        alert('Yhteys epäonnistui!');
-    });
+    } catch(e) {
+        setStatus('Virhe: ' + e.message);
+    }
 }
 
-function msg(d) {
-    console.log('Received:', d.t);
-    
+function handleMessage(d) {
     if (d.t === 'start') {
-        console.log('Received start data');
-        const sx = c.width / d.w, sy = c.height / d.h;
-        g.ter = d.ter.map(p => ({ x: p.x * sx, y: p.y * sy }));
+        setStatus('Aloitetaan peli...');
+        const sx = c.width / d.w;
+        const sy = c.height / d.h;
+        g.ter = [];
+        for (var i = 0; i < d.ter.length; i++) {
+            g.ter.push({ x: d.ter[i].x * sx, y: d.ter[i].y * sy });
+        }
         g.p1.x = d.p1x * sx;
         g.p2.x = d.p2x * sx;
         g.p1.y = getTerH(g.p1.x);
         g.p2.y = getTerH(g.p2.x);
-        console.log('Starting guest game');
         startGame();
     } else if (d.t === 'shot') {
         g.turn = d.p;
         g.proj = { x: d.x, y: d.y, vx: d.vx, vy: d.vy, trail: [{ x: d.x, y: d.y }] };
         anim();
     } else if (d.t === 'ang') {
-        (d.p === 1 ? g.p1 : g.p2).a = d.a;
+        if (d.p === 1) {
+            g.p1.a = d.a;
+        } else {
+            g.p2.a = d.a;
+        }
         draw();
     }
 }
 
 function send(d) {
     if (conn && conn.open) {
-        conn.send(d);
+        try {
+            conn.send(d);
+        } catch(e) {
+            setStatus('Lähetysvirhe: ' + e.message);
+        }
     }
 }
 
 function copyLink() {
-    navigator.clipboard.writeText(document.getElementById('linkDisplay').textContent);
-    alert('Kopioitu!');
+    const txt = document.getElementById('linkDisplay').textContent;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(txt).then(function() {
+            alert('Kopioitu!');
+        });
+    } else {
+        // Fallback for Safari
+        const el = document.createElement('textarea');
+        el.value = txt;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        alert('Kopioitu!');
+    }
 }
 
 function genTerrain() {
     g.p1.x = c.width * 0.1 + Math.random() * c.width * 0.05;
     g.p2.x = c.width * 0.85 + Math.random() * c.width * 0.05;
     g.ter = [];
-    const lh = c.height * 0.7, rh = c.height * 0.7;
+    const lh = c.height * 0.7;
+    const rh = c.height * 0.7;
     let y = lh;
     for (let x = 0; x < c.width; x += 10) {
         let t = x < g.p1.x + 70 ? lh : x > g.p2.x - 70 ? rh : 
                 c.height * 0.75 + Math.sin(x / c.width * Math.PI * 2) * c.height * 0.15;
         y += (t - y) * 0.1 + (Math.random() - 0.5) * 60;
         y = Math.max(c.height * 0.15, Math.min(c.height * 0.95, y));
-        g.ter.push({ x, y });
+        g.ter.push({ x: x, y: y });
     }
     g.p1.y = getTerH(g.p1.x);
     g.p2.y = getTerH(g.p2.x);
@@ -207,7 +283,8 @@ function genTerrain() {
 function getTerH(x) {
     const i = Math.floor(x / 10);
     if (i >= g.ter.length - 1) return g.ter[g.ter.length - 1].y;
-    const t1 = g.ter[i], t2 = g.ter[i + 1];
+    const t1 = g.ter[i];
+    const t2 = g.ter[i + 1];
     return t1.y + (t2.y - t1.y) * ((x - t1.x) / (t2.x - t1.x));
 }
 
@@ -218,23 +295,38 @@ function draw() {
     ctx.fillStyle = '#228b22';
     ctx.beginPath();
     ctx.moveTo(0, c.height);
-    g.ter.forEach(p => ctx.lineTo(p.x, p.y));
+    for (var i = 0; i < g.ter.length; i++) {
+        ctx.lineTo(g.ter[i].x, g.ter[i].y);
+    }
     ctx.lineTo(c.width, c.height);
     ctx.fill();
     
-    g.traj.forEach(t => {
+    for (var i = 0; i < g.traj.length; i++) {
+        var t = g.traj[i];
         ctx.strokeStyle = t.p === 1 ? 'rgba(0,255,0,0.3)' : 'rgba(255,0,0,0.3)';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        t.pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+        for (var j = 0; j < t.pts.length; j++) {
+            if (j === 0) {
+                ctx.moveTo(t.pts[j].x, t.pts[j].y);
+            } else {
+                ctx.lineTo(t.pts[j].x, t.pts[j].y);
+            }
+        }
         ctx.stroke();
-    });
+    }
     
     if (g.proj) {
         ctx.strokeStyle = g.turn === 1 ? 'rgba(0,255,0,0.6)' : 'rgba(255,0,0,0.6)';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        g.proj.trail.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+        for (var i = 0; i < g.proj.trail.length; i++) {
+            if (i === 0) {
+                ctx.moveTo(g.proj.trail[i].x, g.proj.trail[i].y);
+            } else {
+                ctx.lineTo(g.proj.trail[i].x, g.proj.trail[i].y);
+            }
+        }
         ctx.stroke();
     }
     
@@ -243,10 +335,12 @@ function draw() {
     
     if (g.exp) {
         const t = (Date.now() - g.exp.t) / 800;
-        if (t >= 1) g.exp = null;
-        else {
-            const r = g.exp.r * t, a = 1 - t;
-            ctx.fillStyle = `rgba(255,100,0,${a * 0.8})`;
+        if (t >= 1) {
+            g.exp = null;
+        } else {
+            const r = g.exp.r * t;
+            const a = 1 - t;
+            ctx.fillStyle = 'rgba(255,100,0,' + (a * 0.8) + ')';
             ctx.beginPath();
             ctx.arc(g.exp.x, g.exp.y, r, 0, Math.PI * 2);
             ctx.fill();
@@ -296,9 +390,19 @@ function anim() {
     p.trail.push({ x: p.x, y: p.y });
     
     const opp = g.turn === 1 ? g.p2 : g.p1;
-    if (Math.sqrt((p.x - opp.x) ** 2 + (p.y - opp.y + 10) ** 2) < 18) return win();
-    if (p.x >= 0 && p.x <= c.width && p.y >= getTerH(p.x)) return hitGround();
-    if (p.x < -100 || p.x > c.width + 100 || p.y > c.height + 100) return miss();
+    const dist = Math.sqrt((p.x - opp.x) * (p.x - opp.x) + (p.y - opp.y + 10) * (p.y - opp.y + 10));
+    if (dist < 18) {
+        win();
+        return;
+    }
+    if (p.x >= 0 && p.x <= c.width && p.y >= getTerH(p.x)) {
+        hitGround();
+        return;
+    }
+    if (p.x < -100 || p.x > c.width + 100 || p.y > c.height + 100) {
+        miss();
+        return;
+    }
     
     draw();
     requestAnimationFrame(anim);
@@ -325,15 +429,19 @@ function win() {
     g.exp = { x: opp.x, y: opp.y - 10, r: 60, t: Date.now() };
     g.traj.push({ p: g.turn, pts: g.proj.trail });
     g.proj = null;
-    const animExp = () => {
+    
+    function animExp() {
         draw();
-        if (g.exp) requestAnimationFrame(animExp);
-        else {
+        if (g.exp) {
+            requestAnimationFrame(animExp);
+        } else {
             g.over = true;
             updateInfo('Pelaaja ' + g.turn + ' VOITTI! 💥');
-            setTimeout(() => confirm('Uusi peli?') && location.reload(), 2000);
+            setTimeout(function() {
+                if (confirm('Uusi peli?')) location.reload();
+            }, 2000);
         }
-    };
+    }
     animExp();
 }
 
@@ -341,7 +449,7 @@ function updateInfo(txt) {
     document.getElementById('info').innerHTML = '<span class="player' + g.turn + '">' + txt + '</span>';
 }
 
-addEventListener('keydown', e => {
+document.addEventListener('keydown', function(e) {
     if (g.proj || g.over || g.turn !== me) return;
     const p = g.turn === 1 ? g.p1 : g.p2;
     if (e.code === 'ArrowUp') {
@@ -360,15 +468,16 @@ addEventListener('keydown', e => {
     }
 });
 
-let touchY = null, moved = false;
-c.addEventListener('touchstart', e => {
+let touchY = null;
+let moved = false;
+c.addEventListener('touchstart', function(e) {
     e.preventDefault();
     if (g.proj || g.over || g.turn !== me) return;
     touchY = e.touches[0].clientY;
     moved = false;
 });
 
-c.addEventListener('touchmove', e => {
+c.addEventListener('touchmove', function(e) {
     e.preventDefault();
     if (!touchY || g.proj || g.over || g.turn !== me) return;
     const dy = touchY - e.touches[0].clientY;
@@ -380,14 +489,14 @@ c.addEventListener('touchmove', e => {
     draw();
 });
 
-c.addEventListener('touchend', e => {
+c.addEventListener('touchend', function(e) {
     e.preventDefault();
     if (touchY && !moved && g.turn === me) shoot();
     touchY = null;
     moved = false;
 });
 
-c.addEventListener('click', () => {
+c.addEventListener('click', function() {
     if (g.turn === me && !g.proj && !g.over) shoot();
 });
 
@@ -401,7 +510,6 @@ function startGame() {
     g.over = false;
     draw();
     updateInfo('Pelaaja 1 aloittaa!');
-    console.log('Game started! I am player', me);
 }
 </script>
 </body>
