@@ -245,27 +245,32 @@ function handleUpdate(data) {
         }
     }
     
-    if (data.turn !== g.turn) {
+    // Päivitä vuoro Firebase:sta
+    if (data.turn !== undefined && data.turn !== g.turn) {
         g.turn = data.turn;
         updateInfo('Pelaaja ' + g.turn + ' vuoro');
     }
     
+    // Lataa vastustajan laukaus
     if (data.lastShot && data.lastShot.timestamp > (g.lastShotTime || 0)) {
         g.lastShotTime = data.lastShot.timestamp;
-        if (data.lastShot.p !== me) {
+        // Vain jos VASTUSTAJA ampui
+        if (data.lastShot.shooter !== me && !g.proj) {
             g.turn = data.lastShot.p;
             g.proj = {
                 x: data.lastShot.x,
                 y: data.lastShot.y,
                 vx: data.lastShot.vx,
                 vy: data.lastShot.vy,
-                trail: [{ x: data.lastShot.x, y: data.lastShot.y }]
+                trail: [{ x: data.lastShot.x, y: data.lastShot.y }],
+                shooter: data.lastShot.shooter // Merkitään kuka ampui
             };
             anim();
         }
     }
     
-    if (data.lastAngle) {
+    // Päivitä kulma
+    if (data.lastAngle && data.lastAngle.p !== me) {
         if (data.lastAngle.p === 1) {
             g.p1.a = data.lastAngle.a;
         } else {
@@ -396,10 +401,25 @@ function shoot() {
     const a = p.a * Math.PI / 180;
     const pow = p.pow * (0.98 + Math.random() * 0.04);
     const sy = p.y - 15;
-    g.proj = { x: p.x, y: sy, vx: Math.cos(a) * pow, vy: Math.sin(a) * pow, trail: [{ x: p.x, y: sy }] };
+    g.proj = { 
+        x: p.x, 
+        y: sy, 
+        vx: Math.cos(a) * pow, 
+        vy: Math.sin(a) * pow, 
+        trail: [{ x: p.x, y: sy }],
+        shooter: me // Merkitään kuka ampui
+    };
     
     update(gameRef, {
-        lastShot: { p: g.turn, x: p.x, y: sy, vx: g.proj.vx, vy: g.proj.vy, timestamp: Date.now() },
+        lastShot: { 
+            p: g.turn, 
+            x: p.x, 
+            y: sy, 
+            vx: g.proj.vx, 
+            vy: g.proj.vy, 
+            shooter: me, // Ampujan ID
+            timestamp: Date.now() 
+        },
         timestamp: Date.now()
     });
     
@@ -435,31 +455,33 @@ function anim() {
 
 function hitGround() {
     g.traj.push({ p: g.turn, pts: g.proj.trail });
+    const wasMyShot = g.proj.shooter === me;
     g.proj = null;
     
-    // Vaihda vuoro VAIN jos olin minä ampujana
-    if (g.turn === me) {
+    // VAIN ampuja vaihtaa vuoroa
+    if (wasMyShot) {
         const newTurn = g.turn === 1 ? 2 : 1;
         g.turn = newTurn;
         update(gameRef, { turn: newTurn, timestamp: Date.now() });
+        updateInfo('Pelaaja ' + g.turn + ' vuoro');
     }
-    
-    updateInfo('Pelaaja ' + g.turn + ' vuoro');
+    // Muut vain piirtävät
     draw();
 }
 
 function miss() {
     if (g.proj) g.traj.push({ p: g.turn, pts: g.proj.trail });
+    const wasMyShot = g.proj ? g.proj.shooter === me : false;
     g.proj = null;
     
-    // Vaihda vuoro VAIN jos olin minä ampujana
-    if (g.turn === me) {
+    // VAIN ampuja vaihtaa vuoroa
+    if (wasMyShot) {
         const newTurn = g.turn === 1 ? 2 : 1;
         g.turn = newTurn;
         update(gameRef, { turn: newTurn, timestamp: Date.now() });
+        updateInfo('Pelaaja ' + g.turn + ' vuoro');
     }
-    
-    updateInfo('Pelaaja ' + g.turn + ' vuoro');
+    // Muut vain piirtävät
     draw();
 }
 
