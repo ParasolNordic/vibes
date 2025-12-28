@@ -220,6 +220,31 @@ window.joinGame = function() {
 };
 
 function handleUpdate(data) {
+    // Tarkista uusi kierros
+    if (data.newRound && data.newRound > (g.lastRound || 0)) {
+        g.lastRound = data.newRound;
+        // Lataa uusi maasto
+        if (!isHost) {
+            g.ter = data.terrain;
+            g.p1.x = data.p1x;
+            g.p2.x = data.p2x;
+            c.width = data.canvasWidth;
+            c.height = data.canvasHeight;
+            g.p1.y = getTerH(g.p1.x);
+            g.p2.y = getTerH(g.p2.x);
+            
+            // Nollaa peli
+            g.traj = [];
+            g.proj = null;
+            g.over = false;
+            g.exp = null;
+            g.turn = 1;
+            
+            draw();
+            updateInfo('Pelaaja 1 aloittaa!');
+        }
+    }
+    
     if (data.turn !== g.turn) {
         g.turn = data.turn;
         updateInfo('Pelaaja ' + g.turn + ' vuoro');
@@ -412,12 +437,12 @@ function hitGround() {
     g.traj.push({ p: g.turn, pts: g.proj.trail });
     g.proj = null;
     
-    // Vaihda vuoro
-    const newTurn = g.turn === 1 ? 2 : 1;
-    g.turn = newTurn;
-    
-    // Päivitä Firebase
-    update(gameRef, { turn: newTurn, timestamp: Date.now() });
+    // Vaihda vuoro VAIN jos olin minä ampujana
+    if (g.turn === me) {
+        const newTurn = g.turn === 1 ? 2 : 1;
+        g.turn = newTurn;
+        update(gameRef, { turn: newTurn, timestamp: Date.now() });
+    }
     
     updateInfo('Pelaaja ' + g.turn + ' vuoro');
     draw();
@@ -427,12 +452,12 @@ function miss() {
     if (g.proj) g.traj.push({ p: g.turn, pts: g.proj.trail });
     g.proj = null;
     
-    // Vaihda vuoro
-    const newTurn = g.turn === 1 ? 2 : 1;
-    g.turn = newTurn;
-    
-    // Päivitä Firebase
-    update(gameRef, { turn: newTurn, timestamp: Date.now() });
+    // Vaihda vuoro VAIN jos olin minä ampujana
+    if (g.turn === me) {
+        const newTurn = g.turn === 1 ? 2 : 1;
+        g.turn = newTurn;
+        update(gameRef, { turn: newTurn, timestamp: Date.now() });
+    }
     
     updateInfo('Pelaaja ' + g.turn + ' vuoro');
     draw();
@@ -452,7 +477,39 @@ function win() {
             g.over = true;
             updateInfo('Pelaaja ' + g.turn + ' VOITTI! 💥');
             setTimeout(function() {
-                if (confirm('Uusi peli?')) location.reload();
+                if (confirm('Uusi peli?')) {
+                    // Tyhjennä peli ja aloita uusi ilman koodia
+                    if (isHost) {
+                        // Isäntä generoi uuden maaston
+                        g.traj = [];
+                        g.proj = null;
+                        g.over = false;
+                        g.exp = null;
+                        g.turn = 1;
+                        genTerrain();
+                        
+                        // Päivitä Firebase uudella maastolla
+                        update(gameRef, {
+                            terrain: g.ter,
+                            p1x: g.p1.x,
+                            p2x: g.p2.x,
+                            canvasWidth: c.width,
+                            canvasHeight: c.height,
+                            turn: 1,
+                            lastShot: null,
+                            lastAngle: null,
+                            timestamp: Date.now(),
+                            newRound: Date.now() // Merkki uudesta kierroksesta
+                        });
+                        
+                        draw();
+                        updateInfo('Pelaaja 1 aloittaa!');
+                    } else {
+                        // Vieras odottaa isännän uutta maastoa
+                        setStatus('Odotetaan uutta peliä...');
+                        // handleUpdate hoitaa loput
+                    }
+                }
             }, 2000);
         }
     }
