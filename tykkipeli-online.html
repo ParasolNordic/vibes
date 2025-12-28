@@ -3,784 +3,363 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tykkipeli - Online Multiplayer</title>
+    <title>Tykkipeli Online</title>
     <script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #1a1a2e; overflow: hidden; font-family: Arial; }
+        #menu { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); display: flex; align-items: center; 
+            justify-content: center; z-index: 1000; color: white; text-align: center;
         }
-        body {
-            background: #1a1a2e;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
+        #menu.hidden { display: none; }
+        .btn { 
+            background: #4CAF50; color: white; border: none; padding: 15px 30px;
+            font-size: 18px; margin: 10px; cursor: pointer; border-radius: 5px;
         }
-        #startScreen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: url('kargil.jpg') center/cover, #2a4a6a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
+        .btn:hover { background: #45a049; }
+        #linkDisplay { 
+            background: rgba(255,255,255,0.1); padding: 15px; margin: 15px;
+            border-radius: 5px; word-break: break-all; font-size: 14px;
         }
-        #startScreen.hidden {
-            display: none;
-        }
-        #startOverlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-        }
-        #startText {
-            position: relative;
-            z-index: 1;
-            text-align: center;
-            color: white;
-            padding: 20px;
-            max-width: 500px;
-        }
-        h1 {
-            font-size: 24px;
-            margin-bottom: 20px;
-            text-shadow: 3px 3px 6px black;
-        }
-        p {
-            font-size: 14px;
-            margin: 8px 0;
-            text-shadow: 2px 2px 4px black;
-        }
-        .button {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 16px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 10px 5px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-        .button:hover {
-            background: #45a049;
-        }
-        .button.secondary {
-            background: #2196F3;
-        }
-        .button.secondary:hover {
-            background: #0b7dda;
-        }
-        #linkBox {
-            background: rgba(255,255,255,0.1);
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            word-break: break-all;
-        }
-        #linkUrl {
-            color: #4CAF50;
-            font-weight: bold;
-            font-size: 12px;
-        }
-        .status {
-            color: #FFD700;
-            font-weight: bold;
-            margin: 10px 0;
+        canvas { display: block; background: #16213e; }
+        #info { 
+            position: fixed; top: 10px; right: 10px; background: rgba(15,52,96,0.9);
+            padding: 8px 15px; border-radius: 5px; color: white; z-index: 100;
         }
         .player1 { color: #00ff00; }
         .player2 { color: #ff0000; }
-        canvas {
-            display: block;
-            background: #16213e;
-        }
-        #info {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            background: rgba(15,52,96,0.8);
-            padding: 5px 10px;
-            border-radius: 5px;
-            color: white;
-            font-size: 14px;
-            z-index: 100;
-        }
-        #connectionStatus {
-            position: fixed;
-            top: 10px;
-            left: 10px;
-            background: rgba(15,52,96,0.8);
-            padding: 5px 10px;
-            border-radius: 5px;
-            color: white;
-            font-size: 12px;
-            z-index: 100;
-        }
     </style>
 </head>
 <body>
-    <div id="startScreen">
-        <div id="startOverlay"></div>
-        <div id="startText">
-            <h1>🎮 Tykkipeli - Online Multiplayer</h1>
-            <p><strong>Näppäimistö:</strong> ⬆️ ⬇️ = Säädä | VÄLILYÖNTI = Ammu</p>
-            <p><strong>Kosketusnäyttö:</strong> Vedä ylös/alas = Säädä | Napauta = Ammu</p>
-            
-            <div id="menuButtons">
-                <button class="button" onclick="createRoom()">🎯 Luo huone (Pelaaja 1)</button>
-                <button class="button secondary" onclick="showJoinInput()">🔗 Liity huoneeseen (Pelaaja 2)</button>
+    <div id="menu">
+        <div id="menuContent">
+            <h1>🎮 Tykkipeli Online</h1>
+            <p style="margin: 20px;">⬆️⬇️ = Säädä kulma | VÄLILYÖNTI/Napauta = Ammu</p>
+            <div id="buttons">
+                <button class="btn" onclick="host()">Luo peli</button>
+                <button class="btn" onclick="showJoin()">Liity peliin</button>
             </div>
-            
-            <div id="linkBox" style="display:none;">
-                <p class="status" id="statusText">Odotetaan toista pelaajaa...</p>
-                <p>Jaa tämä linkki kaverillesi:</p>
-                <p id="linkUrl"></p>
-                <button class="button secondary" onclick="copyLink()">📋 Kopioi linkki</button>
+            <div id="hostWait" style="display:none;">
+                <p>Jaa tämä linkki:</p>
+                <div id="linkDisplay"></div>
+                <button class="btn" onclick="copyLink()">Kopioi</button>
             </div>
-            
-            <div id="joinBox" style="display:none;">
-                <p>Anna huoneen ID (tai käytä linkkiä):</p>
-                <input type="text" id="roomInput" placeholder="esim: abc123" style="padding: 8px; margin: 10px 0; width: 200px; border-radius: 4px;">
-                <button class="button" onclick="joinRoom()">Liity peliin</button>
+            <div id="joinInput" style="display:none;">
+                <input id="roomId" placeholder="Huoneen ID" style="padding: 10px; font-size: 16px; width: 200px;">
+                <button class="btn" onclick="join()">Liity</button>
             </div>
         </div>
     </div>
-    
-    <canvas id="game"></canvas>
+    <canvas id="c"></canvas>
     <div id="info"></div>
-    <div id="connectionStatus">⚪ Ei yhteyttä</div>
 
-    <script>
-        const canvas = document.getElementById('game');
-        const ctx = canvas.getContext('2d');
-        const startScreen = document.getElementById('startScreen');
-        const info = document.getElementById('info');
-        const connectionStatus = document.getElementById('connectionStatus');
-        
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            if (game.terrain.length > 0) draw();
-        });
-        
-        // Networking - SIMPLIFIED
-        let peer = null;
-        let conn = null;
-        let myPlayer = 0;
-        let isHost = false;
-        
-        // Check for room ID in URL
-        window.addEventListener('load', () => {
-            const params = new URLSearchParams(window.location.search);
-            const roomId = params.get('room');
-            if (roomId) {
-                document.getElementById('roomInput').value = roomId;
-                showJoinInput();
-                setTimeout(() => joinRoom(), 500);
-            }
-        });
-        
-        function createRoom() {
-            peer = new Peer();
-            isHost = true;
-            myPlayer = 1;
-            
-            peer.on('open', (id) => {
-                const url = window.location.origin + window.location.pathname + '?room=' + id;
-                document.getElementById('linkUrl').textContent = url;
-                document.getElementById('linkBox').style.display = 'block';
-                document.getElementById('menuButtons').style.display = 'none';
-                updateConnectionStatus('🟡 Odottaa pelaajaa...', 'orange');
-                console.log('Room created:', id);
-            });
-            
-            peer.on('connection', (connection) => {
-                console.log('Guest connected');
-                conn = connection;
-                
-                // Setup message handler
-                conn.on('data', handleMessage);
-                conn.on('close', () => {
-                    updateConnectionStatus('🔴 Yhteys katkesi', 'red');
-                    alert('Yhteys katkesi!');
-                });
-                
-                // Send ready signal - don't wait, connection is ready
-                setTimeout(() => {
-                    console.log('Host: Sending ready signal');
-                    if (conn && conn.open) {
-                        conn.send({ type: 'ready', player: 1 });
-                        updateConnectionStatus('🟢 Yhdistetty!', '#4CAF50');
-                    }
-                }, 200);
-            });
-        }
-        
-        function showJoinInput() {
-            document.getElementById('joinBox').style.display = 'block';
-            document.getElementById('menuButtons').style.display = 'none';
-        }
-        
-        function joinRoom() {
-            const roomId = document.getElementById('roomInput').value.trim();
-            if (!roomId) {
-                alert('Anna huoneen ID!');
-                return;
-            }
-            
-            console.log('Joining room:', roomId);
-            peer = new Peer();
-            isHost = false;
-            myPlayer = 2;
-            
-            peer.on('open', () => {
-                console.log('Connecting to host...');
-                conn = peer.connect(roomId, { reliable: true });
-                
-                conn.on('open', () => {
-                    console.log('Guest: Connection opened');
-                    updateConnectionStatus('🟢 Yhdistetty!', '#4CAF50');
-                    
-                    // Send ready signal directly
-                    setTimeout(() => {
-                        console.log('Guest: Sending ready signal');
-                        conn.send({ type: 'ready', player: 2 });
-                    }, 200);
-                });
-                
-                conn.on('data', handleMessage);
-                conn.on('close', () => {
-                    updateConnectionStatus('🔴 Yhteys katkesi', 'red');
-                    alert('Yhteys katkesi!');
-                });
-            });
-        }
-        
-        let playersReady = { 1: false, 2: false };
-        
-        function handleMessage(data) {
-            console.log('Received:', data.type);
-            
-            if (data.type === 'ready') {
-                playersReady[data.player] = true;
-                console.log('Player', data.player, 'is ready');
-                
-                // Both players ready - host starts game
-                if (playersReady[1] && playersReady[2] && isHost) {
-                    console.log('Both players ready, starting game');
-                    setTimeout(startMultiplayerGame, 500);
-                }
-            } else if (data.type === 'terrain') {
-                console.log('Received terrain data');
-                receiveTerrain(data);
-            } else if (data.type === 'shot') {
-                handleOpponentShot(data);
-            } else if (data.type === 'angleChange') {
-                const p = data.player === 1 ? game.player1 : game.player2;
-                p.angle = data.angle;
-                draw();
-            }
-        }
-        
-        function sendMessage(data) {
-            if (conn && conn.open) {
-                try {
-                    conn.send(data);
-                    console.log('Sent:', data.type);
-                } catch (err) {
-                    console.error('Send failed:', err);
-                }
-            } else {
-                console.warn('Cannot send - connection not open');
-            }
-        }
-        
-        function startMultiplayerGame() {
-            console.log('Host: Generating terrain');
-            generateTerrain();
-            
-            const terrainData = {
-                type: 'terrain',
-                terrain: game.terrain,
-                player1x: game.player1.x,
-                player2x: game.player2.x,
-                canvasWidth: canvas.width,
-                canvasHeight: canvas.height
-            };
-            
-            console.log('Host: Sending terrain');
-            sendMessage(terrainData);
-            
-            console.log('Host: Starting game');
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+c.width = innerWidth;
+c.height = innerHeight;
+addEventListener('resize', () => { c.width = innerWidth; c.height = innerHeight; draw(); });
+
+let peer, conn, me = 0, isHost = false;
+const g = {
+    p1: { x: 0, y: 0, a: -45, pow: 25 },
+    p2: { x: 0, y: 0, a: -135, pow: 25 },
+    ter: [], traj: [], proj: null, turn: 1, over: false, exp: null
+};
+
+// URL handling
+onload = () => {
+    const rid = new URLSearchParams(location.search).get('room');
+    if (rid) { document.getElementById('roomId').value = rid; showJoin(); setTimeout(join, 500); }
+};
+
+function host() {
+    peer = new Peer();
+    isHost = true;
+    me = 1;
+    peer.on('open', id => {
+        const url = location.origin + location.pathname + '?room=' + id;
+        document.getElementById('linkDisplay').textContent = url;
+        document.getElementById('buttons').style.display = 'none';
+        document.getElementById('hostWait').style.display = 'block';
+    });
+    peer.on('connection', c => {
+        conn = c;
+        conn.on('data', handleMsg);
+        // Wait a bit then start
+        setTimeout(() => {
+            genTerrain();
+            send({ t: 'start', ter: g.ter, p1x: g.p1.x, p2x: g.p2.x, w: c.width, h: c.height });
             startGame();
-        }
-        
-        function receiveTerrain(data) {
-            console.log('Guest: Processing terrain');
-            const scaleX = canvas.width / data.canvasWidth;
-            const scaleY = canvas.height / data.canvasHeight;
-            
-            game.terrain = data.terrain.map(p => ({
-                x: p.x * scaleX,
-                y: p.y * scaleY
-            }));
-            
-            game.player1.x = data.player1x * scaleX;
-            game.player2.x = data.player2x * scaleX;
-            game.player1.y = getTerrainHeight(game.player1.x);
-            game.player2.y = getTerrainHeight(game.player2.x);
-            
-            console.log('Guest: Starting game');
-            startGame();
-        }
-        
-        function updateConnectionStatus(text, color) {
-            connectionStatus.textContent = text;
-            connectionStatus.style.background = `rgba(${color === 'orange' ? '255,165,0' : color === 'red' ? '255,0,0' : '76,175,80'},0.8)`;
-        }
-        
-        function copyLink() {
-            const linkText = document.getElementById('linkUrl').textContent;
-            navigator.clipboard.writeText(linkText).then(() => {
-                alert('Linkki kopioitu!');
-            });
-        }
-        
-        // Audio
-        let audioCtx = null;
-        
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            }
-        }
-        
-        function playSound(type) {
-            if (!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            if (type === 'shoot') {
-                osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.1);
-            } else if (type === 'explosion') {
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(100, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.3);
-                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.3);
-            } else if (type === 'hit') {
-                osc.frequency.setValueAtTime(120, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.15);
-                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-                osc.start();
-                osc.stop(audioCtx.currentTime + 0.15);
-            }
-        }
-        
-        const game = {
-            player1: { x: 0, y: 0, angle: -45, power: 25 },
-            player2: { x: 0, y: 0, angle: -135, power: 25 },
-            terrain: [],
-            trajectories: [],
-            projectile: null,
-            currentPlayer: 1,
-            gameOver: false,
-            touchStartY: null,
-            touchMoved: false,
-            explosion: null
-        };
-        
-        function generateTerrain() {
-            game.player1.x = canvas.width * 0.1 + Math.random() * canvas.width * 0.05;
-            game.player2.x = canvas.width * 0.85 + Math.random() * canvas.width * 0.05;
-            
-            game.terrain = [];
-            const leftH = canvas.height * 0.7 + Math.random() * canvas.height * 0.15;
-            const rightH = canvas.height * 0.7 + Math.random() * canvas.height * 0.15;
-            let y = leftH;
-            
-            for (let x = 0; x < canvas.width; x += 10) {
-                let target = leftH;
-                if (x < game.player1.x + 70) target = leftH;
-                else if (x > game.player2.x - 70) target = rightH;
-                else {
-                    const factor = Math.sin((x / canvas.width) * Math.PI * 2) * canvas.height * 0.15;
-                    target = canvas.height * 0.75 + factor + (Math.random() - 0.5) * canvas.height * 0.1;
-                    target = Math.max(canvas.height * 0.3, Math.min(canvas.height * 0.95, target));
-                }
-                y += (target - y) * 0.1 + (Math.random() - 0.5) * 60;
-                y = Math.max(canvas.height * 0.15, Math.min(canvas.height * 0.95, y));
-                game.terrain.push({ x, y });
-            }
-            
-            game.player1.y = getTerrainHeight(game.player1.x);
-            game.player2.y = getTerrainHeight(game.player2.x);
-        }
-        
-        function getTerrainHeight(x) {
-            const idx = Math.floor(x / 10);
-            if (idx >= game.terrain.length - 1) return game.terrain[game.terrain.length - 1].y;
-            const t1 = game.terrain[idx];
-            const t2 = game.terrain[idx + 1];
-            const ratio = (x - t1.x) / (t2.x - t1.x);
-            return t1.y + (t2.y - t1.y) * ratio;
-        }
-        
-        function draw() {
-            ctx.fillStyle = '#16213e';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Terrain
-            const grad = ctx.createLinearGradient(0, canvas.height * 0.5, 0, canvas.height);
-            grad.addColorStop(0, '#228b22');
-            grad.addColorStop(0.5, '#1a6b1a');
-            grad.addColorStop(1, '#0d4d0d');
-            ctx.fillStyle = grad;
+        }, 1000);
+    });
+}
+
+function showJoin() {
+    document.getElementById('buttons').style.display = 'none';
+    document.getElementById('joinInput').style.display = 'block';
+}
+
+function join() {
+    const rid = document.getElementById('roomId').value.trim();
+    if (!rid) return alert('Anna ID!');
+    peer = new Peer();
+    isHost = false;
+    me = 2;
+    peer.on('open', () => {
+        conn = peer.connect(rid, { reliable: true });
+        conn.on('open', () => console.log('Connected'));
+        conn.on('data', handleMsg);
+    });
+}
+
+function handleMsg(d) {
+    console.log('MSG:', d.t);
+    if (d.t === 'start') {
+        const sx = c.width / d.w, sy = c.height / d.h;
+        g.ter = d.ter.map(p => ({ x: p.x * sx, y: p.y * sy }));
+        g.p1.x = d.p1x * sx; g.p2.x = d.p2x * sx;
+        g.p1.y = getTerH(g.p1.x); g.p2.y = getTerH(g.p2.x);
+        startGame();
+    } else if (d.t === 'shot') {
+        g.turn = d.p;
+        g.proj = { x: d.x, y: d.y, vx: d.vx, vy: d.vy, trail: [{ x: d.x, y: d.y }] };
+        anim();
+    } else if (d.t === 'ang') {
+        (d.p === 1 ? g.p1 : g.p2).a = d.a;
+        draw();
+    }
+}
+
+function send(d) {
+    if (conn && conn.open) conn.send(d);
+}
+
+function copyLink() {
+    navigator.clipboard.writeText(document.getElementById('linkDisplay').textContent);
+    alert('Kopioitu!');
+}
+
+function genTerrain() {
+    g.p1.x = c.width * 0.1 + Math.random() * c.width * 0.05;
+    g.p2.x = c.width * 0.85 + Math.random() * c.width * 0.05;
+    g.ter = [];
+    const lh = c.height * 0.7, rh = c.height * 0.7;
+    let y = lh;
+    for (let x = 0; x < c.width; x += 10) {
+        let t = x < g.p1.x + 70 ? lh : x > g.p2.x - 70 ? rh : 
+                c.height * 0.75 + Math.sin(x / c.width * Math.PI * 2) * c.height * 0.15;
+        y += (t - y) * 0.1 + (Math.random() - 0.5) * 60;
+        y = Math.max(c.height * 0.15, Math.min(c.height * 0.95, y));
+        g.ter.push({ x, y });
+    }
+    g.p1.y = getTerH(g.p1.x);
+    g.p2.y = getTerH(g.p2.x);
+}
+
+function getTerH(x) {
+    const i = Math.floor(x / 10);
+    if (i >= g.ter.length - 1) return g.ter[g.ter.length - 1].y;
+    const t1 = g.ter[i], t2 = g.ter[i + 1];
+    return t1.y + (t2.y - t1.y) * ((x - t1.x) / (t2.x - t1.x));
+}
+
+function draw() {
+    ctx.fillStyle = '#16213e';
+    ctx.fillRect(0, 0, c.width, c.height);
+    
+    // Terrain
+    ctx.fillStyle = '#228b22';
+    ctx.beginPath();
+    ctx.moveTo(0, c.height);
+    g.ter.forEach(p => ctx.lineTo(p.x, p.y));
+    ctx.lineTo(c.width, c.height);
+    ctx.fill();
+    
+    // Trails
+    g.traj.forEach(t => {
+        ctx.strokeStyle = t.p === 1 ? 'rgba(0,255,0,0.3)' : 'rgba(255,0,0,0.3)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        t.pts.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+        ctx.stroke();
+    });
+    
+    // Projectile
+    if (g.proj) {
+        ctx.strokeStyle = g.turn === 1 ? 'rgba(0,255,0,0.6)' : 'rgba(255,0,0,0.6)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        g.proj.trail.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+        ctx.stroke();
+    }
+    
+    // Tanks
+    drawTank(g.p1, '#0f0');
+    drawTank(g.p2, '#f00');
+    
+    // Explosion
+    if (g.exp) {
+        const t = (Date.now() - g.exp.t) / 800;
+        if (t >= 1) g.exp = null;
+        else {
+            const r = g.exp.r * t, a = 1 - t;
+            ctx.fillStyle = `rgba(255,100,0,${a * 0.8})`;
             ctx.beginPath();
-            ctx.moveTo(0, canvas.height);
-            game.terrain.forEach(p => ctx.lineTo(p.x, p.y));
-            ctx.lineTo(canvas.width, canvas.height);
+            ctx.arc(g.exp.x, g.exp.y, r, 0, Math.PI * 2);
             ctx.fill();
-            
-            // Trajectories
-            game.trajectories.forEach(t => {
-                ctx.strokeStyle = t.player === 1 ? 'rgba(0,255,0,0.3)' : 'rgba(255,0,0,0.3)';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                t.points.forEach((p, i) => {
-                    i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
-                });
-                ctx.stroke();
-            });
-            
-            // Projectile trail
-            if (game.projectile) {
-                ctx.strokeStyle = game.currentPlayer === 1 ? 'rgba(0,255,0,0.6)' : 'rgba(255,0,0,0.6)';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                game.projectile.trail.forEach((p, i) => {
-                    i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y);
-                });
-                ctx.stroke();
-            }
-            
-            // Tanks
-            drawTank(game.player1, '#00ff00');
-            drawTank(game.player2, '#ff0000');
-            
-            // Explosion
-            if (game.explosion) {
-                const elapsed = Date.now() - game.explosion.startTime;
-                const progress = elapsed / game.explosion.duration;
-                if (progress >= 1) {
-                    game.explosion = null;
-                } else {
-                    const radius = game.explosion.maxRadius * progress;
-                    const alpha = 1 - progress;
-                    ctx.fillStyle = `rgba(255, 100, 0, ${alpha * 0.8})`;
-                    ctx.beginPath();
-                    ctx.arc(game.explosion.x, game.explosion.y, radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = `rgba(255, 200, 0, ${alpha})`;
-                    ctx.beginPath();
-                    ctx.arc(game.explosion.x, game.explosion.y, radius * 0.6, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
         }
-        
-        function drawTank(p, color) {
-            ctx.save();
-            ctx.translate(p.x, p.y);
-            
-            ctx.fillStyle = color;
-            ctx.fillRect(-15, -10, 30, 10);
-            
-            ctx.fillStyle = color;
-            ctx.beginPath();
-            ctx.arc(0, -10, 8, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.moveTo(0, -10);
-            const barrelLength = 20;
-            const angle = p.angle * Math.PI / 180;
-            ctx.lineTo(Math.cos(angle) * barrelLength, -10 + Math.sin(angle) * barrelLength);
-            ctx.stroke();
-            
-            ctx.fillStyle = 'white';
-            ctx.font = '10px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(Math.round(p.angle) + '°', 0, -25);
-            
-            ctx.restore();
+    }
+}
+
+function drawTank(p, col) {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.fillStyle = col;
+    ctx.fillRect(-15, -10, 30, 10);
+    ctx.beginPath();
+    ctx.arc(0, -10, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, -10);
+    const ang = p.a * Math.PI / 180;
+    ctx.lineTo(Math.cos(ang) * 20, -10 + Math.sin(ang) * 20);
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(Math.round(p.a) + '°', 0, -25);
+    ctx.restore();
+}
+
+function shoot() {
+    if (g.proj || g.over || g.turn !== me) return;
+    const p = g.turn === 1 ? g.p1 : g.p2;
+    const a = p.a * Math.PI / 180;
+    const pow = p.pow * (0.98 + Math.random() * 0.04);
+    const sy = p.y - 15;
+    g.proj = { x: p.x, y: sy, vx: Math.cos(a) * pow, vy: Math.sin(a) * pow, trail: [{ x: p.x, y: sy }] };
+    send({ t: 'shot', p: g.turn, x: p.x, y: sy, vx: g.proj.vx, vy: g.proj.vy });
+    anim();
+}
+
+function anim() {
+    if (!g.proj) return;
+    const p = g.proj;
+    p.vy += 0.5;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.trail.push({ x: p.x, y: p.y });
+    
+    const opp = g.turn === 1 ? g.p2 : g.p1;
+    if (Math.sqrt((p.x - opp.x) ** 2 + (p.y - opp.y + 10) ** 2) < 18) return win();
+    if (p.x >= 0 && p.x <= c.width && p.y >= getTerH(p.x)) return hitGround();
+    if (p.x < -100 || p.x > c.width + 100 || p.y > c.height + 100) return miss();
+    
+    draw();
+    requestAnimationFrame(anim);
+}
+
+function hitGround() {
+    g.traj.push({ p: g.turn, pts: g.proj.trail });
+    g.proj = null;
+    g.turn = g.turn === 1 ? 2 : 1;
+    updateInfo('Pelaaja ' + g.turn);
+    draw();
+}
+
+function miss() {
+    if (g.proj) g.traj.push({ p: g.turn, pts: g.proj.trail });
+    g.proj = null;
+    g.turn = g.turn === 1 ? 2 : 1;
+    updateInfo('Pelaaja ' + g.turn);
+    draw();
+}
+
+function win() {
+    const opp = g.turn === 1 ? g.p2 : g.p1;
+    g.exp = { x: opp.x, y: opp.y - 10, r: 60, t: Date.now() };
+    g.traj.push({ p: g.turn, pts: g.proj.trail });
+    g.proj = null;
+    const animExp = () => {
+        draw();
+        if (g.exp) requestAnimationFrame(animExp);
+        else {
+            g.over = true;
+            updateInfo('Pelaaja ' + g.turn + ' VOITTI! 💥');
+            setTimeout(() => confirm('Uusi peli?') && location.reload(), 2000);
         }
-        
-        function shoot() {
-            if (game.projectile || game.gameOver) return;
-            if (game.currentPlayer !== myPlayer) {
-                updateInfo('Odota vuoroasi!');
-                return;
-            }
-            
-            const p = game.currentPlayer === 1 ? game.player1 : game.player2;
-            const angle = p.angle * Math.PI / 180;
-            const power = p.power * (0.98 + Math.random() * 0.04);
-            const startY = p.y - 15;
-            
-            game.projectile = {
-                x: p.x,
-                y: startY,
-                vx: Math.cos(angle) * power,
-                vy: Math.sin(angle) * power,
-                trail: [{ x: p.x, y: startY }]
-            };
-            
-            sendMessage({
-                type: 'shot',
-                player: game.currentPlayer,
-                x: p.x,
-                y: startY,
-                vx: game.projectile.vx,
-                vy: game.projectile.vy
-            });
-            
-            playSound('shoot');
-            updateInfo('Laukaus ammuttu!');
-            animate();
-        }
-        
-        function handleOpponentShot(data) {
-            if (game.projectile) return;
-            
-            game.currentPlayer = data.player;
-            game.projectile = {
-                x: data.x,
-                y: data.y,
-                vx: data.vx,
-                vy: data.vy,
-                trail: [{ x: data.x, y: data.y }]
-            };
-            
-            playSound('shoot');
-            updateInfo('Vastustaja ampui!');
-            animate();
-        }
-        
-        function animate() {
-            if (!game.projectile) return;
-            
-            const p = game.projectile;
-            p.vy += 0.5;
-            p.x += p.vx;
-            p.y += p.vy;
-            p.trail.push({ x: p.x, y: p.y });
-            
-            const opp = game.currentPlayer === 1 ? game.player2 : game.player1;
-            const dist = Math.sqrt((p.x - opp.x) ** 2 + (p.y - opp.y + 10) ** 2);
-            if (dist < 18) {
-                win();
-                return;
-            }
-            
-            if (p.x >= 0 && p.x <= canvas.width) {
-                if (p.y >= getTerrainHeight(p.x)) {
-                    hitGround();
-                    return;
-                }
-            }
-            
-            if (p.x < -100 || p.x > canvas.width + 100 || p.y > canvas.height + 100) {
-                miss();
-                return;
-            }
-            
-            draw();
-            requestAnimationFrame(animate);
-        }
-        
-        function hitGround() {
-            playSound('hit');
-            
-            const craterX = game.projectile.x;
-            const craterRadius = 30;
-            
-            for (let i = 0; i < game.terrain.length; i++) {
-                const t = game.terrain[i];
-                const dist = Math.abs(t.x - craterX);
-                if (dist < craterRadius) {
-                    const depth = (craterRadius - dist) / craterRadius * 40;
-                    t.y = Math.min(t.y + depth, canvas.height - 20);
-                }
-            }
-            
-            game.player1.y = getTerrainHeight(game.player1.x);
-            game.player2.y = getTerrainHeight(game.player2.x);
-            
-            game.trajectories.push({ player: game.currentPlayer, points: game.projectile.trail });
-            game.projectile = null;
-            game.currentPlayer = game.currentPlayer === 1 ? 2 : 1;
-            updateInfo('Pelaaja ' + game.currentPlayer + ' vuoro');
-            draw();
-        }
-        
-        function miss() {
-            if (game.projectile && game.projectile.trail) {
-                game.trajectories.push({ player: game.currentPlayer, points: game.projectile.trail });
-            }
-            game.projectile = null;
-            game.currentPlayer = game.currentPlayer === 1 ? 2 : 1;
-            updateInfo('Pelaaja ' + game.currentPlayer + ' vuoro');
-            draw();
-        }
-        
-        function win() {
-            playSound('explosion');
-            
-            const opp = game.currentPlayer === 1 ? game.player2 : game.player1;
-            game.explosion = {
-                x: opp.x,
-                y: opp.y - 10,
-                maxRadius: 60,
-                startTime: Date.now(),
-                duration: 800
-            };
-            
-            game.trajectories.push({ player: game.currentPlayer, points: game.projectile.trail });
-            game.projectile = null;
-            
-            const animateExplosion = () => {
-                draw();
-                if (game.explosion) {
-                    requestAnimationFrame(animateExplosion);
-                } else {
-                    game.gameOver = true;
-                    const color = game.currentPlayer === 1 ? 'player1' : 'player2';
-                    info.innerHTML = '<span class="' + color + '">Pelaaja ' + game.currentPlayer + ' VOITTI! 💥</span>';
-                    setTimeout(() => {
-                        if (confirm('Pelaa uudestaan?')) {
-                            location.reload();
-                        }
-                    }, 2000);
-                }
-            };
-            
-            animateExplosion();
-        }
-        
-        function updateInfo(text) {
-            const color = game.currentPlayer === 1 ? 'player1' : 'player2';
-            info.innerHTML = '<span class="' + color + '">' + text + '</span>';
-        }
-        
-        document.addEventListener('keydown', e => {
-            if (game.projectile || game.gameOver) return;
-            if (game.currentPlayer !== myPlayer) return;
-            
-            const p = game.currentPlayer === 1 ? game.player1 : game.player2;
-            
-            if (e.code === 'ArrowUp') {
-                e.preventDefault();
-                p.angle = Math.max(p.angle - 1, game.currentPlayer === 1 ? -90 : -180);
-                sendMessage({ type: 'angleChange', player: game.currentPlayer, angle: p.angle });
-                draw();
-            } else if (e.code === 'ArrowDown') {
-                e.preventDefault();
-                p.angle = Math.min(p.angle + 1, game.currentPlayer === 1 ? 0 : -90);
-                sendMessage({ type: 'angleChange', player: game.currentPlayer, angle: p.angle });
-                draw();
-            } else if (e.code === 'Space') {
-                e.preventDefault();
-                shoot();
-            }
-        });
-        
-        canvas.addEventListener('touchstart', e => {
-            e.preventDefault();
-            if (game.projectile || game.gameOver) return;
-            if (game.currentPlayer !== myPlayer) return;
-            game.touchStartY = e.touches[0].clientY;
-            game.touchMoved = false;
-        });
-        
-        canvas.addEventListener('touchmove', e => {
-            e.preventDefault();
-            if (game.projectile || game.gameOver || !game.touchStartY) return;
-            if (game.currentPlayer !== myPlayer) return;
-            
-            const deltaY = game.touchStartY - e.touches[0].clientY;
-            
-            if (Math.abs(deltaY) > 5) {
-                game.touchMoved = true;
-            }
-            
-            const p = game.currentPlayer === 1 ? game.player1 : game.player2;
-            const change = deltaY * 0.1;
-            
-            p.angle = Math.max(
-                game.currentPlayer === 1 ? -90 : -180,
-                Math.min(game.currentPlayer === 1 ? 0 : -90, p.angle - change)
-            );
-            
-            sendMessage({ type: 'angleChange', player: game.currentPlayer, angle: p.angle });
-            game.touchStartY = e.touches[0].clientY;
-            draw();
-        });
-        
-        canvas.addEventListener('touchend', e => {
-            e.preventDefault();
-            if (game.projectile || game.gameOver) return;
-            if (game.currentPlayer !== myPlayer) return;
-            
-            if (game.touchStartY && !game.touchMoved) {
-                shoot();
-            }
-            
-            game.touchStartY = null;
-            game.touchMoved = false;
-        });
-        
-        canvas.addEventListener('click', () => {
-            if (game.projectile || game.gameOver) return;
-            if (game.currentPlayer !== myPlayer) return;
-            shoot();
-        });
-        
-        function startGame() {
-            initAudio();
-            game.currentPlayer = 1;
-            game.trajectories = [];
-            game.projectile = null;
-            game.gameOver = false;
-            game.explosion = null;
-            game.touchStartY = null;
-            game.touchMoved = false;
-            
-            draw();
-            updateInfo('Pelaaja 1 aloittaa!');
-            startScreen.classList.add('hidden');
-        }
-    </script>
+    };
+    animExp();
+}
+
+function updateInfo(txt) {
+    document.getElementById('info').innerHTML = '<span class="player' + g.turn + '">' + txt + '</span>';
+}
+
+addEventListener('keydown', e => {
+    if (g.proj || g.over || g.turn !== me) return;
+    const p = g.turn === 1 ? g.p1 : g.p2;
+    if (e.code === 'ArrowUp') {
+        e.preventDefault();
+        p.a = Math.max(p.a - 1, g.turn === 1 ? -90 : -180);
+        send({ t: 'ang', p: g.turn, a: p.a });
+        draw();
+    } else if (e.code === 'ArrowDown') {
+        e.preventDefault();
+        p.a = Math.min(p.a + 1, g.turn === 1 ? 0 : -90);
+        send({ t: 'ang', p: g.turn, a: p.a });
+        draw();
+    } else if (e.code === 'Space') {
+        e.preventDefault();
+        shoot();
+    }
+});
+
+let touchY = null, moved = false;
+c.addEventListener('touchstart', e => {
+    e.preventDefault();
+    if (g.proj || g.over || g.turn !== me) return;
+    touchY = e.touches[0].clientY;
+    moved = false;
+});
+
+c.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (!touchY || g.proj || g.over || g.turn !== me) return;
+    const dy = touchY - e.touches[0].clientY;
+    if (Math.abs(dy) > 5) moved = true;
+    const p = g.turn === 1 ? g.p1 : g.p2;
+    p.a = Math.max(g.turn === 1 ? -90 : -180, Math.min(g.turn === 1 ? 0 : -90, p.a - dy * 0.1));
+    send({ t: 'ang', p: g.turn, a: p.a });
+    touchY = e.touches[0].clientY;
+    draw();
+});
+
+c.addEventListener('touchend', e => {
+    e.preventDefault();
+    if (touchY && !moved && g.turn === me) shoot();
+    touchY = null;
+    moved = false;
+});
+
+c.addEventListener('click', () => {
+    if (g.turn === me && !g.proj && !g.over) shoot();
+});
+
+function startGame() {
+    document.getElementById('menu').classList.add('hidden');
+    g.turn = 1;
+    g.traj = [];
+    g.proj = null;
+    g.over = false;
+    draw();
+    updateInfo('Pelaaja 1 aloittaa!');
+}
+</script>
 </body>
 </html>
