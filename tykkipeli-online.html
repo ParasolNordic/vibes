@@ -197,16 +197,17 @@ window.joinGame = function() {
         }
         
         if (!data.player2joined) {
-            const sx = c.width / data.canvasWidth;
-            const sy = c.height / data.canvasHeight;
-            g.ter = [];
-            for (var i = 0; i < data.terrain.length; i++) {
-                g.ter.push({ x: data.terrain[i].x * sx, y: data.terrain[i].y * sy });
-            }
-            g.p1.x = data.p1x * sx;
-            g.p2.x = data.p2x * sx;
+            // Käytä TÄSMÄLLEEN samat koordinaatit kuin isäntä
+            // EI skaalata, vaan käytetään suoraan
+            g.ter = data.terrain;
+            g.p1.x = data.p1x;
+            g.p2.x = data.p2x;
             g.p1.y = getTerH(g.p1.x);
             g.p2.y = getTerH(g.p2.x);
+            
+            // Aseta canvas samaan kokoon (tärkeää!)
+            c.width = data.canvasWidth;
+            c.height = data.canvasHeight;
             
             update(gameRef, { player2joined: true, timestamp: Date.now() });
             
@@ -358,7 +359,14 @@ function drawTank(p, col) {
 }
 
 function shoot() {
-    if (g.proj || g.over || g.turn !== me) return;
+    if (g.proj || g.over) return;
+    
+    // TÄRKEÄ: Tarkista että on oma vuoro
+    if (g.turn !== me) {
+        updateInfo('Odota vuoroasi! (Vuoro: Pelaaja ' + g.turn + ')');
+        return;
+    }
+    
     const p = g.turn === 1 ? g.p1 : g.p2;
     const a = p.a * Math.PI / 180;
     const pow = p.pow * (0.98 + Math.random() * 0.04);
@@ -403,8 +411,14 @@ function anim() {
 function hitGround() {
     g.traj.push({ p: g.turn, pts: g.proj.trail });
     g.proj = null;
-    g.turn = g.turn === 1 ? 2 : 1;
-    update(gameRef, { turn: g.turn, timestamp: Date.now() });
+    
+    // Vaihda vuoro
+    const newTurn = g.turn === 1 ? 2 : 1;
+    g.turn = newTurn;
+    
+    // Päivitä Firebase
+    update(gameRef, { turn: newTurn, timestamp: Date.now() });
+    
     updateInfo('Pelaaja ' + g.turn + ' vuoro');
     draw();
 }
@@ -412,8 +426,14 @@ function hitGround() {
 function miss() {
     if (g.proj) g.traj.push({ p: g.turn, pts: g.proj.trail });
     g.proj = null;
-    g.turn = g.turn === 1 ? 2 : 1;
-    update(gameRef, { turn: g.turn, timestamp: Date.now() });
+    
+    // Vaihda vuoro
+    const newTurn = g.turn === 1 ? 2 : 1;
+    g.turn = newTurn;
+    
+    // Päivitä Firebase
+    update(gameRef, { turn: newTurn, timestamp: Date.now() });
+    
     updateInfo('Pelaaja ' + g.turn + ' vuoro');
     draw();
 }
