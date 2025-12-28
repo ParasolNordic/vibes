@@ -245,6 +245,18 @@ function handleUpdate(data) {
         }
     }
     
+    // Päivitä maasto jos muuttunut (kraatterit)
+    if (data.terrain && data.terrain.length > 0) {
+        const terrainChanged = !g.ter || g.ter.length !== data.terrain.length || 
+                               JSON.stringify(g.ter) !== JSON.stringify(data.terrain);
+        if (terrainChanged) {
+            g.ter = data.terrain;
+            g.p1.y = getTerH(g.p1.x);
+            g.p2.y = getTerH(g.p2.x);
+            draw();
+        }
+    }
+    
     // Päivitä vuoro Firebase:sta
     if (data.turn !== undefined && data.turn !== g.turn) {
         g.turn = data.turn;
@@ -263,7 +275,7 @@ function handleUpdate(data) {
                 vx: data.lastShot.vx,
                 vy: data.lastShot.vy,
                 trail: [{ x: data.lastShot.x, y: data.lastShot.y }],
-                shooter: data.lastShot.shooter // Merkitään kuka ampui
+                shooter: data.lastShot.shooter
             };
             anim();
         }
@@ -454,18 +466,39 @@ function anim() {
 }
 
 function hitGround() {
+    const craterX = g.proj.x;
+    const craterRadius = 30;
+    
+    // Luo kraatteri maastoon
+    for (let i = 0; i < g.ter.length; i++) {
+        const t = g.ter[i];
+        const dist = Math.abs(t.x - craterX);
+        if (dist < craterRadius) {
+            const depth = (craterRadius - dist) / craterRadius * 40;
+            t.y = Math.min(t.y + depth, c.height - 20);
+        }
+    }
+    
+    // Päivitä tykkien korkeudet
+    g.p1.y = getTerH(g.p1.x);
+    g.p2.y = getTerH(g.p2.x);
+    
     g.traj.push({ p: g.turn, pts: g.proj.trail });
     const wasMyShot = g.proj.shooter === me;
     g.proj = null;
     
-    // VAIN ampuja vaihtaa vuoroa
+    // VAIN ampuja vaihtaa vuoroa ja lähettää päivitetyn maaston
     if (wasMyShot) {
         const newTurn = g.turn === 1 ? 2 : 1;
         g.turn = newTurn;
-        update(gameRef, { turn: newTurn, timestamp: Date.now() });
+        update(gameRef, { 
+            turn: newTurn, 
+            terrain: g.ter, // Lähetä päivitetty maasto
+            timestamp: Date.now() 
+        });
         updateInfo('Pelaaja ' + g.turn + ' vuoro');
     }
-    // Muut vain piirtävät
+    
     draw();
 }
 
