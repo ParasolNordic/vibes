@@ -18,36 +18,35 @@
             background: #4CAF50; color: white; border: none; padding: 15px 30px;
             font-size: 18px; margin: 10px; cursor: pointer; border-radius: 5px;
         }
-        .btn:hover { background: #45a049; }
         #linkDisplay { 
             background: rgba(255,255,255,0.1); padding: 15px; margin: 15px;
-            border-radius: 5px; word-break: break-all; font-size: 14px;
+            border-radius: 5px; word-break: break-all; font-size: 12px;
         }
         canvas { display: block; background: #16213e; }
         #info { 
             position: fixed; top: 10px; right: 10px; background: rgba(15,52,96,0.9);
             padding: 8px 15px; border-radius: 5px; color: white; z-index: 100;
         }
-        .player1 { color: #00ff00; }
-        .player2 { color: #ff0000; }
+        .player1 { color: #0f0; }
+        .player2 { color: #f00; }
     </style>
 </head>
 <body>
     <div id="menu">
-        <div id="menuContent">
+        <div>
             <h1>🎮 Tykkipeli Online</h1>
-            <p style="margin: 20px;">⬆️⬇️ = Säädä kulma | VÄLILYÖNTI/Napauta = Ammu</p>
+            <p style="margin: 20px;">⬆️⬇️ = Kulma | VÄLI/Napautus = Ammu</p>
             <div id="buttons">
-                <button class="btn" onclick="host()">Luo peli</button>
-                <button class="btn" onclick="showJoin()">Liity peliin</button>
+                <button class="btn" onclick="host()">Luo peli</button><br>
+                <button class="btn" onclick="showJoin()">Liity</button>
             </div>
             <div id="hostWait" style="display:none;">
-                <p>Jaa tämä linkki:</p>
+                <p>Jaa linkki:</p>
                 <div id="linkDisplay"></div>
                 <button class="btn" onclick="copyLink()">Kopioi</button>
             </div>
             <div id="joinInput" style="display:none;">
-                <input id="roomId" placeholder="Huoneen ID" style="padding: 10px; font-size: 16px; width: 200px;">
+                <input id="roomId" placeholder="ID" style="padding:10px;font-size:16px;width:200px;"><br>
                 <button class="btn" onclick="join()">Liity</button>
             </div>
         </div>
@@ -60,43 +59,64 @@ const c = document.getElementById('c');
 const ctx = c.getContext('2d');
 c.width = innerWidth;
 c.height = innerHeight;
-addEventListener('resize', () => { c.width = innerWidth; c.height = innerHeight; draw(); });
 
-let peer, conn, me = 0, isHost = false;
+let peer, conn, me = 0, isHost = false, gameStarted = false;
 const g = {
     p1: { x: 0, y: 0, a: -45, pow: 25 },
     p2: { x: 0, y: 0, a: -135, pow: 25 },
     ter: [], traj: [], proj: null, turn: 1, over: false, exp: null
 };
 
-// URL handling
 onload = () => {
     const rid = new URLSearchParams(location.search).get('room');
-    if (rid) { document.getElementById('roomId').value = rid; showJoin(); setTimeout(join, 500); }
+    if (rid) { 
+        document.getElementById('roomId').value = rid; 
+        showJoin(); 
+        setTimeout(join, 300); 
+    }
 };
 
 function host() {
+    document.getElementById('buttons').style.display = 'none';
+    document.getElementById('hostWait').style.display = 'block';
+    
     peer = new Peer();
     isHost = true;
     me = 1;
+    
     peer.on('open', id => {
-        const url = location.origin + location.pathname + '?room=' + id;
-        document.getElementById('linkDisplay').textContent = url;
-        document.getElementById('buttons').style.display = 'none';
-        document.getElementById('hostWait').style.display = 'block';
+        document.getElementById('linkDisplay').textContent = 
+            location.origin + location.pathname + '?room=' + id;
+        console.log('Room:', id);
     });
-    peer.on('connection', c => {
-        conn = c;
-        conn.on('data', d => {
-            if (d.t === 'ready') {
-                console.log('Guest is ready, sending terrain');
+    
+    peer.on('connection', connection => {
+        console.log('Guest connected!');
+        conn = connection;
+        
+        // Setup listener
+        conn.on('data', msg);
+        
+        // Connection is ALREADY OPEN on host side
+        // Send immediately with small delay
+        setTimeout(() => {
+            if (!gameStarted) {
+                console.log('Generating terrain...');
                 genTerrain();
-                send({ t: 'start', ter: g.ter, p1x: g.p1.x, p2x: g.p2.x, w: c.width, h: c.height });
+                const data = {
+                    t: 'start',
+                    ter: g.ter,
+                    p1x: g.p1.x,
+                    p2x: g.p2.x,
+                    w: c.width,
+                    h: c.height
+                };
+                console.log('Sending start data');
+                conn.send(data);
+                console.log('Starting host game');
                 startGame();
-            } else {
-                handleMsg(d);
             }
-        });
+        }, 500);
     });
 }
 
@@ -108,27 +128,43 @@ function showJoin() {
 function join() {
     const rid = document.getElementById('roomId').value.trim();
     if (!rid) return alert('Anna ID!');
-    if (peer) return; // Already connecting/connected
+    
+    console.log('Connecting to:', rid);
     peer = new Peer();
     isHost = false;
     me = 2;
+    
     peer.on('open', () => {
+        console.log('Peer ready, connecting...');
         conn = peer.connect(rid, { reliable: true });
+        
         conn.on('open', () => {
-            console.log('Connected, sending ready signal');
-            conn.send({ t: 'ready' });
+            console.log('Connection open!');
         });
-        conn.on('data', handleMsg);
+        
+        conn.on('data', msg);
+        
+        conn.on('error', e => console.error('Connection error:', e));
+    });
+    
+    peer.on('error', e => {
+        console.error('Peer error:', e);
+        alert('Yhteys epäonnistui!');
     });
 }
 
-function handleMsg(d) {
-    console.log('MSG:', d.t);
+function msg(d) {
+    console.log('Received:', d.t);
+    
     if (d.t === 'start') {
+        console.log('Received start data');
         const sx = c.width / d.w, sy = c.height / d.h;
         g.ter = d.ter.map(p => ({ x: p.x * sx, y: p.y * sy }));
-        g.p1.x = d.p1x * sx; g.p2.x = d.p2x * sx;
-        g.p1.y = getTerH(g.p1.x); g.p2.y = getTerH(g.p2.x);
+        g.p1.x = d.p1x * sx;
+        g.p2.x = d.p2x * sx;
+        g.p1.y = getTerH(g.p1.x);
+        g.p2.y = getTerH(g.p2.x);
+        console.log('Starting guest game');
         startGame();
     } else if (d.t === 'shot') {
         g.turn = d.p;
@@ -141,7 +177,9 @@ function handleMsg(d) {
 }
 
 function send(d) {
-    if (conn && conn.open) conn.send(d);
+    if (conn && conn.open) {
+        conn.send(d);
+    }
 }
 
 function copyLink() {
@@ -177,7 +215,6 @@ function draw() {
     ctx.fillStyle = '#16213e';
     ctx.fillRect(0, 0, c.width, c.height);
     
-    // Terrain
     ctx.fillStyle = '#228b22';
     ctx.beginPath();
     ctx.moveTo(0, c.height);
@@ -185,7 +222,6 @@ function draw() {
     ctx.lineTo(c.width, c.height);
     ctx.fill();
     
-    // Trails
     g.traj.forEach(t => {
         ctx.strokeStyle = t.p === 1 ? 'rgba(0,255,0,0.3)' : 'rgba(255,0,0,0.3)';
         ctx.lineWidth = 1;
@@ -194,7 +230,6 @@ function draw() {
         ctx.stroke();
     });
     
-    // Projectile
     if (g.proj) {
         ctx.strokeStyle = g.turn === 1 ? 'rgba(0,255,0,0.6)' : 'rgba(255,0,0,0.6)';
         ctx.lineWidth = 2;
@@ -203,11 +238,9 @@ function draw() {
         ctx.stroke();
     }
     
-    // Tanks
     drawTank(g.p1, '#0f0');
     drawTank(g.p2, '#f00');
     
-    // Explosion
     if (g.exp) {
         const t = (Date.now() - g.exp.t) / 800;
         if (t >= 1) g.exp = null;
@@ -359,6 +392,8 @@ c.addEventListener('click', () => {
 });
 
 function startGame() {
+    if (gameStarted) return;
+    gameStarted = true;
     document.getElementById('menu').classList.add('hidden');
     g.turn = 1;
     g.traj = [];
@@ -366,6 +401,7 @@ function startGame() {
     g.over = false;
     draw();
     updateInfo('Pelaaja 1 aloittaa!');
+    console.log('Game started! I am player', me);
 }
 </script>
 </body>
