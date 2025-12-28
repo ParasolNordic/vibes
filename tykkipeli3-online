@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tykkipeli Online - 3 Pelaajaa</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #1a1a2e; overflow: hidden; font-family: Arial; color: white; }
+        #menu { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); display: flex; align-items: center; 
+            justify-content: center; z-index: 1000; text-align: center;
+        }
+        #menu.hidden { display: none; }
+        .btn { 
+            background: #4CAF50; color: white; border: none; padding: 15px 30px;
+            font-size: 18px; margin: 10px; cursor: pointer; border-radius: 5px;
+        }
+        .btn:hover { background: #45a049; }
+        #qrcode { 
+            background: white; padding: 20px; margin: 20px auto;
+            border-radius: 10px; display: inline-block;
+        }
+        #roomCode {
+            font-size: 36px; font-weight: bold; color: #4CAF50;
+            margin: 20px; letter-spacing: 5px;
+        }
+        #status { color: yellow; margin: 15px; font-size: 16px; }
+        #playerList { 
+            margin: 20px auto; padding: 15px; background: rgba(0,0,0,0.3);
+            border-radius: 10px; max-width: 400px;
+        }
+        #playerList div {
+            margin: 8px 0; font-size: 18px;
+        }
+        canvas { display: block; background: #16213e; }
+        #info { 
+            position: fixed; top: 10px; right: 10px; background: rgba(15,52,96,0.9);
+            padding: 8px 15px; border-radius: 5px; color: white; z-index: 100;
+        }
+        .player1 { color: #0f0; }
+        .player2 { color: #ff0; }
+        .player3 { color: #f00; }
+        input {
+            padding: 15px; font-size: 24px; width: 300px; text-align: center;
+            border: 2px solid #4CAF50; border-radius: 5px; margin: 10px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div id="menu">
+        <div>
+            <h1>🎮 Tykkipeli Online - 3 Pelaajaa</h1>
+            <p style="margin: 20px;">⬆️⬇️ = Kulma | VÄLI/Napautus = Ammu</p>
+            <p style="margin-bottom: 20px;">
+                <span class="player1">Pelaaja 1 (Vihreä)</span> | 
+                <span class="player2">Pelaaja 2 (Keltainen)</span> | 
+                <span class="player3">Pelaaja 3 (Punainen)</span>
+            </p>
+            <div id="status">Ladataan Firebase...</div>
+            
+            <div id="buttons" style="display:none;">
+                <button class="btn" onclick="createGame()">📱 Luo peli (QR-koodi)</button><br>
+                <button class="btn" onclick="showJoin()">🔢 Liity peliin</button>
+            </div>
+            
+            <div id="hostScreen" style="display:none;">
+                <div id="roomCode"></div>
+                <div id="qrcode"></div>
+                <p style="margin-top:20px;">Skannaa QR tai kirjoita koodi toisella laitteella</p>
+                <div id="playerList">
+                    <div id="p1status">✅ Pelaaja 1: Valmis (Isäntä)</div>
+                    <div id="p2status">⏳ Pelaaja 2: Odotetaan...</div>
+                    <div id="p3status">⏳ Pelaaja 3: Odotetaan...</div>
+                </div>
+                <button class="btn" onclick="startGameEarly()" id="startEarlyBtn" style="display:none;">
+                    Aloita 2 pelaajalla
+                </button>
+            </div>
+            
+            <div id="joinScreen" style="display:none;">
+                <p>Anna pelin koodi:</p>
+                <input id="codeInput" type="text" placeholder="XXXX" maxlength="4">
+                <br>
+                <button class="btn" onclick="joinGame()">Liity</button>
+            </div>
+        </div>
+    </div>
+    <canvas id="c"></canvas>
+    <div id="info"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getDatabase, ref, set, onValue, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA9RGFVeItwteVL9mRezHHCX5DQex_lLqA",
+  authDomain: "tykkipeli-945a3.firebaseapp.com",
+  databaseURL: "https://tykkipeli-945a3-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tykkipeli-945a3",
+  storageBucket: "tykkipeli-945a3.firebasestorage.app",
+  messagingSenderId: "176177720878",
+  appId: "1:176177720878:web:eaabae515c8a141613b9bf"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+c.width = innerWidth;
+c.height = innerHeight;
+
+let gameId = '';
+let me = 0;
+let isHost = false;
+let gameRef = null;
+let terrainVersion = 0;
+let audioCtx = null;
+
+const g = {
+    p1: { x: 0, y: 0, a: -45, pow: 25, alive: true },
+    p2: { x: 0, y: 0, a: -90, pow: 25, alive: true },
+    p3: { x: 0, y: 0, a: -135, pow: 25, alive: true },
+    ter: [], traj: [], proj: null, turn: 1, over: false, exp: null
+};
+
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+function playSound(type) {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    if (type === 'shoot') {
+        osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.1);
+    } else if (type === 'explosion') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(100, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.3);
+    } else if (type === 'hit') {
+        osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+    }
+}
+
+window.addEventListener('load', function() {
+    setStatus('Valmis! Valitse pelimuoto');
+    document.getElementById('buttons').style.display = 'block';
+    
+    const urlParams = new URLSearchParams(location.search);
+    const code = urlParams.get('join');
+    if (code) {
+        document.getElementById('codeInput').value = code.toUpperCase();
+        showJoin();
+        setTimeout(joinGame, 500);
+    }
+});
+
+function setStatus(txt) {
+    document.getElementById('status').textContent = txt;
+}
+
+function generateCode() {
+    return Math.random().toString(36).substr(2, 4).toUpperCase();
+}
+
+window.createGame = function() {
+    initAudio();
+    gameId = generateCode();
+    isHost = true;
+    me = 1;
+    terrainVersion = 0;
+    
+    document.getElementById('buttons').style.display = 'none';
+    document.getElementById('hostScreen').style.display = 'block';
+    document.getElementById('roomCode').textContent = gameId;
+    
+    const url = location.origin + location.pathname + '?join=' + gameId;
+    new QRCode(document.getElementById('qrcode'), {
+        text: url,
+        width: 200,
+        height: 200
+    });
+    
+    setStatus('Odotetaan pelaajia...');
+    
+    genTerrain();
+    
+    gameRef = ref(db, 'games/' + gameId);
+    set(gameRef, {
+        terrain: g.ter,
+        p1x: g.p1.x,
+        p2x: g.p2.x,
+        p3x: g.p3.x,
+        canvasWidth: c.width,
+        canvasHeight: c.height,
+        player2joined: false,
+        player3joined: false,
+        turn: 1,
+        terrainVersion: 0,
+        p1y: g.p1.y,
+        p2y: g.p2.y,
+        p3y: g.p3.y,
+        p1alive: true,
+        p2alive: true,
+        p3alive: true,
+        timestamp: Date.now()
+    });
+    
+    onValue(gameRef, function(snapshot) {
+        const data = snapshot.val();
+        if (!data) return;
+        
+        // Päivitä pelaajalistaus
+        if (document.getElementById('hostScreen').style.display !== 'none') {
+            document.getElementById('p2status').innerHTML = data.player2joined ? 
+                '✅ Pelaaja 2: Valmis' : '⏳ Pelaaja 2: Odotetaan...';
+            document.getElementById('p3status').innerHTML = data.player3joined ? 
+                '✅ Pelaaja 3: Valmis' : '⏳ Pelaaja 3: Odotetaan...';
+            
+            // Näytä "Aloita 2 pelaajalla" -nappi jos vähintään 2 pelaajaa
+            if (data.player2joined && !data.player3joined) {
+                document.getElementById('startEarlyBtn').style.display = 'block';
+            }
+        }
+        
+        // Aloita peli kun 3 pelaajaa tai manuaalisesti käynnistetty
+        if (data.gameStarted && !document.getElementById('menu').classList.contains('hidden')) {
+            setStatus('Kaikki pelaajat paikalla! Aloitetaan...');
+            setTimeout(startGame, 1000);
+        }
+        
+        if (data && document.getElementById('menu').classList.contains('hidden')) {
+            handleUpdate(data);
+        }
+    });
+};
+
+window.startGameEarly = function() {
+    if (!isHost) return;
+    update(gameRef, { 
+        gameStarted: true,
+        p3alive: false, // Pelaaja 3 ei pelissä mukana
+        timestamp: Date.now() 
+    });
+};
+
+window.showJoin = function() {
+    document.getElementById('buttons').style.display = 'none';
+    document.getElementById('joinScreen').style.display = 'block';
+    setStatus('Anna pelin koodi');
+};
+
+window.joinGame = function() {
+    initAudio();
+    gameId = document.getElementById('codeInput').value.trim().toUpperCase();
+    if (gameId.length !== 4) {
+        alert('Virheellinen koodi!');
+        return;
+    }
+    
+    isHost = false;
+    
+    setStatus('Liitytään peliin...');
+    
+    gameRef = ref(db, 'games/' + gameId);
+    onValue(gameRef, function(snapshot) {
+        const data = snapshot.val();
+        if (!data) {
+            alert('Peliä ei löytynyt koodilla: ' + gameId);
+            return;
+        }
+        
+        // Määritä pelaajan numero
+        if (!data.player2joined && me === 0) {
+            me = 2;
+            g.ter = data.terrain;
+            g.p1.x = data.p1x;
+            g.p2.x = data.p2x;
+            g.p3.x = data.p3x;
+            g.p1.y = getTerH(g.p1.x);
+            g.p2.y = getTerH(g.p2.x);
+            g.p3.y = getTerH(g.p3.x);
+            
+            c.width = data.canvasWidth;
+            c.height = data.canvasHeight;
+            
+            update(gameRef, { player2joined: true, timestamp: Date.now() });
+            
+            setStatus('Liitytty pelaajana 2. Odotetaan muita...');
+        } else if (!data.player3joined && me === 0) {
+            me = 3;
+            g.ter = data.terrain;
+            g.p1.x = data.p1x;
+            g.p2.x = data.p2x;
+            g.p3.x = data.p3x;
+            g.p1.y = getTerH(g.p1.x);
+            g.p2.y = getTerH(g.p2.x);
+            g.p3.y = getTerH(g.p3.x);
+            
+            c.width = data.canvasWidth;
+            c.height = data.canvasHeight;
+            
+            update(gameRef, { 
+                player3joined: true,
+                gameStarted: true, // Kaikki 3 paikalla, aloitetaan
+                timestamp: Date.now() 
+            });
+            
+            setStatus('Kaikki pelaajat paikalla! Aloitetaan...');
+        }
+        
+        if (data.gameStarted && !document.getElementById('menu').classList.contains('hidden')) {
+            setTimeout(startGame, 1000);
+        } else if (me > 0) {
+            handleUpdate(data);
+        }
+    });
+};
+
+function handleUpdate(data) {
+    // Tarkista uusi kierros
+    if (data.newRound && data.newRound > (g.lastRound || 0)) {
+        g.lastRound = data.newRound;
+        if (!isHost) {
+            g.ter = data.terrain;
+            g.p1.x = data.p1x;
+            g.p2.x = data.p2x;
+            g.p3.x = data.p3x;
+            c.width = data.canvasWidth;
+            c.height = data.canvasHeight;
+            g.p1.y = getTerH(g.p1.x);
+            g.p2.y = getTerH(g.p2.x);
+            g.p3.y = getTerH(g.p3.x);
+            g.p1.alive = data.p1alive !== false;
+            g.p2.alive = data.p2alive !== false;
+            g.p3.alive = data.p3alive !== false;
+            terrainVersion = data.terrainVersion || 0;
+            
+            g.traj = [];
+            g.proj = null;
+            g.over = false;
+            g.exp = null;
+            g.turn = 1;
+            
+            draw();
+            updateInfo('Pelaaja 1 aloittaa!');
+        }
+    }
+    
+    // Synkronoi vuoro
+    if (data.turn && data.turn !== g.turn) {
+        g.turn = data.turn;
+        if (!g.proj && !g.over) {
+            updateInfo('Pelaaja ' + g.turn + ' vuoro');
+        }
+    }
+    
+    // Synkronoi pelaajien elossa olo
+    if (data.p1alive !== undefined) g.p1.alive = data.p1alive;
+    if (data.p2alive !== undefined) g.p2.alive = data.p2alive;
+    if (data.p3alive !== undefined) g.p3.alive = data.p3alive;
+    
+    // Synkronoi maasto (vain jos versio on uudempi)
+    if (data.terrainVersion && data.terrainVersion > terrainVersion) {
+        terrainVersion = data.terrainVersion;
+        g.ter = data.terrain;
+        g.p1.y = data.p1y || getTerH(g.p1.x);
+        g.p2.y = data.p2y || getTerH(g.p2.x);
+        g.p3.y = data.p3y || getTerH(g.p3.x);
+        if (!g.proj) draw();
+    }
+    
+    // Synkronoi kulma
+    if (data.lastAngle && data.lastAngle.p !== me && !g.proj) {
+        const p = g['p' + data.lastAngle.p];
+        if (p) {
+            p.a = data.lastAngle.a;
+            draw();
+        }
+    }
+    
+    // Synkronoi laukaus
+    if (data.lastShot && data.lastShot.shooter !== me && !g.proj) {
+        const shot = data.lastShot;
+        if (shot.p === g.turn) {
+            g.proj = {
+                x: shot.x,
+                y: shot.y,
+                vx: shot.vx,
+                vy: shot.vy,
+                trail: [{ x: shot.x, y: shot.y }],
+                shooter: shot.shooter
+            };
+            anim();
+        }
+    }
+}
+
+function genTerrain() {
+    const positions = [];
+    const minDistance = c.width * 0.25;
+    
+    // Pelaaja 1 (vasen)
+    positions.push(c.width * 0.1 + Math.random() * c.width * 0.1);
+    
+    // Pelaaja 2 (keski)
+    let pos2;
+    do {
+        pos2 = c.width * 0.4 + Math.random() * c.width * 0.2;
+    } while (Math.abs(pos2 - positions[0]) < minDistance);
+    positions.push(pos2);
+    
+    // Pelaaja 3 (oikea)
+    let pos3;
+    do {
+        pos3 = c.width * 0.75 + Math.random() * c.width * 0.15;
+    } while (Math.abs(pos3 - positions[0]) < minDistance && 
+             Math.abs(pos3 - positions[1]) < minDistance);
+    positions.push(pos3);
+    
+    g.p1.x = positions[0];
+    g.p2.x = positions[1];
+    g.p3.x = positions[2];
+    
+    g.ter = [];
+    let y = c.height * 0.75;
+    
+    for (let x = 0; x < c.width; x += 10) {
+        let target = c.height * 0.75;
+        let roughness = 60;
+        
+        for (let pos of positions) {
+            const distToPlayer = Math.abs(x - pos);
+            if (distToPlayer < 100) {
+                roughness = 120;
+                const heightVariation = (Math.random() - 0.5) * c.height * 0.3;
+                target = c.height * 0.6 + heightVariation;
+            }
+        }
+        
+        if (roughness === 60) {
+            const factor = Math.sin((x / c.width) * Math.PI * 3) * c.height * 0.2;
+            target = c.height * 0.7 + factor;
+        }
+        
+        y += (target - y) * 0.1 + (Math.random() - 0.5) * roughness;
+        y = Math.max(c.height * 0.4, Math.min(c.height - 50, y));
+        g.ter.push({ x, y });
+    }
+    
+    g.p1.y = getTerH(g.p1.x);
+    g.p2.y = getTerH(g.p2.x);
+    g.p3.y = getTerH(g.p3.x);
+}
+
+function getTerH(x) {
+    for (let i = 0; i < g.ter.length - 1; i++) {
+        if (x >= g.ter[i].x && x <= g.ter[i + 1].x) {
+            const t = (x - g.ter[i].x) / (g.ter[i + 1].x - g.ter[i].x);
+            return g.ter[i].y + (g.ter[i + 1].y - g.ter[i].y) * t;
+        }
+    }
+    return g.ter[g.ter.length - 1].y;
+}
+
+function draw() {
+    ctx.fillStyle = '#16213e';
+    ctx.fillRect(0, 0, c.width, c.height);
+    
+    // Maasto
+    ctx.fillStyle = '#2d4a3e';
+    ctx.beginPath();
+    ctx.moveTo(0, c.height);
+    for (let t of g.ter) ctx.lineTo(t.x, t.y);
+    ctx.lineTo(c.width, c.height);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Trajektorit
+    for (let t of g.traj) {
+        ctx.strokeStyle = t.p === 1 ? '#0f0' : t.p === 2 ? '#ff0' : '#f00';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.3;
+        ctx.beginPath();
+        for (let i = 0; i < t.pts.length; i++) {
+            const pt = t.pts[i];
+            if (i === 0) ctx.moveTo(pt.x, pt.y);
+            else ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+    }
+    
+    // Tykit
+    drawCannon(g.p1, '#0f0', 1);
+    drawCannon(g.p2, '#ff0', 2);
+    drawCannon(g.p3, '#f00', 3);
+    
+    // Projektiili
+    if (g.proj) {
+        ctx.fillStyle = g.turn === 1 ? '#0f0' : g.turn === 2 ? '#ff0' : '#f00';
+        ctx.beginPath();
+        ctx.arc(g.proj.x, g.proj.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.strokeStyle = ctx.fillStyle;
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.6;
+        ctx.beginPath();
+        for (let i = Math.max(0, g.proj.trail.length - 20); i < g.proj.trail.length; i++) {
+            const pt = g.proj.trail[i];
+            if (i === Math.max(0, g.proj.trail.length - 20)) ctx.moveTo(pt.x, pt.y);
+            else ctx.lineTo(pt.x, pt.y);
+        }
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+    }
+    
+    // Räjähdys
+    if (g.exp) {
+        const elapsed = Date.now() - g.exp.t;
+        const progress = Math.min(elapsed / 800, 1);
+        const r = g.exp.r * progress;
+        
+        ctx.fillStyle = `rgba(255, ${255 * (1 - progress)}, 0, ${1 - progress})`;
+        ctx.beginPath();
+        ctx.arc(g.exp.x, g.exp.y, r, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.strokeStyle = `rgba(255, 100, 0, ${1 - progress})`;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        if (progress >= 1) g.exp = null;
+    }
+}
+
+function drawCannon(p, col, num) {
+    if (!p.alive) {
+        // Näytä tuhottu tykki
+        ctx.fillStyle = '#555';
+        ctx.globalAlpha = 0.5;
+        ctx.fillRect(p.x - 10, p.y - 20, 20, 20);
+        ctx.globalAlpha = 1;
+        return;
+    }
+    
+    const isMyTurn = g.turn === num;
+    
+    // Tynnyri
+    ctx.save();
+    ctx.translate(p.x, p.y - 10);
+    ctx.rotate(p.a * Math.PI / 180);
+    ctx.fillStyle = isMyTurn ? col : '#666';
+    ctx.fillRect(0, -3, 25, 6);
+    ctx.restore();
+    
+    // Runko
+    ctx.fillStyle = isMyTurn ? col : '#444';
+    ctx.fillRect(p.x - 10, p.y - 15, 20, 15);
+    
+    // Pelaajan numero
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 12px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(num, p.x, p.y - 25);
+}
+
+function shoot() {
+    if (g.proj || g.over) return;
+    
+    if (g.turn !== me) {
+        updateInfo('Odota vuoroasi! (Vuoro: Pelaaja ' + g.turn + ')');
+        return;
+    }
+    
+    const p = g['p' + g.turn];
+    if (!p.alive) return;
+    
+    playSound('shoot');
+    
+    const a = p.a * Math.PI / 180;
+    const pow = p.pow * (0.98 + Math.random() * 0.04);
+    const sy = p.y - 15;
+    g.proj = { 
+        x: p.x, 
+        y: sy, 
+        vx: Math.cos(a) * pow, 
+        vy: Math.sin(a) * pow, 
+        trail: [{ x: p.x, y: sy }],
+        shooter: me
+    };
+    
+    update(gameRef, {
+        lastShot: { 
+            p: g.turn, 
+            x: p.x, 
+            y: sy, 
+            vx: g.proj.vx, 
+            vy: g.proj.vy, 
+            shooter: me,
+            timestamp: Date.now() 
+        },
+        timestamp: Date.now()
+    });
+    
+    anim();
+}
+
+function anim() {
+    if (!g.proj) return;
+    const p = g.proj;
+    p.vy += 0.5;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.trail.push({ x: p.x, y: p.y });
+    
+    // Tarkista osuma kaikkiin vastustajiin
+    for (let i = 1; i <= 3; i++) {
+        if (i === g.turn) continue;
+        const opp = g['p' + i];
+        if (!opp.alive) continue;
+        
+        const dist = Math.sqrt((p.x - opp.x) * (p.x - opp.x) + (p.y - opp.y + 10) * (p.y - opp.y + 10));
+        if (dist < 18) {
+            hit(i);
+            return;
+        }
+    }
+    
+    if (p.x >= 0 && p.x <= c.width && p.y >= getTerH(p.x)) {
+        hitGround();
+        return;
+    }
+    if (p.x < -100 || p.x > c.width + 100 || p.y > c.height + 100) {
+        miss();
+        return;
+    }
+    
+    draw();
+    requestAnimationFrame(anim);
+}
+
+function hitGround() {
+    playSound('hit');
+    
+    const craterX = g.proj.x;
+    const craterRadius = 30;
+    
+    for (let i = 0; i < g.ter.length; i++) {
+        const t = g.ter[i];
+        const dist = Math.abs(t.x - craterX);
+        if (dist < craterRadius) {
+            const depth = (craterRadius - dist) / craterRadius * 40;
+            t.y = Math.min(t.y + depth, c.height - 20);
+        }
+    }
+    
+    g.p1.y = getTerH(g.p1.x);
+    g.p2.y = getTerH(g.p2.x);
+    g.p3.y = getTerH(g.p3.x);
+    
+    g.traj.push({ p: g.turn, pts: g.proj.trail });
+    const wasMyShot = g.proj.shooter === me;
+    g.proj = null;
+    
+    if (wasMyShot) {
+        terrainVersion++;
+        const newTurn = nextPlayerTurn();
+        g.turn = newTurn;
+        
+        update(gameRef, { 
+            turn: newTurn, 
+            terrain: g.ter,
+            terrainVersion: terrainVersion,
+            p1y: g.p1.y,
+            p2y: g.p2.y,
+            p3y: g.p3.y,
+            timestamp: Date.now() 
+        });
+        updateInfo('Pelaaja ' + g.turn + ' vuoro');
+    }
+    
+    draw();
+}
+
+function miss() {
+    if (g.proj) g.traj.push({ p: g.turn, pts: g.proj.trail });
+    const wasMyShot = g.proj ? g.proj.shooter === me : false;
+    g.proj = null;
+    
+    if (wasMyShot) {
+        const newTurn = nextPlayerTurn();
+        g.turn = newTurn;
+        update(gameRef, { turn: newTurn, timestamp: Date.now() });
+        updateInfo('Pelaaja ' + g.turn + ' vuoro');
+    }
+    draw();
+}
+
+function hit(targetPlayer) {
+    playSound('explosion');
+    
+    const opp = g['p' + targetPlayer];
+    opp.alive = false;
+    
+    g.exp = { x: opp.x, y: opp.y - 10, r: 60, t: Date.now() };
+    g.traj.push({ p: g.turn, pts: g.proj.trail });
+    g.proj = null;
+    
+    // Päivitä tiedot Firebaseen (vain ampuja)
+    if (g.turn === me) {
+        const updateData = {
+            ['p' + targetPlayer + 'alive']: false,
+            timestamp: Date.now()
+        };
+        update(gameRef, updateData);
+    }
+    
+    function animExp() {
+        draw();
+        if (g.exp) {
+            requestAnimationFrame(animExp);
+        } else {
+            checkWinner();
+        }
+    }
+    
+    animExp();
+}
+
+function checkWinner() {
+    const alive = [];
+    if (g.p1.alive) alive.push(1);
+    if (g.p2.alive) alive.push(2);
+    if (g.p3.alive) alive.push(3);
+    
+    if (alive.length === 1) {
+        g.over = true;
+        const winner = alive[0];
+        const color = 'player' + winner;
+        updateInfo('Pelaaja ' + winner + ' VOITTI! 💥');
+        
+        setTimeout(function() {
+            if (confirm('Uusi peli?')) {
+                if (isHost) {
+                    g.traj = [];
+                    g.proj = null;
+                    g.over = false;
+                    g.exp = null;
+                    g.turn = 1;
+                    g.p1.alive = true;
+                    g.p2.alive = true;
+                    g.p3.alive = true;
+                    terrainVersion = 0;
+                    genTerrain();
+                    
+                    update(gameRef, {
+                        terrain: g.ter,
+                        p1x: g.p1.x,
+                        p2x: g.p2.x,
+                        p3x: g.p3.x,
+                        p1y: g.p1.y,
+                        p2y: g.p2.y,
+                        p3y: g.p3.y,
+                        canvasWidth: c.width,
+                        canvasHeight: c.height,
+                        turn: 1,
+                        terrainVersion: 0,
+                        p1alive: true,
+                        p2alive: true,
+                        p3alive: true,
+                        lastShot: null,
+                        lastAngle: null,
+                        timestamp: Date.now(),
+                        newRound: Date.now()
+                    });
+                    
+                    draw();
+                    updateInfo('Pelaaja 1 aloittaa!');
+                } else {
+                    setStatus('Odotetaan uutta peliä...');
+                }
+            }
+        }, 2000);
+    } else {
+        nextPlayerAfterKill();
+    }
+}
+
+function nextPlayerTurn() {
+    // Etsi seuraava elossa oleva pelaaja
+    for (let i = 0; i < 3; i++) {
+        const next = (g.turn % 3) + 1;
+        g.turn = next;
+        if (g['p' + next].alive) {
+            return next;
+        }
+    }
+    return g.turn;
+}
+
+function nextPlayerAfterKill() {
+    const newTurn = nextPlayerTurn();
+    g.turn = newTurn;
+    
+    if (me === g.turn) {
+        update(gameRef, { turn: newTurn, timestamp: Date.now() });
+    }
+    
+    updateInfo('Pelaaja ' + g.turn + ' vuoro');
+    draw();
+}
+
+function updateInfo(txt) {
+    document.getElementById('info').innerHTML = '<span class="player' + g.turn + '">' + txt + '</span>';
+}
+
+document.addEventListener('keydown', function(e) {
+    if (g.proj || g.over || g.turn !== me) return;
+    const p = g['p' + g.turn];
+    if (!p || !p.alive) return;
+    
+    if (e.code === 'ArrowUp') {
+        e.preventDefault();
+        const minAngle = g.turn === 1 ? -90 : g.turn === 2 ? -180 : -180;
+        const maxAngle = g.turn === 1 ? 0 : g.turn === 2 ? 0 : -90;
+        p.a = Math.max(p.a - 1, minAngle);
+        update(gameRef, { lastAngle: { p: g.turn, a: p.a }, timestamp: Date.now() });
+        draw();
+    } else if (e.code === 'ArrowDown') {
+        e.preventDefault();
+        const minAngle = g.turn === 1 ? -90 : g.turn === 2 ? -180 : -180;
+        const maxAngle = g.turn === 1 ? 0 : g.turn === 2 ? 0 : -90;
+        p.a = Math.min(p.a + 1, maxAngle);
+        update(gameRef, { lastAngle: { p: g.turn, a: p.a }, timestamp: Date.now() });
+        draw();
+    } else if (e.code === 'Space') {
+        e.preventDefault();
+        shoot();
+    }
+});
+
+let touchY = null;
+let moved = false;
+c.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    if (g.proj || g.over || g.turn !== me) return;
+    touchY = e.touches[0].clientY;
+    moved = false;
+});
+
+c.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    if (!touchY || g.proj || g.over || g.turn !== me) return;
+    const dy = touchY - e.touches[0].clientY;
+    if (Math.abs(dy) > 5) moved = true;
+    const p = g['p' + g.turn];
+    if (!p || !p.alive) return;
+    
+    const minAngle = g.turn === 1 ? -90 : g.turn === 2 ? -180 : -180;
+    const maxAngle = g.turn === 1 ? 0 : g.turn === 2 ? 0 : -90;
+    p.a = Math.max(minAngle, Math.min(maxAngle, p.a - dy * 0.1));
+    update(gameRef, { lastAngle: { p: g.turn, a: p.a }, timestamp: Date.now() });
+    touchY = e.touches[0].clientY;
+    draw();
+});
+
+c.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    if (touchY && !moved && g.turn === me) shoot();
+    touchY = null;
+    moved = false;
+});
+
+c.addEventListener('click', function() {
+    if (g.turn === me && !g.proj && !g.over) shoot();
+});
+
+function startGame() {
+    document.getElementById('menu').classList.add('hidden');
+    g.turn = 1;
+    g.traj = [];
+    g.proj = null;
+    g.over = false;
+    draw();
+    updateInfo('Pelaaja 1 aloittaa!');
+}
+</script>
+</body>
+</html>
