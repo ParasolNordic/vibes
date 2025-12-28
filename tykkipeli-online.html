@@ -97,6 +97,7 @@ let gameId = '';
 let me = 0;
 let isHost = false;
 let gameRef = null;
+let terrainVersion = 0; // Seurataan maaston versiota
 
 const g = {
     p1: { x: 0, y: 0, a: -45, pow: 25 },
@@ -129,6 +130,7 @@ window.createGame = function() {
     gameId = generateCode();
     isHost = true;
     me = 1;
+    terrainVersion = 0; // Nollaa versio
     
     document.getElementById('buttons').style.display = 'none';
     document.getElementById('hostScreen').style.display = 'block';
@@ -154,6 +156,9 @@ window.createGame = function() {
         canvasHeight: c.height,
         player2joined: false,
         turn: 1,
+        terrainVersion: 0,
+        p1y: g.p1.y,
+        p2y: g.p2.y,
         timestamp: Date.now()
     });
     
@@ -232,6 +237,7 @@ function handleUpdate(data) {
             c.height = data.canvasHeight;
             g.p1.y = getTerH(g.p1.x);
             g.p2.y = getTerH(g.p2.x);
+            terrainVersion = data.terrainVersion || 0;
             
             // Nollaa peli
             g.traj = [];
@@ -245,16 +251,17 @@ function handleUpdate(data) {
         }
     }
     
-    // Päivitä maasto jos muuttunut (kraatterit)
-    if (data.terrain && data.terrain.length > 0) {
-        const terrainChanged = !g.ter || g.ter.length !== data.terrain.length || 
-                               JSON.stringify(g.ter) !== JSON.stringify(data.terrain);
-        if (terrainChanged) {
-            g.ter = data.terrain;
-            g.p1.y = getTerH(g.p1.x);
-            g.p2.y = getTerH(g.p2.x);
-            draw();
-        }
+    // Päivitä maasto VAIN jos versio on uudempi (kraatterit)
+    if (data.terrainVersion !== undefined && data.terrainVersion > terrainVersion) {
+        console.log('handleUpdate: Updating terrain from version ' + terrainVersion + ' to ' + data.terrainVersion);
+        terrainVersion = data.terrainVersion;
+        g.ter = data.terrain;
+        
+        // Päivitä tykkien korkeudet
+        if (data.p1y !== undefined) g.p1.y = data.p1y;
+        if (data.p2y !== undefined) g.p2.y = data.p2y;
+        
+        draw();
     }
     
     // Päivitä vuoro Firebase:sta
@@ -469,6 +476,8 @@ function hitGround() {
     const craterX = g.proj.x;
     const craterRadius = 30;
     
+    console.log('hitGround: Creating crater at x=' + craterX + ', shooter=' + g.proj.shooter + ', me=' + me);
+    
     // Luo kraatteri maastoon
     for (let i = 0; i < g.ter.length; i++) {
         const t = g.ter[i];
@@ -489,14 +498,23 @@ function hitGround() {
     
     // VAIN ampuja vaihtaa vuoroa ja lähettää päivitetyn maaston
     if (wasMyShot) {
+        terrainVersion++; // Kasvata versiota
+        console.log('hitGround: I was shooter, updating Firebase with terrainVersion=' + terrainVersion);
+        
         const newTurn = g.turn === 1 ? 2 : 1;
         g.turn = newTurn;
+        
         update(gameRef, { 
             turn: newTurn, 
             terrain: g.ter, // Lähetä päivitetty maasto
+            terrainVersion: terrainVersion, // Versionumero
+            p1y: g.p1.y, // Lähetä myös uudet korkeudet
+            p2y: g.p2.y,
             timestamp: Date.now() 
         });
         updateInfo('Pelaaja ' + g.turn + ' vuoro');
+    } else {
+        console.log('hitGround: Not my shot, waiting for Firebase update');
     }
     
     draw();
@@ -541,6 +559,7 @@ function win() {
                         g.over = false;
                         g.exp = null;
                         g.turn = 1;
+                        terrainVersion = 0; // Nollaa versio
                         genTerrain();
                         
                         // Päivitä Firebase uudella maastolla
@@ -548,9 +567,12 @@ function win() {
                             terrain: g.ter,
                             p1x: g.p1.x,
                             p2x: g.p2.x,
+                            p1y: g.p1.y,
+                            p2y: g.p2.y,
                             canvasWidth: c.width,
                             canvasHeight: c.height,
                             turn: 1,
+                            terrainVersion: 0,
                             lastShot: null,
                             lastAngle: null,
                             timestamp: Date.now(),
