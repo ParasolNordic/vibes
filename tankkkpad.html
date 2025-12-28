@@ -82,11 +82,13 @@
             flex-direction: column;
             gap: 5px;
             flex: 1;
+            align-items: center;
         }
         
-        .dpad {
+        .dpad-container {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
             gap: 5px;
             max-width: 200px;
         }
@@ -116,14 +118,16 @@
         }
         
         .shoot-btn {
-            width: 100%;
+            width: 60px;
             height: 60px;
             border: 3px solid #fff;
             border-radius: 10px;
-            font-size: 20px;
+            font-size: 14px;
             font-weight: bold;
             touch-action: none;
             cursor: pointer;
+            grid-column: 2;
+            grid-row: 2;
         }
         
         .shoot-btn:active {
@@ -191,7 +195,7 @@
 </head>
 <body>
     <div id="menu" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #000; padding: 20px;">
-        <h1 style="font-size: 48px; margin-bottom: 30px; color: #FFD700;">TANKKIPELI</h1>
+        <img src="tankk.png" style="max-height: 60vh; max-width: 80vw; width: auto; display: block; margin-bottom: 30px;">
         <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
             <button onclick="selectPlayers(2)" class="menu-btn" style="background: #4CAF50;">2 PELAAJAA</button>
             <button onclick="selectPlayers(3)" class="menu-btn" style="background: #2196F3;">3 PELAAJAA</button>
@@ -199,6 +203,7 @@
     </div>
     
     <div id="bounceMenu" style="display: none; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #000; padding: 20px;">
+        <img src="tankk.png" style="max-height: 60vh; max-width: 80vw; width: auto; display: block; margin-bottom: 30px;">
         <h2 style="font-size: 36px; margin-bottom: 30px; color: #FFD700;">AMMUKSET</h2>
         <div style="display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;">
             <button onclick="startGame(true)" class="menu-btn" style="background: #FF9800;">KIMPOAVAT</button>
@@ -222,41 +227,47 @@
         <div id="controls">
             <!-- Pelaaja 1 ohjaimet -->
             <div class="control-group player1-controls">
-                <div class="dpad">
+                <div class="dpad-container">
                     <div class="control-btn empty"></div>
                     <div class="control-btn" data-key="w">▲</div>
                     <div class="control-btn empty"></div>
                     <div class="control-btn" data-key="a">◄</div>
-                    <div class="control-btn" data-key="s">▼</div>
+                    <button class="shoot-btn" data-key=" ">P1<br>AMMU</button>
                     <div class="control-btn" data-key="d">►</div>
+                    <div class="control-btn empty"></div>
+                    <div class="control-btn" data-key="s">▼</div>
+                    <div class="control-btn empty"></div>
                 </div>
-                <button class="shoot-btn" data-key=" ">AMMU P1</button>
             </div>
             
             <!-- Pelaaja 2 ohjaimet -->
             <div class="control-group player2-controls">
-                <div class="dpad">
+                <div class="dpad-container">
                     <div class="control-btn empty"></div>
                     <div class="control-btn" data-key="ArrowUp">▲</div>
                     <div class="control-btn empty"></div>
                     <div class="control-btn" data-key="ArrowLeft">◄</div>
-                    <div class="control-btn" data-key="ArrowDown">▼</div>
+                    <button class="shoot-btn" data-key="Enter">P2<br>AMMU</button>
                     <div class="control-btn" data-key="ArrowRight">►</div>
+                    <div class="control-btn empty"></div>
+                    <div class="control-btn" data-key="ArrowDown">▼</div>
+                    <div class="control-btn empty"></div>
                 </div>
-                <button class="shoot-btn" data-key="Enter">AMMU P2</button>
             </div>
             
             <!-- Pelaaja 3 ohjaimet -->
             <div class="control-group player3-controls" id="p3Controls">
-                <div class="dpad">
+                <div class="dpad-container">
                     <div class="control-btn empty"></div>
                     <div class="control-btn" data-key="u">▲</div>
                     <div class="control-btn empty"></div>
                     <div class="control-btn" data-key="h">◄</div>
-                    <div class="control-btn" data-key="j">▼</div>
+                    <button class="shoot-btn" data-key="7">P3<br>AMMU</button>
                     <div class="control-btn" data-key="k">►</div>
+                    <div class="control-btn empty"></div>
+                    <div class="control-btn" data-key="j">▼</div>
+                    <div class="control-btn empty"></div>
                 </div>
-                <button class="shoot-btn" data-key="7">AMMU P3</button>
             </div>
         </div>
     </div>
