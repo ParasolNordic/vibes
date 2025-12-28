@@ -3,30 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tykkipeli Online</title>
+    <title>Tykkipeli Online - Firebase</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #1a1a2e; overflow: hidden; font-family: Arial; }
+        body { background: #1a1a2e; overflow: hidden; font-family: Arial; color: white; }
         #menu { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); display: flex; align-items: center; 
-            justify-content: center; z-index: 1000; color: white; text-align: center;
+            justify-content: center; z-index: 1000; text-align: center;
         }
         #menu.hidden { display: none; }
         .btn { 
             background: #4CAF50; color: white; border: none; padding: 15px 30px;
             font-size: 18px; margin: 10px; cursor: pointer; border-radius: 5px;
         }
-        #linkDisplay { 
-            background: rgba(255,255,255,0.1); padding: 15px; margin: 15px;
-            border-radius: 5px; word-break: break-all; font-size: 12px;
-            max-width: 400px;
+        .btn:hover { background: #45a049; }
+        #qrcode { 
+            background: white; padding: 20px; margin: 20px auto;
+            border-radius: 10px; display: inline-block;
         }
-        #status {
-            color: yellow;
-            margin: 10px;
-            font-size: 14px;
+        #roomCode {
+            font-size: 36px; font-weight: bold; color: #4CAF50;
+            margin: 20px; letter-spacing: 5px;
         }
+        #status { color: yellow; margin: 15px; font-size: 16px; }
         canvas { display: block; background: #16213e; }
         #info { 
             position: fixed; top: 10px; right: 10px; background: rgba(15,52,96,0.9);
@@ -34,231 +35,217 @@
         }
         .player1 { color: #0f0; }
         .player2 { color: #f00; }
+        input {
+            padding: 15px; font-size: 24px; width: 300px; text-align: center;
+            border: 2px solid #4CAF50; border-radius: 5px; margin: 10px;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body>
     <div id="menu">
         <div>
             <h1>🎮 Tykkipeli Online</h1>
-            <div id="status">Ladataan...</div>
             <p style="margin: 20px;">⬆️⬇️ = Kulma | VÄLI/Napautus = Ammu</p>
+            <div id="status">Ladataan Firebase...</div>
+            
             <div id="buttons" style="display:none;">
-                <button class="btn" onclick="host()">Luo peli</button><br>
-                <button class="btn" onclick="showJoin()">Liity</button>
+                <button class="btn" onclick="createGame()">📱 Luo peli (QR-koodi)</button><br>
+                <button class="btn" onclick="showJoin()">🔢 Liity peliin</button>
             </div>
-            <div id="hostWait" style="display:none;">
-                <p>Jaa linkki:</p>
-                <div id="linkDisplay"></div>
-                <button class="btn" onclick="copyLink()">Kopioi</button>
+            
+            <div id="hostScreen" style="display:none;">
+                <div id="roomCode"></div>
+                <div id="qrcode"></div>
+                <p style="margin-top:20px;">Skannaa QR tai kirjoita koodi toisella laitteella</p>
             </div>
-            <div id="joinInput" style="display:none;">
-                <input id="roomId" placeholder="Room ID" style="padding:10px;font-size:16px;width:250px;"><br>
-                <button class="btn" onclick="join()">Liity</button>
+            
+            <div id="joinScreen" style="display:none;">
+                <p>Anna pelin koodi:</p>
+                <input id="codeInput" type="text" placeholder="XXXX" maxlength="4">
+                <br>
+                <button class="btn" onclick="joinGame()">Liity</button>
             </div>
         </div>
     </div>
     <canvas id="c"></canvas>
     <div id="info"></div>
 
-<script src="https://unpkg.com/peerjs@1.5.1/dist/peerjs.min.js"></script>
-<script>
-// Check if PeerJS loaded
-window.addEventListener('load', function() {
-    if (typeof Peer === 'undefined') {
-        document.getElementById('status').textContent = 'VIRHE: PeerJS ei latautunut!';
-        document.getElementById('status').style.color = 'red';
-        return;
-    }
-    
-    document.getElementById('status').textContent = 'Valmis!';
-    document.getElementById('status').style.color = '#0f0';
-    document.getElementById('buttons').style.display = 'block';
-    
-    // Auto-join from URL
-    const rid = new URLSearchParams(location.search).get('room');
-    if (rid) { 
-        document.getElementById('roomId').value = rid; 
-        showJoin(); 
-        setTimeout(join, 500); 
-    }
-});
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getDatabase, ref, set, onValue, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA9RGFVeItwteVL9mRezHHCX5DQex_lLqA",
+  authDomain: "tykkipeli-945a3.firebaseapp.com",
+  databaseURL: "https://tykkipeli-945a3-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tykkipeli-945a3",
+  storageBucket: "tykkipeli-945a3.firebasestorage.app",
+  messagingSenderId: "176177720878",
+  appId: "1:176177720878:web:eaabae515c8a141613b9bf"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 const c = document.getElementById('c');
 const ctx = c.getContext('2d');
 c.width = innerWidth;
 c.height = innerHeight;
 
-let peer, conn, me = 0, isHost = false, gameStarted = false;
+let gameId = '';
+let me = 0;
+let isHost = false;
+let gameRef = null;
+
 const g = {
     p1: { x: 0, y: 0, a: -45, pow: 25 },
     p2: { x: 0, y: 0, a: -135, pow: 25 },
     ter: [], traj: [], proj: null, turn: 1, over: false, exp: null
 };
 
+window.addEventListener('load', function() {
+    setStatus('Valmis! Valitse pelimuoto');
+    document.getElementById('buttons').style.display = 'block';
+    
+    const urlParams = new URLSearchParams(location.search);
+    const code = urlParams.get('join');
+    if (code) {
+        document.getElementById('codeInput').value = code.toUpperCase();
+        showJoin();
+        setTimeout(joinGame, 500);
+    }
+});
+
 function setStatus(txt) {
     document.getElementById('status').textContent = txt;
 }
 
-function host() {
-    setStatus('Luodaan huonetta...');
-    document.getElementById('buttons').style.display = 'none';
-    document.getElementById('hostWait').style.display = 'block';
+function generateCode() {
+    return Math.random().toString(36).substr(2, 4).toUpperCase();
+}
+
+window.createGame = function() {
+    gameId = generateCode();
+    isHost = true;
+    me = 1;
     
-    try {
-        peer = new Peer();
-        isHost = true;
-        me = 1;
-        
-        peer.on('open', function(id) {
-            const url = location.origin + location.pathname + '?room=' + id;
-            document.getElementById('linkDisplay').textContent = url;
-            setStatus('Odotetaan pelaajaa...');
-        });
-        
-        peer.on('connection', function(connection) {
-            setStatus('Pelaaja liittyi!');
-            conn = connection;
-            
-            conn.on('data', function(data) {
-                handleMessage(data);
-            });
-            
-            conn.on('error', function(err) {
-                setStatus('Virhe: ' + err);
-            });
-            
-            // Send terrain after delay
-            setTimeout(function() {
-                if (!gameStarted) {
-                    setStatus('Aloitetaan peli...');
-                    genTerrain();
-                    
-                    try {
-                        conn.send({
-                            t: 'start',
-                            ter: g.ter,
-                            p1x: g.p1.x,
-                            p2x: g.p2.x,
-                            w: c.width,
-                            h: c.height
-                        });
-                        startGame();
-                    } catch(e) {
-                        setStatus('Lähetysvirhe: ' + e.message);
-                    }
-                }
-            }, 800);
-        });
-        
-        peer.on('error', function(err) {
-            setStatus('Peer-virhe: ' + err.type);
-        });
-        
-    } catch(e) {
-        setStatus('Virhe: ' + e.message);
-    }
-}
-
-function showJoin() {
     document.getElementById('buttons').style.display = 'none';
-    document.getElementById('joinInput').style.display = 'block';
-    setStatus('Anna huoneen ID');
-}
+    document.getElementById('hostScreen').style.display = 'block';
+    document.getElementById('roomCode').textContent = gameId;
+    
+    const url = location.origin + location.pathname + '?join=' + gameId;
+    new QRCode(document.getElementById('qrcode'), {
+        text: url,
+        width: 200,
+        height: 200
+    });
+    
+    setStatus('Odotetaan pelaajaa...');
+    
+    genTerrain();
+    
+    gameRef = ref(db, 'games/' + gameId);
+    set(gameRef, {
+        terrain: g.ter,
+        p1x: g.p1.x,
+        p2x: g.p2.x,
+        canvasWidth: c.width,
+        canvasHeight: c.height,
+        player2joined: false,
+        turn: 1,
+        timestamp: Date.now()
+    });
+    
+    onValue(gameRef, function(snapshot) {
+        const data = snapshot.val();
+        if (data && data.player2joined && !document.getElementById('menu').classList.contains('hidden')) {
+            setStatus('Pelaaja 2 liittyi! Aloitetaan...');
+            setTimeout(startGame, 1000);
+        }
+        
+        if (data && document.getElementById('menu').classList.contains('hidden')) {
+            handleUpdate(data);
+        }
+    });
+};
 
-function join() {
-    const rid = document.getElementById('roomId').value.trim();
-    if (!rid) {
-        alert('Anna huoneen ID!');
+window.showJoin = function() {
+    document.getElementById('buttons').style.display = 'none';
+    document.getElementById('joinScreen').style.display = 'block';
+    setStatus('Anna pelin koodi');
+};
+
+window.joinGame = function() {
+    gameId = document.getElementById('codeInput').value.trim().toUpperCase();
+    if (gameId.length !== 4) {
+        alert('Virheellinen koodi!');
         return;
     }
     
-    setStatus('Yhdistetään...');
+    isHost = false;
+    me = 2;
     
-    try {
-        peer = new Peer();
-        isHost = false;
-        me = 2;
-        
-        peer.on('open', function() {
-            setStatus('Luodaan yhteyttä...');
-            conn = peer.connect(rid, { reliable: true });
-            
-            conn.on('open', function() {
-                setStatus('Yhdistetty! Odotetaan peliä...');
-            });
-            
-            conn.on('data', function(data) {
-                handleMessage(data);
-            });
-            
-            conn.on('error', function(err) {
-                setStatus('Yhteys epäonnistui: ' + err);
-            });
-        });
-        
-        peer.on('error', function(err) {
-            setStatus('Virhe: ' + err.type);
-            alert('Yhteys epäonnistui! Tarkista ID.');
-        });
-        
-    } catch(e) {
-        setStatus('Virhe: ' + e.message);
-    }
-}
-
-function handleMessage(d) {
-    if (d.t === 'start') {
-        setStatus('Aloitetaan peli...');
-        const sx = c.width / d.w;
-        const sy = c.height / d.h;
-        g.ter = [];
-        for (var i = 0; i < d.ter.length; i++) {
-            g.ter.push({ x: d.ter[i].x * sx, y: d.ter[i].y * sy });
+    setStatus('Liitytään peliin...');
+    
+    gameRef = ref(db, 'games/' + gameId);
+    onValue(gameRef, function(snapshot) {
+        const data = snapshot.val();
+        if (!data) {
+            alert('Peliä ei löytynyt koodilla: ' + gameId);
+            return;
         }
-        g.p1.x = d.p1x * sx;
-        g.p2.x = d.p2x * sx;
-        g.p1.y = getTerH(g.p1.x);
-        g.p2.y = getTerH(g.p2.x);
-        startGame();
-    } else if (d.t === 'shot') {
-        g.turn = d.p;
-        g.proj = { x: d.x, y: d.y, vx: d.vx, vy: d.vy, trail: [{ x: d.x, y: d.y }] };
-        anim();
-    } else if (d.t === 'ang') {
-        if (d.p === 1) {
-            g.p1.a = d.a;
+        
+        if (!data.player2joined) {
+            const sx = c.width / data.canvasWidth;
+            const sy = c.height / data.canvasHeight;
+            g.ter = [];
+            for (var i = 0; i < data.terrain.length; i++) {
+                g.ter.push({ x: data.terrain[i].x * sx, y: data.terrain[i].y * sy });
+            }
+            g.p1.x = data.p1x * sx;
+            g.p2.x = data.p2x * sx;
+            g.p1.y = getTerH(g.p1.x);
+            g.p2.y = getTerH(g.p2.x);
+            
+            update(gameRef, { player2joined: true, timestamp: Date.now() });
+            
+            setStatus('Aloitetaan peli...');
+            setTimeout(startGame, 1000);
         } else {
-            g.p2.a = d.a;
+            handleUpdate(data);
+        }
+    });
+};
+
+function handleUpdate(data) {
+    if (data.turn !== g.turn) {
+        g.turn = data.turn;
+        updateInfo('Pelaaja ' + g.turn + ' vuoro');
+    }
+    
+    if (data.lastShot && data.lastShot.timestamp > (g.lastShotTime || 0)) {
+        g.lastShotTime = data.lastShot.timestamp;
+        if (data.lastShot.p !== me) {
+            g.turn = data.lastShot.p;
+            g.proj = {
+                x: data.lastShot.x,
+                y: data.lastShot.y,
+                vx: data.lastShot.vx,
+                vy: data.lastShot.vy,
+                trail: [{ x: data.lastShot.x, y: data.lastShot.y }]
+            };
+            anim();
+        }
+    }
+    
+    if (data.lastAngle) {
+        if (data.lastAngle.p === 1) {
+            g.p1.a = data.lastAngle.a;
+        } else {
+            g.p2.a = data.lastAngle.a;
         }
         draw();
-    }
-}
-
-function send(d) {
-    if (conn && conn.open) {
-        try {
-            conn.send(d);
-        } catch(e) {
-            setStatus('Lähetysvirhe: ' + e.message);
-        }
-    }
-}
-
-function copyLink() {
-    const txt = document.getElementById('linkDisplay').textContent;
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(txt).then(function() {
-            alert('Kopioitu!');
-        });
-    } else {
-        // Fallback for Safari
-        const el = document.createElement('textarea');
-        el.value = txt;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
-        alert('Kopioitu!');
     }
 }
 
@@ -377,7 +364,12 @@ function shoot() {
     const pow = p.pow * (0.98 + Math.random() * 0.04);
     const sy = p.y - 15;
     g.proj = { x: p.x, y: sy, vx: Math.cos(a) * pow, vy: Math.sin(a) * pow, trail: [{ x: p.x, y: sy }] };
-    send({ t: 'shot', p: g.turn, x: p.x, y: sy, vx: g.proj.vx, vy: g.proj.vy });
+    
+    update(gameRef, {
+        lastShot: { p: g.turn, x: p.x, y: sy, vx: g.proj.vx, vy: g.proj.vy, timestamp: Date.now() },
+        timestamp: Date.now()
+    });
+    
     anim();
 }
 
@@ -412,7 +404,8 @@ function hitGround() {
     g.traj.push({ p: g.turn, pts: g.proj.trail });
     g.proj = null;
     g.turn = g.turn === 1 ? 2 : 1;
-    updateInfo('Pelaaja ' + g.turn);
+    update(gameRef, { turn: g.turn, timestamp: Date.now() });
+    updateInfo('Pelaaja ' + g.turn + ' vuoro');
     draw();
 }
 
@@ -420,7 +413,8 @@ function miss() {
     if (g.proj) g.traj.push({ p: g.turn, pts: g.proj.trail });
     g.proj = null;
     g.turn = g.turn === 1 ? 2 : 1;
-    updateInfo('Pelaaja ' + g.turn);
+    update(gameRef, { turn: g.turn, timestamp: Date.now() });
+    updateInfo('Pelaaja ' + g.turn + ' vuoro');
     draw();
 }
 
@@ -455,12 +449,12 @@ document.addEventListener('keydown', function(e) {
     if (e.code === 'ArrowUp') {
         e.preventDefault();
         p.a = Math.max(p.a - 1, g.turn === 1 ? -90 : -180);
-        send({ t: 'ang', p: g.turn, a: p.a });
+        update(gameRef, { lastAngle: { p: g.turn, a: p.a }, timestamp: Date.now() });
         draw();
     } else if (e.code === 'ArrowDown') {
         e.preventDefault();
         p.a = Math.min(p.a + 1, g.turn === 1 ? 0 : -90);
-        send({ t: 'ang', p: g.turn, a: p.a });
+        update(gameRef, { lastAngle: { p: g.turn, a: p.a }, timestamp: Date.now() });
         draw();
     } else if (e.code === 'Space') {
         e.preventDefault();
@@ -484,7 +478,7 @@ c.addEventListener('touchmove', function(e) {
     if (Math.abs(dy) > 5) moved = true;
     const p = g.turn === 1 ? g.p1 : g.p2;
     p.a = Math.max(g.turn === 1 ? -90 : -180, Math.min(g.turn === 1 ? 0 : -90, p.a - dy * 0.1));
-    send({ t: 'ang', p: g.turn, a: p.a });
+    update(gameRef, { lastAngle: { p: g.turn, a: p.a }, timestamp: Date.now() });
     touchY = e.touches[0].clientY;
     draw();
 });
@@ -501,8 +495,6 @@ c.addEventListener('click', function() {
 });
 
 function startGame() {
-    if (gameStarted) return;
-    gameStarted = true;
     document.getElementById('menu').classList.add('hidden');
     g.turn = 1;
     g.traj = [];
