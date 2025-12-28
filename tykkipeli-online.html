@@ -87,13 +87,16 @@ function host() {
     });
     peer.on('connection', c => {
         conn = c;
-        conn.on('data', handleMsg);
-        // Wait a bit then start
-        setTimeout(() => {
-            genTerrain();
-            send({ t: 'start', ter: g.ter, p1x: g.p1.x, p2x: g.p2.x, w: c.width, h: c.height });
-            startGame();
-        }, 1000);
+        conn.on('data', d => {
+            if (d.t === 'ready') {
+                console.log('Guest is ready, sending terrain');
+                genTerrain();
+                send({ t: 'start', ter: g.ter, p1x: g.p1.x, p2x: g.p2.x, w: c.width, h: c.height });
+                startGame();
+            } else {
+                handleMsg(d);
+            }
+        });
     });
 }
 
@@ -105,12 +108,16 @@ function showJoin() {
 function join() {
     const rid = document.getElementById('roomId').value.trim();
     if (!rid) return alert('Anna ID!');
+    if (peer) return; // Already connecting/connected
     peer = new Peer();
     isHost = false;
     me = 2;
     peer.on('open', () => {
         conn = peer.connect(rid, { reliable: true });
-        conn.on('open', () => console.log('Connected'));
+        conn.on('open', () => {
+            console.log('Connected, sending ready signal');
+            conn.send({ t: 'ready' });
+        });
         conn.on('data', handleMsg);
     });
 }
