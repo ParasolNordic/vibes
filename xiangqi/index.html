@@ -118,8 +118,8 @@
             height: 20px;
             border-radius: 50%;
             background: rgba(76, 175, 80, 0.6);
-            pointer-events: none;
             animation: pulse 1s infinite;
+            z-index: 10;
         }
         
         @keyframes pulse {
@@ -251,7 +251,7 @@
     <div class="container">
         <div class="game-section">
             <div class="board-container">
-                <div class="board" id="board">
+                <div class="board" id="board" onclick="handleBoardClick(event)">
                     <svg class="board-lines" width="540" height="600">
                         <!-- Vertical lines -->
                         <line x1="60" y1="30" x2="60" y2="570" stroke="#333" stroke-width="2"/>
@@ -528,28 +528,54 @@
             }
         }
 
-        function selectPiece(row, col) {
-            const piece = board[row][col];
-            
-            if (!piece) {
-                if (selectedPiece) {
-                    movePiece(selectedPiece.row, selectedPiece.col, row, col);
-                }
+        function handleBoardClick(event) {
+            if (event.target.id !== 'board' && !event.target.closest('.valid-move')) {
                 return;
             }
 
-            if (selectedPiece && PIECE_INFO[piece].color !== currentPlayer) {
+            if (!selectedPiece) {
+                return;
+            }
+
+            const boardRect = document.getElementById('board').getBoundingClientRect();
+            const x = event.clientX - boardRect.left;
+            const y = event.clientY - boardRect.top;
+
+            const col = Math.round((x - 60) / 60);
+            const row = Math.round((y - 30) / 60);
+
+            if (row >= 0 && row < 10 && col >= 0 && col < 9) {
+                selectPiece(row, col);
+            }
+        }
+
+        function selectPiece(row, col) {
+            const piece = board[row][col];
+            
+            // If clicking on empty square and we have a piece selected
+            if (!piece && selectedPiece) {
                 movePiece(selectedPiece.row, selectedPiece.col, row, col);
                 return;
             }
 
-            if (PIECE_INFO[piece].color !== currentPlayer) {
+            // If clicking on opponent's piece while having a piece selected
+            if (piece && selectedPiece && PIECE_INFO[piece].color !== currentPlayer) {
+                movePiece(selectedPiece.row, selectedPiece.col, row, col);
                 return;
             }
 
-            selectedPiece = { row, col, piece };
-            renderBoard();
-            displayPieceInfo(piece);
+            // If clicking on own piece when no piece is selected, or selecting a different own piece
+            if (piece && PIECE_INFO[piece].color === currentPlayer) {
+                selectedPiece = { row, col, piece };
+                renderBoard();
+                displayPieceInfo(piece);
+                return;
+            }
+
+            // If clicking on opponent's piece without having selected anything
+            if (piece && PIECE_INFO[piece].color !== currentPlayer) {
+                return;
+            }
         }
 
         function displayPieceInfo(piece) {
@@ -572,7 +598,12 @@
                 dot.className = 'valid-move';
                 dot.style.left = `${50 + c * 60}px`;
                 dot.style.top = `${20 + r * 60}px`;
-                dot.onclick = () => movePiece(row, col, r, c);
+                dot.style.pointerEvents = 'auto';
+                dot.style.cursor = 'pointer';
+                dot.onclick = (e) => {
+                    e.stopPropagation();
+                    movePiece(row, col, r, c);
+                };
                 boardElement.appendChild(dot);
             });
         }
