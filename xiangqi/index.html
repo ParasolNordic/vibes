@@ -1,748 +1,789 @@
 <!DOCTYPE html>
 <html lang="fi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Xiangqi - Kiinalainen Shakki</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-        }
-        
-        .container {
-            display: flex;
-            gap: 30px;
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 1400px;
-        }
-        
-        .game-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .board-container {
-            position: relative;
-            background: #d4a574;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        
-        .board {
-            position: relative;
-            width: 600px;
-            height: 660px;
-            background-image: url('Xiangqi.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-        }
-        
-        .piece {
-            position: absolute;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            border: 3px solid #333;
-        }
-        
-        .piece.red {
-            background: radial-gradient(circle at 30% 30%, #ff6b6b, #c92a2a);
-            color: #fff;
-        }
-        
-        .piece.black {
-            background: radial-gradient(circle at 30% 30%, #495057, #212529);
-            color: #fff;
-        }
-        
-        .piece:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
-        }
-        
-        .piece.selected {
-            transform: scale(1.15);
-            box-shadow: 0 0 20px #ffd700, 0 6px 12px rgba(0,0,0,0.4);
-            border-color: #ffd700;
-        }
-        
-        .valid-move {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background: rgba(76, 175, 80, 0.8);
-            animation: pulse 1s infinite;
-            z-index: 10;
-            cursor: pointer;
-            border: 2px solid #4caf50;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.7; }
-            50% { transform: scale(1.3); opacity: 1; }
-        }
-        
-        .info-panel {
-            width: 400px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        
-        .info-box {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            border-left: 4px solid #667eea;
-        }
-        
-        .info-box h2 {
-            margin: 0 0 15px 0;
-            color: #333;
-            font-size: 20px;
-        }
-        
-        .info-box h3 {
-            margin: 15px 0 10px 0;
-            color: #495057;
-            font-size: 16px;
-        }
-        
-        .info-box p, .info-box ul {
-            margin: 8px 0;
-            color: #666;
-            line-height: 1.6;
-            font-size: 14px;
-        }
-        
-        .info-box ul {
-            padding-left: 20px;
-        }
-        
-        .status {
-            font-size: 18px;
-            font-weight: bold;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        
-        .status.red-turn {
-            background: #ffe0e0;
-            color: #c92a2a;
-        }
-        
-        .status.black-turn {
-            background: #e0e0e0;
-            color: #212529;
-        }
-        
-        .button {
-            padding: 12px 24px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-        
-        .button:hover {
-            background: #5568d3;
-        }
-        
-        .move-history {
-            max-height: 200px;
-            overflow-y: auto;
-            font-size: 13px;
-            line-height: 1.8;
-        }
-        
-        .highlight {
-            background: #fff3cd;
-            padding: 2px 4px;
-            border-radius: 3px;
-            font-weight: bold;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Xiangqi - Kiinalainen Shakki</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+    }
+
+    .container {
+      display: flex;
+      gap: 30px;
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 1400px;
+    }
+
+    .game-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .board-container {
+      position: relative;
+      background: #d4a574;
+      padding: 40px;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    /* ✅ FIX: Laudan kuvasuhde lukitaan (Xiangqi.png on 3:4) ja tausta venytetään täsmälleen elementin kokoiseksi */
+    .board {
+      position: relative;
+      width: 600px;
+      aspect-ratio: 3 / 4;           /* 1350:1800 = 3:4 */
+      background-image: url('Xiangqi.png');
+      background-size: 100% 100%;    /* ei "contain" -> ei sivutyhjää -> koordinaatit pysyy linjassa */
+      background-repeat: no-repeat;
+      background-position: 0 0;
+      user-select: none;
+    }
+
+    .piece {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+      border: 3px solid #333;
+      z-index: 5;
+    }
+
+    .piece.red {
+      background: radial-gradient(circle at 30% 30%, #ff6b6b, #c92a2a);
+      color: #fff;
+    }
+
+    .piece.black {
+      background: radial-gradient(circle at 30% 30%, #495057, #212529);
+      color: #fff;
+    }
+
+    .piece:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+    }
+
+    .piece.selected {
+      transform: scale(1.15);
+      box-shadow: 0 0 20px #ffd700, 0 6px 12px rgba(0,0,0,0.4);
+      border-color: #ffd700;
+    }
+
+    .valid-move {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(76, 175, 80, 0.8);
+      animation: pulse 1s infinite;
+      z-index: 10;
+      cursor: pointer;
+      border: 2px solid #4caf50;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 0.7; }
+      50% { transform: scale(1.3); opacity: 1; }
+    }
+
+    .info-panel {
+      width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .info-box {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      border-left: 4px solid #667eea;
+    }
+
+    .info-box h2 {
+      margin: 0 0 15px 0;
+      color: #333;
+      font-size: 20px;
+    }
+
+    .info-box h3 {
+      margin: 15px 0 10px 0;
+      color: #495057;
+      font-size: 16px;
+    }
+
+    .info-box p, .info-box ul {
+      margin: 8px 0;
+      color: #666;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .info-box ul {
+      padding-left: 20px;
+    }
+
+    .status {
+      font-size: 18px;
+      font-weight: bold;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .status.red-turn {
+      background: #ffe0e0;
+      color: #c92a2a;
+    }
+
+    .status.black-turn {
+      background: #e0e0e0;
+      color: #212529;
+    }
+
+    .button {
+      padding: 12px 24px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      transition: background 0.2s;
+      margin-top: 16px;
+    }
+
+    .button:hover {
+      background: #5568d3;
+    }
+
+    .move-history {
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .highlight {
+      background: #fff3cd;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-weight: bold;
+    }
+
+    /* Pieni responsiivisuus: pienillä näytöillä lauta kaventuu */
+    @media (max-width: 1100px) {
+      .container { flex-direction: column; align-items: center; }
+      .info-panel { width: 100%; max-width: 600px; }
+      .board { width: min(600px, 85vw); }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="game-section">
-            <div class="board-container">
-                <div class="board" id="board" onclick="handleBoardClick(event)"></div>
-            </div>
-            <button class="button" onclick="resetGame()">Uusi peli</button>
-        </div>
-        
-        <div class="info-panel">
-            <div class="info-box">
-                <div id="status" class="status red-turn">Punaisen vuoro</div>
-            </div>
-            
-            <div class="info-box">
-                <h2>Viimeisin siirto</h2>
-                <div id="lastMove">Peli alkaa. Punainen aloittaa!</div>
-            </div>
-            
-            <div class="info-box">
-                <h2>Ohjeet valitulle nappulalle</h2>
-                <div id="pieceInfo">Valitse nappula nähdäksesi sen liikkumissäännöt ja taktiset vinkit.</div>
-            </div>
-            
-            <div class="info-box">
-                <h2>Siirtohistoria</h2>
-                <div id="moveHistory" class="move-history">-</div>
-            </div>
-            
-            <div class="info-box">
-                <h2>Perussäännöt</h2>
-                <p><strong>Tavoite:</strong> Shakkimatti vastustajan kenraali.</p>
-                <p><strong>Erityistä:</strong></p>
-                <ul>
-                    <li>Nappulat liikkuvat viivojen risteyskohdissa</li>
-                    <li>Joki jakaa laudan - vaikuttaa norsun ja sotilaiden liikkeisiin</li>
-                    <li>Kenraalit eivät voi kohdata suoraan ilman nappuloita välissä</li>
-                </ul>
-            </div>
-        </div>
+  <div class="container">
+    <div class="game-section">
+      <div class="board-container">
+        <div class="board" id="board" onclick="handleBoardClick(event)"></div>
+      </div>
+      <button class="button" onclick="resetGame()">Uusi peli</button>
     </div>
 
-    <script>
-        // Piece names and movement info
-        const PIECE_NAMES = {
-            '帥': 'Kenraali (Shuai)', '將': 'Kenraali (Jiang)',
-            '仕': 'Neuvonantaja (Shi)', '士': 'Neuvonantaja (Shi)',
-            '相': 'Norsu (Xiang)', '象': 'Norsu (Xiang)',
-            '馬': 'Hevonen (Ma)',
-            '車': 'Vaunu (Ju)',
-            '炮': 'Tykki (Pao)', '砲': 'Tykki (Pao)',
-            '兵': 'Sotilas (Bing)', '卒': 'Sotilas (Zu)'
-        };
+    <div class="info-panel">
+      <div class="info-box">
+        <div id="status" class="status red-turn">Punaisen vuoro</div>
+      </div>
 
-        const PIECE_MOVES = {
-            '帥': 'Liikkuu yhden askeleen kerrallaan pysty- tai vaakasuunnassa.',
-            '將': 'Liikkuu yhden askeleen kerrallaan pysty- tai vaakasuunnassa.',
-            '仕': 'Liikkuu yhden askeleen viistosti palatsin diagonaaleilla.',
-            '士': 'Liikkuu yhden askeleen viistosti palatsin diagonaaleilla.',
-            '相': 'Liikkuu täsmälleen kaksi ruutua viistosti (muodostaa "X"-muodon).',
-            '象': 'Liikkuu täsmälleen kaksi ruutua viistosti (muodostaa "X"-muodon).',
-            '馬': 'Liikkuu "L"-muodossa: yksi askel suoraan, sitten yksi viistosti.',
-            '車': 'Liikkuu minkä tahansa matkan pysty- tai vaakasuunnassa.',
-            '炮': 'Liikkuu kuten vaunu MUTTA syödäkseen sen täytyy hypätä täsmälleen yhden nappulan yli.',
-            '砲': 'Liikkuu kuten vaunu MUTTA syödäkseen sen täytyy hypätä täsmälleen yhden nappulan yli.',
-            '兵': 'Liikkuu yhden askeleen eteenpäin. Joen ylitettyään voi liikkua myös sivuille (ei taaksepäin).',
-            '卒': 'Liikkuu yhden askeleen eteenpäin. Joen ylitettyään voi liikkua myös sivuille (ei taaksepäin).'
-        };
+      <div class="info-box">
+        <h2>Viimeisin siirto</h2>
+        <div id="lastMove">Peli alkaa. Punainen aloittaa!</div>
+      </div>
 
-        const PIECE_RESTRICTIONS = {
-            '帥': 'EI VOI POISTUA PALATSISTA (3x3 keskialue).',
-            '將': 'EI VOI POISTUA PALATSISTA (3x3 keskialue).',
-            '仕': 'EI VOI POISTUA PALATSISTA.',
-            '士': 'EI VOI POISTUA PALATSISTA.',
-            '相': 'EI VOI YLITTÄÄ JOKEA. Voidaan estää, jos väliruudussa on nappula.',
-            '象': 'EI VOI YLITTÄÄ JOKEA. Voidaan estää, jos väliruudussa on nappula.',
-            '馬': 'Voidaan estää, jos viereisessä ruudussa on nappula.',
-            '車': 'Ei voi hypätä muiden nappuloiden yli.',
-            '炮': 'Tarvitsee "näytön" hyppääkseen syödäkseen.',
-            '砲': 'Tarvitsee "näytön" hyppääkseen syödäkseen.',
-            '兵': 'Ei voi liikkua taaksepäin.',
-            '卒': 'Ei voi liikkua taaksepäin.'
-        };
+      <div class="info-box">
+        <h2>Ohjeet valitulle nappulalle</h2>
+        <div id="pieceInfo">Valitse nappula nähdäksesi sen liikkumissäännöt ja taktiset vinkit.</div>
+      </div>
 
-        const PIECE_TACTICS = {
-            '帥': 'Pidä kenraali suojattuna! Vältä paljastamasta sitä vastustajan kenraalin kanssa samalle riville.',
-            '將': 'Pidä kenraali suojattuna! Vältä paljastamasta sitä vastustajan kenraalin kanssa samalle riville.',
-            '仕': 'Käytä neuvonantajia kenraalin suojaamiseen.',
-            '士': 'Käytä neuvonantajia kenraalin suojaamiseen.',
-            '相': 'Norsut ovat hyviä puolustajia omalla puolellasi.',
-            '象': 'Norsut ovat hyviä puolustajia omalla puolellasi.',
-            '馬': 'Hevoset ovat voimakkaita keskipelissä. Vältä niiden estämistä omilla nappuloillasi.',
-            '車': 'Vaunuja pidetään vahvimpina nappuloina! Hallitse avoimia linjoja.',
-            '炮': 'Tykit ovat erinomaisia avajaisissa. Aseta ne painostamaan kenraalia. Käytä vastustajan nappuloita "näyttöinä"!',
-            '砲': 'Tykit ovat erinomaisia avajaisissa. Aseta ne painostamaan kenraalia. Käytä vastustajan nappuloita "näyttöinä"!',
-            '兵': 'Sotilaat vahvistuvat ylitettyään joen! Työnnä niitä eteenpäin tukeaksesi hyökkäystä.',
-            '卒': 'Sotilaat vahvistuvat ylitettyään joen! Työnnä niitä eteenpäin tukeaksesi hyökkäystä.'
-        };
+      <div class="info-box">
+        <h2>Siirtohistoria</h2>
+        <div id="moveHistory" class="move-history">-</div>
+      </div>
 
-        let board = [];
-        let pieceColors = {};
-        let selectedPiece = null;
-        let currentPlayer = 'red';
-        let moveHistory = [];
+      <div class="info-box">
+        <h2>Perussäännöt</h2>
+        <p><strong>Tavoite:</strong> Shakkimatti vastustajan kenraali.</p>
+        <p><strong>Erityistä:</strong></p>
+        <ul>
+          <li>Nappulat liikkuvat viivojen risteyskohdissa</li>
+          <li>Joki jakaa laudan - vaikuttaa norsun ja sotilaiden liikkeisiin</li>
+          <li>Kenraalit eivät voi kohdata suoraan ilman nappuloita välissä</li>
+        </ul>
+      </div>
+    </div>
+  </div>
 
-        // Board positioning - calibrated to match the image
-        // Image is 600px wide, 660px tall
-        // Intersections are at these approximate positions (measured from image)
-        const BOARD_LEFT = 58;  // Left edge offset
-        const BOARD_TOP = 82;   // Top edge offset
-        const COL_SPACING = 60.5;  // Space between columns
-        const ROW_SPACING = 59.5;  // Space between rows
+  <script>
+    // Piece names and movement info
+    const PIECE_NAMES = {
+      '帥': 'Kenraali (Shuai)', '將': 'Kenraali (Jiang)',
+      '仕': 'Neuvonantaja (Shi)', '士': 'Neuvonantaja (Shi)',
+      '相': 'Norsu (Xiang)', '象': 'Norsu (Xiang)',
+      '馬': 'Hevonen (Ma)',
+      '車': 'Vaunu (Ju)',
+      '炮': 'Tykki (Pao)', '砲': 'Tykki (Pao)',
+      '兵': 'Sotilas (Bing)', '卒': 'Sotilas (Zu)'
+    };
 
-        const initialSetup = [
-            ['車', '馬', '象', '士', '將', '士', '象', '馬', '車'],  // row 0 - Black
-            ['', '', '', '', '', '', '', '', ''],
-            ['', '砲', '', '', '', '', '', '砲', ''],              // row 2 - Black cannons
-            ['卒', '', '卒', '', '卒', '', '卒', '', '卒'],        // row 3 - Black soldiers
-            ['', '', '', '', '', '', '', '', ''],
-            ['', '', '', '', '', '', '', '', ''],
-            ['兵', '', '兵', '', '兵', '', '兵', '', '兵'],        // row 6 - Red soldiers
-            ['', '炮', '', '', '', '', '', '炮', ''],              // row 7 - Red cannons
-            ['', '', '', '', '', '', '', '', ''],
-            ['車', '馬', '相', '仕', '帥', '仕', '相', '馬', '車']   // row 9 - Red
-        ];
+    const PIECE_MOVES = {
+      '帥': 'Liikkuu yhden askeleen kerrallaan pysty- tai vaakasuunnassa.',
+      '將': 'Liikkuu yhden askeleen kerrallaan pysty- tai vaakasuunnassa.',
+      '仕': 'Liikkuu yhden askeleen viistosti palatsin diagonaaleilla.',
+      '士': 'Liikkuu yhden askeleen viistosti palatsin diagonaaleilla.',
+      '相': 'Liikkuu täsmälleen kaksi ruutua viistosti (muodostaa "X"-muodon).',
+      '象': 'Liikkuu täsmälleen kaksi ruutua viistosti (muodostaa "X"-muodon).',
+      '馬': 'Liikkuu "L"-muodossa: yksi askel suoraan, sitten yksi viistosti.',
+      '車': 'Liikkuu minkä tahansa matkan pysty- tai vaakasuunnassa.',
+      '炮': 'Liikkuu kuten vaunu MUTTA syödäkseen sen täytyy hypätä täsmälleen yhden nappulan yli.',
+      '砲': 'Liikkuu kuten vaunu MUTTA syödäkseen sen täytyy hypätä täsmälleen yhden nappulan yli.',
+      '兵': 'Liikkuu yhden askeleen eteenpäin. Joen ylitettyään voi liikkua myös sivuille (ei taaksepäin).',
+      '卒': 'Liikkuu yhden askeleen eteenpäin. Joen ylitettyään voi liikkua myös sivuille (ei taaksepäin).'
+    };
 
-        function getPixelPosition(row, col) {
-            return {
-                x: BOARD_LEFT + col * COL_SPACING,
-                y: BOARD_TOP + row * ROW_SPACING
+    const PIECE_RESTRICTIONS = {
+      '帥': 'EI VOI POISTUA PALATSISTA (3x3 keskialue).',
+      '將': 'EI VOI POISTUA PALATSISTA (3x3 keskialue).',
+      '仕': 'EI VOI POISTUA PALATSISTA.',
+      '士': 'EI VOI POISTUA PALATSISTA.',
+      '相': 'EI VOI YLITTÄÄ JOKEA. Voidaan estää, jos väliruudussa on nappula.',
+      '象': 'EI VOI YLITTÄÄ JOKEA. Voidaan estää, jos väliruudussa on nappula.',
+      '馬': 'Voidaan estää, jos viereisessä ruudussa on nappula.',
+      '車': 'Ei voi hypätä muiden nappuloiden yli.',
+      '炮': 'Tarvitsee "näytön" hyppääkseen syödäkseen.',
+      '砲': 'Tarvitsee "näytön" hyppääkseen syödäkseen.',
+      '兵': 'Ei voi liikkua taaksepäin.',
+      '卒': 'Ei voi liikkua taaksepäin.'
+    };
+
+    const PIECE_TACTICS = {
+      '帥': 'Pidä kenraali suojattuna! Vältä paljastamasta sitä vastustajan kenraalin kanssa samalle riville.',
+      '將': 'Pidä kenraali suojattuna! Vältä paljastamasta sitä vastustajan kenraalin kanssa samalle riville.',
+      '仕': 'Käytä neuvonantajia kenraalin suojaamiseen.',
+      '士': 'Käytä neuvonantajia kenraalin suojaamiseen.',
+      '相': 'Norsut ovat hyviä puolustajia omalla puolellasi.',
+      '象': 'Norsut ovat hyviä puolustajia omalla puolellasi.',
+      '馬': 'Hevoset ovat voimakkaita keskipelissä. Vältä niiden estämistä omilla nappuloillasi.',
+      '車': 'Vaunuja pidetään vahvimpina nappuloina! Hallitse avoimia linjoja.',
+      '炮': 'Tykit ovat erinomaisia avajaisissa. Aseta ne painostamaan kenraalia. Käytä vastustajan nappuloita "näyttöinä"!',
+      '砲': 'Tykit ovat erinomaisia avajaisissa. Aseta ne painostamaan kenraalia. Käytä vastustajan nappuloita "näyttöinä"!',
+      '兵': 'Sotilaat vahvistuvat ylitettyään joen! Työnnä niitä eteenpäin tukeaksesi hyökkäystä.',
+      '卒': 'Sotilaat vahvistuvat ylitettyään joen! Työnnä niitä eteenpäin tukeaksesi hyökkäystä.'
+    };
+
+    let board = [];
+    let pieceColors = {};
+    let selectedPiece = null;
+    let currentPlayer = 'red';
+    let moveHistory = [];
+
+    // ✅ FIX: Ruudukko sidotaan taustakuvan "oikeaan" ruudukon alueeseen prosentteina.
+    // Nämä arvot on mitattu Xiangqi.png:stä (1350x1800):
+    // ruudukon vasen x=77, oikea x=1289, ylä y=226, ala y=1573
+    const GRID = {
+      leftPct: 77 / 1350,
+      rightPct: 1289 / 1350,
+      topPct: 226 / 1800,
+      bottomPct: 1573 / 1800,
+      cols: 9,
+      rows: 10
+    };
+
+    function getBoardMetrics() {
+      const el = document.getElementById('board');
+      const w = el.clientWidth;
+      const h = el.clientHeight;
+
+      const left = w * GRID.leftPct;
+      const top = h * GRID.topPct;
+
+      const colSpacing = (w * (GRID.rightPct - GRID.leftPct)) / (GRID.cols - 1);
+      const rowSpacing = (h * (GRID.bottomPct - GRID.topPct)) / (GRID.rows - 1);
+
+      return { left, top, colSpacing, rowSpacing };
+    }
+
+    function getPixelPosition(row, col) {
+      const m = getBoardMetrics();
+      return {
+        x: m.left + col * m.colSpacing,
+        y: m.top + row * m.rowSpacing
+      };
+    }
+
+    function getGridPosition(x, y) {
+      const m = getBoardMetrics();
+      const col = Math.round((x - m.left) / m.colSpacing);
+      const row = Math.round((y - m.top) / m.rowSpacing);
+      return { row, col };
+    }
+
+    function setPieceColor(row, col, color) {
+      pieceColors[`${row}-${col}`] = color;
+    }
+
+    function getPieceColor(row, col) {
+      return pieceColors[`${row}-${col}`] || null;
+    }
+
+    const initialSetup = [
+      ['車', '馬', '象', '士', '將', '士', '象', '馬', '車'],  // row 0 - Black
+      ['', '', '', '', '', '', '', '', ''],
+      ['', '砲', '', '', '', '', '', '砲', ''],              // row 2 - Black cannons
+      ['卒', '', '卒', '', '卒', '', '卒', '', '卒'],        // row 3 - Black soldiers
+      ['', '', '', '', '', '', '', '', ''],
+      ['', '', '', '', '', '', '', '', ''],
+      ['兵', '', '兵', '', '兵', '', '兵', '', '兵'],        // row 6 - Red soldiers
+      ['', '炮', '', '', '', '', '', '炮', ''],              // row 7 - Red cannons
+      ['', '', '', '', '', '', '', '', ''],
+      ['車', '馬', '相', '仕', '帥', '仕', '相', '馬', '車']   // row 9 - Red
+    ];
+
+    function initBoard() {
+      board = initialSetup.map(row => [...row]);
+      pieceColors = {};
+
+      for (let row = 0; row < 10; row++) {
+        for (let col = 0; col < 9; col++) {
+          const piece = board[row][col];
+          if (piece) {
+            const color = row <= 3 ? 'black' : 'red';
+            setPieceColor(row, col, color);
+          }
+        }
+      }
+
+      renderBoard();
+    }
+
+    function renderBoard() {
+      const boardElement = document.getElementById('board');
+      const existingPieces = boardElement.querySelectorAll('.piece');
+      existingPieces.forEach(p => p.remove());
+
+      const validMoves = boardElement.querySelectorAll('.valid-move');
+      validMoves.forEach(m => m.remove());
+
+      for (let row = 0; row < 10; row++) {
+        for (let col = 0; col < 9; col++) {
+          const piece = board[row][col];
+          if (piece) {
+            const color = getPieceColor(row, col);
+            const pos = getPixelPosition(row, col);
+
+            const pieceElement = document.createElement('div');
+            pieceElement.className = `piece ${color}`;
+            pieceElement.textContent = piece;
+            pieceElement.style.left = `${pos.x - 25}px`;
+            pieceElement.style.top = `${pos.y - 25}px`;
+            pieceElement.dataset.row = row;
+            pieceElement.dataset.col = col;
+            pieceElement.onclick = (e) => {
+              e.stopPropagation();
+              selectPiece(row, col);
             };
-        }
 
-        function getGridPosition(x, y) {
-            const col = Math.round((x - BOARD_LEFT) / COL_SPACING);
-            const row = Math.round((y - BOARD_TOP) / ROW_SPACING);
-            return { row, col };
-        }
-
-        function setPieceColor(row, col, color) {
-            pieceColors[`${row}-${col}`] = color;
-        }
-
-        function getPieceColor(row, col) {
-            return pieceColors[`${row}-${col}`] || null;
-        }
-
-        function initBoard() {
-            board = initialSetup.map(row => [...row]);
-            pieceColors = {};
-            
-            for (let row = 0; row < 10; row++) {
-                for (let col = 0; col < 9; col++) {
-                    const piece = board[row][col];
-                    if (piece) {
-                        const color = row <= 3 ? 'black' : 'red';
-                        setPieceColor(row, col, color);
-                    }
-                }
-            }
-            
-            renderBoard();
-        }
-
-        function renderBoard() {
-            const boardElement = document.getElementById('board');
-            const existingPieces = boardElement.querySelectorAll('.piece');
-            existingPieces.forEach(p => p.remove());
-            
-            const validMoves = boardElement.querySelectorAll('.valid-move');
-            validMoves.forEach(m => m.remove());
-
-            for (let row = 0; row < 10; row++) {
-                for (let col = 0; col < 9; col++) {
-                    const piece = board[row][col];
-                    if (piece) {
-                        const color = getPieceColor(row, col);
-                        const pos = getPixelPosition(row, col);
-                        
-                        const pieceElement = document.createElement('div');
-                        pieceElement.className = `piece ${color}`;
-                        pieceElement.textContent = piece;
-                        pieceElement.style.left = `${pos.x - 25}px`;
-                        pieceElement.style.top = `${pos.y - 25}px`;
-                        pieceElement.dataset.row = row;
-                        pieceElement.dataset.col = col;
-                        pieceElement.onclick = (e) => {
-                            e.stopPropagation();
-                            selectPiece(row, col);
-                        };
-                        
-                        if (selectedPiece && selectedPiece.row === row && selectedPiece.col === col) {
-                            pieceElement.classList.add('selected');
-                        }
-                        
-                        boardElement.appendChild(pieceElement);
-                    }
-                }
+            if (selectedPiece && selectedPiece.row === row && selectedPiece.col === col) {
+              pieceElement.classList.add('selected');
             }
 
-            if (selectedPiece) {
-                showValidMoves(selectedPiece.row, selectedPiece.col);
-            }
+            boardElement.appendChild(pieceElement);
+          }
         }
+      }
 
-        function handleBoardClick(event) {
-            if (!selectedPiece) return;
+      if (selectedPiece) {
+        showValidMoves(selectedPiece.row, selectedPiece.col);
+      }
+    }
 
-            const boardRect = document.getElementById('board').getBoundingClientRect();
-            const x = event.clientX - boardRect.left;
-            const y = event.clientY - boardRect.top;
+    function handleBoardClick(event) {
+      if (!selectedPiece) return;
 
-            const { row, col } = getGridPosition(x, y);
+      const boardRect = document.getElementById('board').getBoundingClientRect();
+      const x = event.clientX - boardRect.left;
+      const y = event.clientY - boardRect.top;
 
-            if (row >= 0 && row < 10 && col >= 0 && col < 9) {
-                selectPiece(row, col);
-            }
+      const { row, col } = getGridPosition(x, y);
+
+      if (row >= 0 && row < 10 && col >= 0 && col < 9) {
+        selectPiece(row, col);
+      }
+    }
+
+    function selectPiece(row, col) {
+      const piece = board[row][col];
+      const pieceColor = getPieceColor(row, col);
+
+      if (!piece && selectedPiece) {
+        movePiece(selectedPiece.row, selectedPiece.col, row, col);
+        return;
+      }
+
+      if (piece && selectedPiece && pieceColor !== currentPlayer) {
+        movePiece(selectedPiece.row, selectedPiece.col, row, col);
+        return;
+      }
+
+      if (piece && pieceColor === currentPlayer) {
+        selectedPiece = { row, col, piece };
+        renderBoard();
+        displayPieceInfo(piece);
+        return;
+      }
+    }
+
+    function displayPieceInfo(piece) {
+      const infoElement = document.getElementById('pieceInfo');
+      infoElement.innerHTML = `
+        <h3>${PIECE_NAMES[piece]}</h3>
+        <p><strong>Liike:</strong> ${PIECE_MOVES[piece]}</p>
+        <p><strong>Rajoitukset:</strong> ${PIECE_RESTRICTIONS[piece]}</p>
+        <p><strong>Taktiikka:</strong> ${PIECE_TACTICS[piece]}</p>
+      `;
+    }
+
+    function showValidMoves(row, col) {
+      const moves = getValidMoves(row, col);
+      const boardElement = document.getElementById('board');
+
+      moves.forEach(([r, c]) => {
+        const pos = getPixelPosition(r, c);
+        const dot = document.createElement('div');
+        dot.className = 'valid-move';
+        dot.style.left = `${pos.x - 10}px`;
+        dot.style.top = `${pos.y - 10}px`;
+        dot.onclick = (e) => {
+          e.stopPropagation();
+          movePiece(row, col, r, c);
+        };
+        boardElement.appendChild(dot);
+      });
+    }
+
+    function getValidMoves(row, col) {
+      const piece = board[row][col];
+
+      if (piece === '帥' || piece === '將') return getGeneralMoves(row, col);
+      if (piece === '仕' || piece === '士') return getAdvisorMoves(row, col);
+      if (piece === '相' || piece === '象') return getElephantMoves(row, col);
+      if (piece === '馬') return getHorseMoves(row, col);
+      if (piece === '車') return getChariotMoves(row, col);
+      if (piece === '炮' || piece === '砲') return getCannonMoves(row, col);
+      if (piece === '兵' || piece === '卒') return getSoldierMoves(row, col);
+
+      return [];
+    }
+
+    function getGeneralMoves(row, col) {
+      const moves = [];
+      const pieceColor = getPieceColor(row, col);
+      const palaceRows = pieceColor === 'red' ? [7, 8, 9] : [0, 1, 2];
+      const palaceCols = [3, 4, 5];
+
+      const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+
+      for (const [dr, dc] of directions) {
+        const newRow = row + dr;
+        const newCol = col + dc;
+
+        if (palaceRows.includes(newRow) && palaceCols.includes(newCol)) {
+          const targetColor = getPieceColor(newRow, newCol);
+          if (!board[newRow][newCol] || targetColor !== pieceColor) {
+            moves.push([newRow, newCol]);
+          }
         }
+      }
 
-        function selectPiece(row, col) {
-            const piece = board[row][col];
-            const pieceColor = getPieceColor(row, col);
-            
-            if (!piece && selectedPiece) {
-                movePiece(selectedPiece.row, selectedPiece.col, row, col);
-                return;
-            }
+      return moves;
+    }
 
-            if (piece && selectedPiece && pieceColor !== currentPlayer) {
-                movePiece(selectedPiece.row, selectedPiece.col, row, col);
-                return;
-            }
+    function getAdvisorMoves(row, col) {
+      const moves = [];
+      const pieceColor = getPieceColor(row, col);
+      const palaceRows = pieceColor === 'red' ? [7, 8, 9] : [0, 1, 2];
+      const palaceCols = [3, 4, 5];
 
-            if (piece && pieceColor === currentPlayer) {
-                selectedPiece = { row, col, piece };
-                renderBoard();
-                displayPieceInfo(piece);
-                return;
-            }
+      const directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+
+      for (const [dr, dc] of directions) {
+        const newRow = row + dr;
+        const newCol = col + dc;
+
+        if (palaceRows.includes(newRow) && palaceCols.includes(newCol)) {
+          const targetColor = getPieceColor(newRow, newCol);
+          if (!board[newRow][newCol] || targetColor !== pieceColor) {
+            moves.push([newRow, newCol]);
+          }
         }
+      }
 
-        function displayPieceInfo(piece) {
-            const infoElement = document.getElementById('pieceInfo');
-            infoElement.innerHTML = `
-                <h3>${PIECE_NAMES[piece]}</h3>
-                <p><strong>Liike:</strong> ${PIECE_MOVES[piece]}</p>
-                <p><strong>Rajoitukset:</strong> ${PIECE_RESTRICTIONS[piece]}</p>
-                <p><strong>Taktiikka:</strong> ${PIECE_TACTICS[piece]}</p>
-            `;
-        }
+      return moves;
+    }
 
-        function showValidMoves(row, col) {
-            const moves = getValidMoves(row, col);
-            const boardElement = document.getElementById('board');
+    function getElephantMoves(row, col) {
+      const moves = [];
+      const pieceColor = getPieceColor(row, col);
+      const maxRow = pieceColor === 'red' ? 9 : 4;
+      const minRow = pieceColor === 'red' ? 5 : 0;
 
-            moves.forEach(([r, c]) => {
-                const pos = getPixelPosition(r, c);
-                const dot = document.createElement('div');
-                dot.className = 'valid-move';
-                dot.style.left = `${pos.x - 10}px`;
-                dot.style.top = `${pos.y - 10}px`;
-                dot.onclick = (e) => {
-                    e.stopPropagation();
-                    movePiece(row, col, r, c);
-                };
-                boardElement.appendChild(dot);
-            });
-        }
+      const directions = [[2, 2], [2, -2], [-2, 2], [-2, -2]];
 
-        function getValidMoves(row, col) {
-            const piece = board[row][col];
-            
-            if (piece === '帥' || piece === '將') return getGeneralMoves(row, col);
-            if (piece === '仕' || piece === '士') return getAdvisorMoves(row, col);
-            if (piece === '相' || piece === '象') return getElephantMoves(row, col);
-            if (piece === '馬') return getHorseMoves(row, col);
-            if (piece === '車') return getChariotMoves(row, col);
-            if (piece === '炮' || piece === '砲') return getCannonMoves(row, col);
-            if (piece === '兵' || piece === '卒') return getSoldierMoves(row, col);
-            
-            return [];
-        }
+      for (const [dr, dc] of directions) {
+        const newRow = row + dr;
+        const newCol = col + dc;
+        const blockRow = row + dr / 2;
+        const blockCol = col + dc / 2;
 
-        function getGeneralMoves(row, col) {
-            const moves = [];
-            const pieceColor = getPieceColor(row, col);
-            const palaceRows = pieceColor === 'red' ? [7, 8, 9] : [0, 1, 2];
-            const palaceCols = [3, 4, 5];
-
-            const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-            
-            for (const [dr, dc] of directions) {
-                const newRow = row + dr;
-                const newCol = col + dc;
-                
-                if (palaceRows.includes(newRow) && palaceCols.includes(newCol)) {
-                    const targetColor = getPieceColor(newRow, newCol);
-                    if (!board[newRow][newCol] || targetColor !== pieceColor) {
-                        moves.push([newRow, newCol]);
-                    }
-                }
+        if (newRow >= minRow && newRow <= maxRow && newCol >= 0 && newCol < 9) {
+          if (!board[blockRow][blockCol]) {
+            const targetColor = getPieceColor(newRow, newCol);
+            if (!board[newRow][newCol] || targetColor !== pieceColor) {
+              moves.push([newRow, newCol]);
             }
-
-            return moves;
+          }
         }
+      }
 
-        function getAdvisorMoves(row, col) {
-            const moves = [];
-            const pieceColor = getPieceColor(row, col);
-            const palaceRows = pieceColor === 'red' ? [7, 8, 9] : [0, 1, 2];
-            const palaceCols = [3, 4, 5];
+      return moves;
+    }
 
-            const directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
-            
-            for (const [dr, dc] of directions) {
-                const newRow = row + dr;
-                const newCol = col + dc;
-                
-                if (palaceRows.includes(newRow) && palaceCols.includes(newCol)) {
-                    const targetColor = getPieceColor(newRow, newCol);
-                    if (!board[newRow][newCol] || targetColor !== pieceColor) {
-                        moves.push([newRow, newCol]);
-                    }
-                }
+    function getHorseMoves(row, col) {
+      const moves = [];
+      const pieceColor = getPieceColor(row, col);
+
+      const horseMoves = [
+        [[-1, 0], [-2, -1]], [[-1, 0], [-2, 1]],
+        [[1, 0], [2, -1]], [[1, 0], [2, 1]],
+        [[0, -1], [-1, -2]], [[0, -1], [1, -2]],
+        [[0, 1], [-1, 2]], [[0, 1], [1, 2]]
+      ];
+
+      for (const [block, dest] of horseMoves) {
+        const blockRow = row + block[0];
+        const blockCol = col + block[1];
+        const destRow = row + dest[0];
+        const destCol = col + dest[1];
+
+        if (blockRow >= 0 && blockRow < 10 && blockCol >= 0 && blockCol < 9) {
+          if (!board[blockRow][blockCol]) {
+            if (destRow >= 0 && destRow < 10 && destCol >= 0 && destCol < 9) {
+              const targetColor = getPieceColor(destRow, destCol);
+              if (!board[destRow][destCol] || targetColor !== pieceColor) {
+                moves.push([destRow, destCol]);
+              }
             }
-
-            return moves;
+          }
         }
+      }
 
-        function getElephantMoves(row, col) {
-            const moves = [];
-            const pieceColor = getPieceColor(row, col);
-            const maxRow = pieceColor === 'red' ? 9 : 4;
-            const minRow = pieceColor === 'red' ? 5 : 0;
+      return moves;
+    }
 
-            const directions = [[2, 2], [2, -2], [-2, 2], [-2, -2]];
-            
-            for (const [dr, dc] of directions) {
-                const newRow = row + dr;
-                const newCol = col + dc;
-                const blockRow = row + dr/2;
-                const blockCol = col + dc/2;
-                
-                if (newRow >= minRow && newRow <= maxRow && newCol >= 0 && newCol < 9) {
-                    if (!board[blockRow][blockCol]) {
-                        const targetColor = getPieceColor(newRow, newCol);
-                        if (!board[newRow][newCol] || targetColor !== pieceColor) {
-                            moves.push([newRow, newCol]);
-                        }
-                    }
-                }
+    function getChariotMoves(row, col) {
+      const moves = [];
+      const pieceColor = getPieceColor(row, col);
+
+      const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+
+      for (const [dr, dc] of directions) {
+        let newRow = row + dr;
+        let newCol = col + dc;
+
+        while (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 9) {
+          if (!board[newRow][newCol]) {
+            moves.push([newRow, newCol]);
+          } else {
+            const targetColor = getPieceColor(newRow, newCol);
+            if (targetColor !== pieceColor) {
+              moves.push([newRow, newCol]);
             }
-
-            return moves;
+            break;
+          }
+          newRow += dr;
+          newCol += dc;
         }
+      }
 
-        function getHorseMoves(row, col) {
-            const moves = [];
-            const pieceColor = getPieceColor(row, col);
-            
-            const horseMoves = [
-                [[-1, 0], [-2, -1]], [[-1, 0], [-2, 1]],
-                [[1, 0], [2, -1]], [[1, 0], [2, 1]],
-                [[0, -1], [-1, -2]], [[0, -1], [1, -2]],
-                [[0, 1], [-1, 2]], [[0, 1], [1, 2]]
-            ];
-            
-            for (const [block, dest] of horseMoves) {
-                const blockRow = row + block[0];
-                const blockCol = col + block[1];
-                const destRow = row + dest[0];
-                const destCol = col + dest[1];
-                
-                if (blockRow >= 0 && blockRow < 10 && blockCol >= 0 && blockCol < 9) {
-                    if (!board[blockRow][blockCol]) {
-                        if (destRow >= 0 && destRow < 10 && destCol >= 0 && destCol < 9) {
-                            const targetColor = getPieceColor(destRow, destCol);
-                            if (!board[destRow][destCol] || targetColor !== pieceColor) {
-                                moves.push([destRow, destCol]);
-                            }
-                        }
-                    }
-                }
+      return moves;
+    }
+
+    function getCannonMoves(row, col) {
+      const moves = [];
+      const pieceColor = getPieceColor(row, col);
+
+      const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+
+      for (const [dr, dc] of directions) {
+        let newRow = row + dr;
+        let newCol = col + dc;
+        let jumped = false;
+
+        while (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 9) {
+          if (!board[newRow][newCol]) {
+            if (!jumped) {
+              moves.push([newRow, newCol]);
             }
-
-            return moves;
-        }
-
-        function getChariotMoves(row, col) {
-            const moves = [];
-            const pieceColor = getPieceColor(row, col);
-            
-            const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-            
-            for (const [dr, dc] of directions) {
-                let newRow = row + dr;
-                let newCol = col + dc;
-                
-                while (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 9) {
-                    if (!board[newRow][newCol]) {
-                        moves.push([newRow, newCol]);
-                    } else {
-                        const targetColor = getPieceColor(newRow, newCol);
-                        if (targetColor !== pieceColor) {
-                            moves.push([newRow, newCol]);
-                        }
-                        break;
-                    }
-                    newRow += dr;
-                    newCol += dc;
-                }
-            }
-
-            return moves;
-        }
-
-        function getCannonMoves(row, col) {
-            const moves = [];
-            const pieceColor = getPieceColor(row, col);
-            
-            const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-            
-            for (const [dr, dc] of directions) {
-                let newRow = row + dr;
-                let newCol = col + dc;
-                let jumped = false;
-                
-                while (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 9) {
-                    if (!board[newRow][newCol]) {
-                        if (!jumped) {
-                            moves.push([newRow, newCol]);
-                        }
-                    } else {
-                        if (!jumped) {
-                            jumped = true;
-                        } else {
-                            const targetColor = getPieceColor(newRow, newCol);
-                            if (targetColor !== pieceColor) {
-                                moves.push([newRow, newCol]);
-                            }
-                            break;
-                        }
-                    }
-                    newRow += dr;
-                    newCol += dc;
-                }
-            }
-
-            return moves;
-        }
-
-        function getSoldierMoves(row, col) {
-            const moves = [];
-            const pieceColor = getPieceColor(row, col);
-            const direction = pieceColor === 'red' ? -1 : 1;
-            const hasCrossed = pieceColor === 'red' ? row < 5 : row > 4;
-
-            const forwardRow = row + direction;
-            if (forwardRow >= 0 && forwardRow < 10) {
-                const targetColor = getPieceColor(forwardRow, col);
-                if (!board[forwardRow][col] || targetColor !== pieceColor) {
-                    moves.push([forwardRow, col]);
-                }
-            }
-
-            if (hasCrossed) {
-                if (col > 0) {
-                    const targetColor = getPieceColor(row, col-1);
-                    if (!board[row][col-1] || targetColor !== pieceColor) {
-                        moves.push([row, col-1]);
-                    }
-                }
-                if (col < 8) {
-                    const targetColor = getPieceColor(row, col+1);
-                    if (!board[row][col+1] || targetColor !== pieceColor) {
-                        moves.push([row, col+1]);
-                    }
-                }
-            }
-
-            return moves;
-        }
-
-        function movePiece(fromRow, fromCol, toRow, toCol) {
-            const validMoves = getValidMoves(fromRow, fromCol);
-            const isValid = validMoves.some(([r, c]) => r === toRow && c === toCol);
-
-            if (!isValid) {
-                selectedPiece = null;
-                renderBoard();
-                return;
-            }
-
-            const movingPiece = board[fromRow][fromCol];
-            const capturedPiece = board[toRow][toCol];
-            const movingColor = getPieceColor(fromRow, fromCol);
-
-            board[toRow][toCol] = movingPiece;
-            board[fromRow][fromCol] = '';
-            
-            setPieceColor(toRow, toCol, movingColor);
-            delete pieceColors[`${fromRow}-${fromCol}`];
-
-            const moveNotation = `${PIECE_NAMES[movingPiece]} ${String.fromCharCode(97 + fromCol)}${10 - fromRow} → ${String.fromCharCode(97 + toCol)}${10 - toRow}${capturedPiece ? ' (syö ' + PIECE_NAMES[capturedPiece] + ')' : ''}`;
-            
-            moveHistory.push(moveNotation);
-            updateMoveHistory();
-
-            const lastMoveElement = document.getElementById('lastMove');
-            let moveDescription = `<span class="highlight">${PIECE_NAMES[movingPiece]}</span> siirtyi kohdasta ${String.fromCharCode(97 + fromCol)}${10 - fromRow} kohtaan ${String.fromCharCode(97 + toCol)}${10 - toRow}.`;
-            
-            if (capturedPiece) {
-                moveDescription += ` <span class="highlight">Söi ${PIECE_NAMES[capturedPiece]}!</span>`;
-            }
-
-            lastMoveElement.innerHTML = moveDescription;
-
-            currentPlayer = currentPlayer === 'red' ? 'black' : 'red';
-            updateStatus();
-
-            selectedPiece = null;
-            renderBoard();
-        }
-
-        function updateStatus() {
-            const statusElement = document.getElementById('status');
-            statusElement.className = `status ${currentPlayer}-turn`;
-            statusElement.textContent = currentPlayer === 'red' ? 'Punaisen vuoro' : 'Mustan vuoro';
-        }
-
-        function updateMoveHistory() {
-            const historyElement = document.getElementById('moveHistory');
-            if (moveHistory.length === 0) {
-                historyElement.textContent = '-';
+          } else {
+            if (!jumped) {
+              jumped = true;
             } else {
-                historyElement.innerHTML = moveHistory.map((move, i) => `${i + 1}. ${move}`).join('<br>');
-                historyElement.scrollTop = historyElement.scrollHeight;
+              const targetColor = getPieceColor(newRow, newCol);
+              if (targetColor !== pieceColor) {
+                moves.push([newRow, newCol]);
+              }
+              break;
             }
+          }
+          newRow += dr;
+          newCol += dc;
         }
+      }
 
-        function resetGame() {
-            selectedPiece = null;
-            currentPlayer = 'red';
-            moveHistory = [];
-            initBoard();
-            updateStatus();
-            updateMoveHistory();
-            document.getElementById('lastMove').textContent = 'Peli alkaa. Punainen aloittaa!';
-            document.getElementById('pieceInfo').textContent = 'Valitse nappula nähdäksesi sen liikkumissäännöt ja taktiset vinkit.';
+      return moves;
+    }
+
+    function getSoldierMoves(row, col) {
+      const moves = [];
+      const pieceColor = getPieceColor(row, col);
+      const direction = pieceColor === 'red' ? -1 : 1;
+      const hasCrossed = pieceColor === 'red' ? row < 5 : row > 4;
+
+      const forwardRow = row + direction;
+      if (forwardRow >= 0 && forwardRow < 10) {
+        const targetColor = getPieceColor(forwardRow, col);
+        if (!board[forwardRow][col] || targetColor !== pieceColor) {
+          moves.push([forwardRow, col]);
         }
+      }
 
-        // Initialize game
-        initBoard();
-    </script>
+      if (hasCrossed) {
+        if (col > 0) {
+          const targetColor = getPieceColor(row, col - 1);
+          if (!board[row][col - 1] || targetColor !== pieceColor) {
+            moves.push([row, col - 1]);
+          }
+        }
+        if (col < 8) {
+          const targetColor = getPieceColor(row, col + 1);
+          if (!board[row][col + 1] || targetColor !== pieceColor) {
+            moves.push([row, col + 1]);
+          }
+        }
+      }
+
+      return moves;
+    }
+
+    function movePiece(fromRow, fromCol, toRow, toCol) {
+      const validMoves = getValidMoves(fromRow, fromCol);
+      const isValid = validMoves.some(([r, c]) => r === toRow && c === toCol);
+
+      if (!isValid) {
+        selectedPiece = null;
+        renderBoard();
+        return;
+      }
+
+      const movingPiece = board[fromRow][fromCol];
+      const capturedPiece = board[toRow][toCol];
+      const movingColor = getPieceColor(fromRow, fromCol);
+
+      board[toRow][toCol] = movingPiece;
+      board[fromRow][fromCol] = '';
+
+      setPieceColor(toRow, toCol, movingColor);
+      delete pieceColors[`${fromRow}-${fromCol}`];
+
+      const moveNotation =
+        `${PIECE_NAMES[movingPiece]} ${String.fromCharCode(97 + fromCol)}${10 - fromRow} → ` +
+        `${String.fromCharCode(97 + toCol)}${10 - toRow}` +
+        `${capturedPiece ? ' (syö ' + PIECE_NAMES[capturedPiece] + ')' : ''}`;
+
+      moveHistory.push(moveNotation);
+      updateMoveHistory();
+
+      const lastMoveElement = document.getElementById('lastMove');
+      let moveDescription =
+        `<span class="highlight">${PIECE_NAMES[movingPiece]}</span> siirtyi kohdasta ` +
+        `${String.fromCharCode(97 + fromCol)}${10 - fromRow} kohtaan ` +
+        `${String.fromCharCode(97 + toCol)}${10 - toRow}.`;
+
+      if (capturedPiece) {
+        moveDescription += ` <span class="highlight">Söi ${PIECE_NAMES[capturedPiece]}!</span>`;
+      }
+
+      lastMoveElement.innerHTML = moveDescription;
+
+      currentPlayer = currentPlayer === 'red' ? 'black' : 'red';
+      updateStatus();
+
+      selectedPiece = null;
+      renderBoard();
+    }
+
+    function updateStatus() {
+      const statusElement = document.getElementById('status');
+      statusElement.className = `status ${currentPlayer}-turn`;
+      statusElement.textContent = currentPlayer === 'red' ? 'Punaisen vuoro' : 'Mustan vuoro';
+    }
+
+    function updateMoveHistory() {
+      const historyElement = document.getElementById('moveHistory');
+      if (moveHistory.length === 0) {
+        historyElement.textContent = '-';
+      } else {
+        historyElement.innerHTML = moveHistory.map((move, i) => `${i + 1}. ${move}`).join('<br>');
+        historyElement.scrollTop = historyElement.scrollHeight;
+      }
+    }
+
+    function resetGame() {
+      selectedPiece = null;
+      currentPlayer = 'red';
+      moveHistory = [];
+      initBoard();
+      updateStatus();
+      updateMoveHistory();
+      document.getElementById('lastMove').textContent = 'Peli alkaa. Punainen aloittaa!';
+      document.getElementById('pieceInfo').textContent =
+        'Valitse nappula nähdäksesi sen liikkumissäännöt ja taktiset vinkit.';
+    }
+
+    // ✅ Renderöi nappulat myös kun selainikkunan koko muuttuu (koska koordinaatit riippuu boardin koosta)
+    window.addEventListener('resize', () => renderBoard());
+
+    // Initialize game
+    initBoard();
+  </script>
 </body>
 </html>
