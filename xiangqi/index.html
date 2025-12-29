@@ -42,37 +42,12 @@
         
         .board {
             position: relative;
-            width: 540px;
-            height: 600px;
-            background: #e8c89a;
-            border: 3px solid #8b4513;
-        }
-        
-        .board-lines {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        
-        .river {
-            position: absolute;
-            top: 270px;
-            left: 0;
-            width: 100%;
-            height: 60px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 32px;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .river-text {
-            background: #e8c89a;
-            padding: 0 20px;
+            width: 600px;
+            height: 660px;
+            background-image: url('Xiangqi.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
         }
         
         .piece {
@@ -117,14 +92,16 @@
             width: 20px;
             height: 20px;
             border-radius: 50%;
-            background: rgba(76, 175, 80, 0.6);
+            background: rgba(76, 175, 80, 0.8);
             animation: pulse 1s infinite;
             z-index: 10;
+            cursor: pointer;
+            border: 2px solid #4caf50;
         }
         
         @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.6; }
-            50% { transform: scale(1.2); opacity: 0.8; }
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.3); opacity: 1; }
         }
         
         .info-panel {
@@ -211,88 +188,13 @@
             border-radius: 3px;
             font-weight: bold;
         }
-
-        .coordinates {
-            position: absolute;
-            font-size: 14px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .coord-top, .coord-bottom {
-            top: -30px;
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            padding: 0 22px;
-        }
-
-        .coord-bottom {
-            top: auto;
-            bottom: -30px;
-        }
-
-        .coord-left, .coord-right {
-            left: -30px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            height: 100%;
-            padding: 22px 0;
-        }
-
-        .coord-right {
-            left: auto;
-            right: -30px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="game-section">
             <div class="board-container">
-                <div class="board" id="board" onclick="handleBoardClick(event)">
-                    <svg class="board-lines" width="540" height="600">
-                        <!-- Vertical lines -->
-                        <line x1="60" y1="30" x2="60" y2="570" stroke="#333" stroke-width="2"/>
-                        <line x1="120" y1="30" x2="120" y2="570" stroke="#333" stroke-width="2"/>
-                        <line x1="180" y1="30" x2="180" y2="570" stroke="#333" stroke-width="2"/>
-                        <line x1="240" y1="30" x2="240" y2="570" stroke="#333" stroke-width="2"/>
-                        <line x1="300" y1="30" x2="300" y2="570" stroke="#333" stroke-width="2"/>
-                        <line x1="360" y1="30" x2="360" y2="570" stroke="#333" stroke-width="2"/>
-                        <line x1="420" y1="30" x2="420" y2="570" stroke="#333" stroke-width="2"/>
-                        <line x1="480" y1="30" x2="480" y2="570" stroke="#333" stroke-width="2"/>
-                        
-                        <!-- Horizontal lines -->
-                        <line x1="60" y1="30" x2="480" y2="30" stroke="#333" stroke-width="2"/>
-                        <line x1="60" y1="90" x2="480" y2="90" stroke="#333" stroke-width="2"/>
-                        <line x1="60" y1="150" x2="480" y2="150" stroke="#333" stroke-width="2"/>
-                        <line x1="60" y1="210" x2="480" y2="210" stroke="#333" stroke-width="2"/>
-                        <line x1="60" y1="270" x2="480" y2="270" stroke="#333" stroke-width="2"/>
-                        <line x1="60" y1="330" x2="480" y2="330" stroke="#333" stroke-width="2"/>
-                        <line x1="60" y1="390" x2="480" y2="390" stroke="#333" stroke-width="2"/>
-                        <line x1="60" y1="450" x2="480" y2="450" stroke="#333" stroke-width="2"/>
-                        <line x1="60" y1="510" x2="480" y2="510" stroke="#333" stroke-width="2"/>
-                        <line x1="60" y1="570" x2="480" y2="570" stroke="#333" stroke-width="2"/>
-                        
-                        <!-- Palace diagonals - Black -->
-                        <line x1="240" y1="30" x2="300" y2="90" stroke="#333" stroke-width="2"/>
-                        <line x1="300" y1="30" x2="240" y2="90" stroke="#333" stroke-width="2"/>
-                        
-                        <!-- Palace diagonals - Red -->
-                        <line x1="240" y1="510" x2="300" y2="570" stroke="#333" stroke-width="2"/>
-                        <line x1="300" y1="510" x2="240" y2="570" stroke="#333" stroke-width="2"/>
-                    </svg>
-                    
-                    <div class="river">
-                        <span class="river-text">楚 河 ～ 漢 界</span>
-                    </div>
-
-                    <div class="coordinates coord-top" id="coordTop"></div>
-                    <div class="coordinates coord-bottom" id="coordBottom"></div>
-                    <div class="coordinates coord-left" id="coordLeft"></div>
-                    <div class="coordinates coord-right" id="coordRight"></div>
-                </div>
+                <div class="board" id="board" onclick="handleBoardClick(event)"></div>
             </div>
             <button class="button" onclick="resetGame()">Uusi peli</button>
         </div>
@@ -331,166 +233,125 @@
     </div>
 
     <script>
-        const PIECE_INFO = {
-            '帥': {
-                name: 'Kenraali (Shuai)',
-                color: 'red',
-                moves: 'Liikkuu yhden askeleen kerrallaan pysty- tai vaakasuunnassa.',
-                restriction: 'EI VOI POISTUA PALATSISTA (3x3 ruudukon keskialue tukialueellasi).',
-                tactics: 'Pidä kenraali suojattuna! Vältä paljastamasta sitä vastustajan kenraalin kanssa samalle pystyriville ilman nappuloita välissä.'
-            },
-            '將': {
-                name: 'Kenraali (Jiang)',
-                color: 'black',
-                moves: 'Liikkuu yhden askeleen kerrallaan pysty- tai vaakasuunnassa.',
-                restriction: 'EI VOI POISTUA PALATSISTA (3x3 ruudukon keskialue tukialueellasi).',
-                tactics: 'Pidä kenraali suojattuna! Vältä paljastamasta sitä vastustajan kenraalin kanssa samalle pystyriville ilman nappuloita välissä.'
-            },
-            '仕': {
-                name: 'Neuvonantaja (Shi)',
-                color: 'red',
-                moves: 'Liikkuu yhden askeleen viistosti palatsin diagonaaleilla.',
-                restriction: 'EI VOI POISTUA PALATSISTA.',
-                tactics: 'Käytä neuvonantajia kenraalin suojaamiseen. Ne voivat peittää tärkeitä diagonaaleja.'
-            },
-            '士': {
-                name: 'Neuvonantaja (Shi)',
-                color: 'black',
-                moves: 'Liikkuu yhden askeleen viistosti palatsin diagonaaleilla.',
-                restriction: 'EI VOI POISTUA PALATSISTA.',
-                tactics: 'Käytä neuvonantajia kenraalin suojaamiseen. Ne voivat peittää tärkeitä diagonaaleja.'
-            },
-            '相': {
-                name: 'Norsu/Ministeri (Xiang)',
-                color: 'red',
-                moves: 'Liikkuu täsmälleen kaksi ruutua viistosti (muodostaa "X"-muodon).',
-                restriction: 'EI VOI YLITTÄÄ JOKEA. Voidaan estää, jos väliruudussa on nappula.',
-                tactics: 'Norsut ovat hyviä puolustajia omalla puolellasi. Käytä niitä keskialueen kontrollointiin.'
-            },
-            '象': {
-                name: 'Norsu/Ministeri (Xiang)',
-                color: 'black',
-                moves: 'Liikkuu täsmälleen kaksi ruutua viistosti (muodostaa "X"-muodon).',
-                restriction: 'EI VOI YLITTÄÄ JOKEA. Voidaan estää, jos väliruudussa on nappula.',
-                tactics: 'Norsut ovat hyviä puolustajia omalla puolellasi. Käytä niitä keskialueen kontrollointiin.'
-            },
-            '馬': {
-                name: 'Hevonen (Ma)',
-                color: 'red',
-                moves: 'Liikkuu "L"-muodossa: yksi askel suoraan, sitten yksi viistosti.',
-                restriction: 'Voidaan estää ("hobble"), jos viereisessä ruudussa on nappula ennen viistoa liikettä.',
-                tactics: 'Hevoset ovat voimakkaita keskipelissä. Vältä niiden estämistä omilla nappuloillasi. Hyvä hyökkääjä!'
-            },
-            '馬': {
-                name: 'Hevonen (Ma)',
-                color: 'black',
-                moves: 'Liikkuu "L"-muodossa: yksi askel suoraan, sitten yksi viistosti.',
-                restriction: 'Voidaan estää ("hobble"), jos viereisessä ruudussa on nappula ennen viistoa liikettä.',
-                tactics: 'Hevoset ovat voimakkaita keskipelissä. Vältä niiden estämistä omilla nappuloillasi. Hyvä hyökkääjä!'
-            },
-            '車': {
-                name: 'Vaunu (Ju)',
-                color: 'red',
-                moves: 'Liikkuu minkä tahansa matkan pysty- tai vaakasuunnassa.',
-                restriction: 'Ei voi hypätä muiden nappuloiden yli.',
-                tactics: 'Vaunuja pidetään vahvimpina nappuloina! Aktivoi ne varhain. Hallitse avoimia linjoja ja rivejä.'
-            },
-            '車': {
-                name: 'Vaunu (Ju)',
-                color: 'black',
-                moves: 'Liikkuu minkä tahansa matkan pysty- tai vaakasuunnassa.',
-                restriction: 'Ei voi hypätä muiden nappuloiden yli.',
-                tactics: 'Vaunuja pidetään vahvimpina nappuloina! Aktivoi ne varhain. Hallitse avoimia linjoja ja rivejä.'
-            },
-            '炮': {
-                name: 'Tykki (Pao)',
-                color: 'red',
-                moves: 'Liikkuu kuten vaunu MUTTA syödäkseen sen täytyy hypätä täsmälleen yhden nappulan yli.',
-                restriction: 'Tarvitsee "näytön" (screen) hyppääkseen syödäkseen.',
-                tactics: 'Tykit ovat erinomaisia avajaisissa ja keskipelissä. Aseta ne painostamaan kenraalia. Käytä vastustajan nappuloita "näyttöinä"!'
-            },
-            '砲': {
-                name: 'Tykki (Pao)',
-                color: 'black',
-                moves: 'Liikkuu kuten vaunu MUTTA syödäkseen sen täytyy hypätä täsmälleen yhden nappulan yli.',
-                restriction: 'Tarvitsee "näytön" (screen) hyppääkseen syödäkseen.',
-                tactics: 'Tykit ovat erinomaisia avajaisissa ja keskipelissä. Aseta ne painostamaan kenraalia. Käytä vastustajan nappuloita "näyttöinä"!'
-            },
-            '兵': {
-                name: 'Sotilas (Bing)',
-                color: 'red',
-                moves: 'Liikkuu yhden askeleen eteenpäin. Joen ylitettyään voi liikkua myös sivuille (ei taaksepäin).',
-                restriction: 'Ei voi liikkua taaksepäin.',
-                tactics: 'Sotilaat vahvistuvat ylitettyään joen! Työnnä niitä eteenpäin tukeaksesi hyökkäystä. Ryhmä sotilaita voi olla vaarallinen.'
-            },
-            '卒': {
-                name: 'Sotilas (Zu)',
-                color: 'black',
-                moves: 'Liikkuu yhden askeleen eteenpäin. Joen ylitettyään voi liikkua myös sivuille (ei taaksepäin).',
-                restriction: 'Ei voi liikkua taaksepäin.',
-                tactics: 'Sotilaat vahvistuvat ylitettyään joen! Työnnä niitä eteenpäin tukeaksesi hyökkäystä. Ryhmä sotilaita voi olla vaarallinen.'
-            }
+        // Piece names and movement info
+        const PIECE_NAMES = {
+            '帥': 'Kenraali (Shuai)', '將': 'Kenraali (Jiang)',
+            '仕': 'Neuvonantaja (Shi)', '士': 'Neuvonantaja (Shi)',
+            '相': 'Norsu (Xiang)', '象': 'Norsu (Xiang)',
+            '馬': 'Hevonen (Ma)',
+            '車': 'Vaunu (Ju)',
+            '炮': 'Tykki (Pao)', '砲': 'Tykki (Pao)',
+            '兵': 'Sotilas (Bing)', '卒': 'Sotilas (Zu)'
+        };
+
+        const PIECE_MOVES = {
+            '帥': 'Liikkuu yhden askeleen kerrallaan pysty- tai vaakasuunnassa.',
+            '將': 'Liikkuu yhden askeleen kerrallaan pysty- tai vaakasuunnassa.',
+            '仕': 'Liikkuu yhden askeleen viistosti palatsin diagonaaleilla.',
+            '士': 'Liikkuu yhden askeleen viistosti palatsin diagonaaleilla.',
+            '相': 'Liikkuu täsmälleen kaksi ruutua viistosti (muodostaa "X"-muodon).',
+            '象': 'Liikkuu täsmälleen kaksi ruutua viistosti (muodostaa "X"-muodon).',
+            '馬': 'Liikkuu "L"-muodossa: yksi askel suoraan, sitten yksi viistosti.',
+            '車': 'Liikkuu minkä tahansa matkan pysty- tai vaakasuunnassa.',
+            '炮': 'Liikkuu kuten vaunu MUTTA syödäkseen sen täytyy hypätä täsmälleen yhden nappulan yli.',
+            '砲': 'Liikkuu kuten vaunu MUTTA syödäkseen sen täytyy hypätä täsmälleen yhden nappulan yli.',
+            '兵': 'Liikkuu yhden askeleen eteenpäin. Joen ylitettyään voi liikkua myös sivuille (ei taaksepäin).',
+            '卒': 'Liikkuu yhden askeleen eteenpäin. Joen ylitettyään voi liikkua myös sivuille (ei taaksepäin).'
+        };
+
+        const PIECE_RESTRICTIONS = {
+            '帥': 'EI VOI POISTUA PALATSISTA (3x3 keskialue).',
+            '將': 'EI VOI POISTUA PALATSISTA (3x3 keskialue).',
+            '仕': 'EI VOI POISTUA PALATSISTA.',
+            '士': 'EI VOI POISTUA PALATSISTA.',
+            '相': 'EI VOI YLITTÄÄ JOKEA. Voidaan estää, jos väliruudussa on nappula.',
+            '象': 'EI VOI YLITTÄÄ JOKEA. Voidaan estää, jos väliruudussa on nappula.',
+            '馬': 'Voidaan estää, jos viereisessä ruudussa on nappula.',
+            '車': 'Ei voi hypätä muiden nappuloiden yli.',
+            '炮': 'Tarvitsee "näytön" hyppääkseen syödäkseen.',
+            '砲': 'Tarvitsee "näytön" hyppääkseen syödäkseen.',
+            '兵': 'Ei voi liikkua taaksepäin.',
+            '卒': 'Ei voi liikkua taaksepäin.'
+        };
+
+        const PIECE_TACTICS = {
+            '帥': 'Pidä kenraali suojattuna! Vältä paljastamasta sitä vastustajan kenraalin kanssa samalle riville.',
+            '將': 'Pidä kenraali suojattuna! Vältä paljastamasta sitä vastustajan kenraalin kanssa samalle riville.',
+            '仕': 'Käytä neuvonantajia kenraalin suojaamiseen.',
+            '士': 'Käytä neuvonantajia kenraalin suojaamiseen.',
+            '相': 'Norsut ovat hyviä puolustajia omalla puolellasi.',
+            '象': 'Norsut ovat hyviä puolustajia omalla puolellasi.',
+            '馬': 'Hevoset ovat voimakkaita keskipelissä. Vältä niiden estämistä omilla nappuloillasi.',
+            '車': 'Vaunuja pidetään vahvimpina nappuloina! Hallitse avoimia linjoja.',
+            '炮': 'Tykit ovat erinomaisia avajaisissa. Aseta ne painostamaan kenraalia. Käytä vastustajan nappuloita "näyttöinä"!',
+            '砲': 'Tykit ovat erinomaisia avajaisissa. Aseta ne painostamaan kenraalia. Käytä vastustajan nappuloita "näyttöinä"!',
+            '兵': 'Sotilaat vahvistuvat ylitettyään joen! Työnnä niitä eteenpäin tukeaksesi hyökkäystä.',
+            '卒': 'Sotilaat vahvistuvat ylitettyään joen! Työnnä niitä eteenpäin tukeaksesi hyökkäystä.'
         };
 
         let board = [];
+        let pieceColors = {};
         let selectedPiece = null;
         let currentPlayer = 'red';
         let moveHistory = [];
 
+        // Board positioning - calibrated to match the image
+        // Image is 600px wide, 660px tall
+        // Intersections are at these approximate positions (measured from image)
+        const BOARD_LEFT = 58;  // Left edge offset
+        const BOARD_TOP = 82;   // Top edge offset
+        const COL_SPACING = 60.5;  // Space between columns
+        const ROW_SPACING = 59.5;  // Space between rows
+
         const initialSetup = [
-            ['車', '馬', '象', '士', '將', '士', '象', '馬', '車'],
+            ['車', '馬', '象', '士', '將', '士', '象', '馬', '車'],  // row 0 - Black
             ['', '', '', '', '', '', '', '', ''],
-            ['', '砲', '', '', '', '', '', '砲', ''],
-            ['卒', '', '卒', '', '卒', '', '卒', '', '卒'],
+            ['', '砲', '', '', '', '', '', '砲', ''],              // row 2 - Black cannons
+            ['卒', '', '卒', '', '卒', '', '卒', '', '卒'],        // row 3 - Black soldiers
             ['', '', '', '', '', '', '', '', ''],
             ['', '', '', '', '', '', '', '', ''],
-            ['兵', '', '兵', '', '兵', '', '兵', '', '兵'],
-            ['', '炮', '', '', '', '', '', '炮', ''],
+            ['兵', '', '兵', '', '兵', '', '兵', '', '兵'],        // row 6 - Red soldiers
+            ['', '炮', '', '', '', '', '', '炮', ''],              // row 7 - Red cannons
             ['', '', '', '', '', '', '', '', ''],
-            ['車', '馬', '相', '仕', '帥', '仕', '相', '馬', '車']
+            ['車', '馬', '相', '仕', '帥', '仕', '相', '馬', '車']   // row 9 - Red
         ];
+
+        function getPixelPosition(row, col) {
+            return {
+                x: BOARD_LEFT + col * COL_SPACING,
+                y: BOARD_TOP + row * ROW_SPACING
+            };
+        }
+
+        function getGridPosition(x, y) {
+            const col = Math.round((x - BOARD_LEFT) / COL_SPACING);
+            const row = Math.round((y - BOARD_TOP) / ROW_SPACING);
+            return { row, col };
+        }
+
+        function setPieceColor(row, col, color) {
+            pieceColors[`${row}-${col}`] = color;
+        }
+
+        function getPieceColor(row, col) {
+            return pieceColors[`${row}-${col}`] || null;
+        }
 
         function initBoard() {
             board = initialSetup.map(row => [...row]);
+            pieceColors = {};
+            
+            for (let row = 0; row < 10; row++) {
+                for (let col = 0; col < 9; col++) {
+                    const piece = board[row][col];
+                    if (piece) {
+                        const color = row <= 3 ? 'black' : 'red';
+                        setPieceColor(row, col, color);
+                    }
+                }
+            }
+            
             renderBoard();
-            setupCoordinates();
-        }
-
-        function setupCoordinates() {
-            const topCoords = document.getElementById('coordTop');
-            const bottomCoords = document.getElementById('coordBottom');
-            const leftCoords = document.getElementById('coordLeft');
-            const rightCoords = document.getElementById('coordRight');
-
-            topCoords.innerHTML = '';
-            bottomCoords.innerHTML = '';
-            leftCoords.innerHTML = '';
-            rightCoords.innerHTML = '';
-
-            // Numbers for top and bottom (9 to 1 for black, 1 to 9 for red)
-            for (let i = 9; i >= 1; i--) {
-                const topSpan = document.createElement('span');
-                topSpan.textContent = i;
-                topCoords.appendChild(topSpan);
-            }
-
-            for (let i = 1; i <= 9; i++) {
-                const bottomSpan = document.createElement('span');
-                bottomSpan.textContent = i;
-                bottomCoords.appendChild(bottomSpan);
-            }
-
-            // Letters for left and right (a-j)
-            const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
-            letters.forEach(letter => {
-                const leftSpan = document.createElement('span');
-                leftSpan.textContent = letter;
-                leftCoords.appendChild(leftSpan);
-
-                const rightSpan = document.createElement('span');
-                rightSpan.textContent = letter;
-                rightCoords.appendChild(rightSpan);
-            });
         }
 
         function renderBoard() {
@@ -505,14 +366,20 @@
                 for (let col = 0; col < 9; col++) {
                     const piece = board[row][col];
                     if (piece) {
+                        const color = getPieceColor(row, col);
+                        const pos = getPixelPosition(row, col);
+                        
                         const pieceElement = document.createElement('div');
-                        pieceElement.className = `piece ${PIECE_INFO[piece].color}`;
+                        pieceElement.className = `piece ${color}`;
                         pieceElement.textContent = piece;
-                        pieceElement.style.left = `${35 + col * 60}px`;
-                        pieceElement.style.top = `${5 + row * 60}px`;
+                        pieceElement.style.left = `${pos.x - 25}px`;
+                        pieceElement.style.top = `${pos.y - 25}px`;
                         pieceElement.dataset.row = row;
                         pieceElement.dataset.col = col;
-                        pieceElement.onclick = () => selectPiece(row, col);
+                        pieceElement.onclick = (e) => {
+                            e.stopPropagation();
+                            selectPiece(row, col);
+                        };
                         
                         if (selectedPiece && selectedPiece.row === row && selectedPiece.col === col) {
                             pieceElement.classList.add('selected');
@@ -529,20 +396,13 @@
         }
 
         function handleBoardClick(event) {
-            if (event.target.id !== 'board' && !event.target.closest('.valid-move')) {
-                return;
-            }
-
-            if (!selectedPiece) {
-                return;
-            }
+            if (!selectedPiece) return;
 
             const boardRect = document.getElementById('board').getBoundingClientRect();
             const x = event.clientX - boardRect.left;
             const y = event.clientY - boardRect.top;
 
-            const col = Math.round((x - 60) / 60);
-            const row = Math.round((y - 30) / 60);
+            const { row, col } = getGridPosition(x, y);
 
             if (row >= 0 && row < 10 && col >= 0 && col < 9) {
                 selectPiece(row, col);
@@ -551,41 +411,33 @@
 
         function selectPiece(row, col) {
             const piece = board[row][col];
+            const pieceColor = getPieceColor(row, col);
             
-            // If clicking on empty square and we have a piece selected
             if (!piece && selectedPiece) {
                 movePiece(selectedPiece.row, selectedPiece.col, row, col);
                 return;
             }
 
-            // If clicking on opponent's piece while having a piece selected
-            if (piece && selectedPiece && PIECE_INFO[piece].color !== currentPlayer) {
+            if (piece && selectedPiece && pieceColor !== currentPlayer) {
                 movePiece(selectedPiece.row, selectedPiece.col, row, col);
                 return;
             }
 
-            // If clicking on own piece when no piece is selected, or selecting a different own piece
-            if (piece && PIECE_INFO[piece].color === currentPlayer) {
+            if (piece && pieceColor === currentPlayer) {
                 selectedPiece = { row, col, piece };
                 renderBoard();
                 displayPieceInfo(piece);
                 return;
             }
-
-            // If clicking on opponent's piece without having selected anything
-            if (piece && PIECE_INFO[piece].color !== currentPlayer) {
-                return;
-            }
         }
 
         function displayPieceInfo(piece) {
-            const info = PIECE_INFO[piece];
             const infoElement = document.getElementById('pieceInfo');
             infoElement.innerHTML = `
-                <h3>${info.name}</h3>
-                <p><strong>Liike:</strong> ${info.moves}</p>
-                <p><strong>Rajoitukset:</strong> ${info.restriction}</p>
-                <p><strong>Taktiikka:</strong> ${info.tactics}</p>
+                <h3>${PIECE_NAMES[piece]}</h3>
+                <p><strong>Liike:</strong> ${PIECE_MOVES[piece]}</p>
+                <p><strong>Rajoitukset:</strong> ${PIECE_RESTRICTIONS[piece]}</p>
+                <p><strong>Taktiikka:</strong> ${PIECE_TACTICS[piece]}</p>
             `;
         }
 
@@ -594,12 +446,11 @@
             const boardElement = document.getElementById('board');
 
             moves.forEach(([r, c]) => {
+                const pos = getPixelPosition(r, c);
                 const dot = document.createElement('div');
                 dot.className = 'valid-move';
-                dot.style.left = `${50 + c * 60}px`;
-                dot.style.top = `${20 + r * 60}px`;
-                dot.style.pointerEvents = 'auto';
-                dot.style.cursor = 'pointer';
+                dot.style.left = `${pos.x - 10}px`;
+                dot.style.top = `${pos.y - 10}px`;
                 dot.onclick = (e) => {
                     e.stopPropagation();
                     movePiece(row, col, r, c);
@@ -610,37 +461,22 @@
 
         function getValidMoves(row, col) {
             const piece = board[row][col];
-            const moves = [];
-
-            switch(piece) {
-                case '帥':
-                case '將':
-                    return getGeneralMoves(row, col, piece);
-                case '仕':
-                case '士':
-                    return getAdvisorMoves(row, col, piece);
-                case '相':
-                case '象':
-                    return getElephantMoves(row, col, piece);
-                case '馬':
-                    return getHorseMoves(row, col);
-                case '車':
-                    return getChariotMoves(row, col);
-                case '炮':
-                case '砲':
-                    return getCannonMoves(row, col);
-                case '兵':
-                case '卒':
-                    return getSoldierMoves(row, col, piece);
-            }
-
-            return moves;
+            
+            if (piece === '帥' || piece === '將') return getGeneralMoves(row, col);
+            if (piece === '仕' || piece === '士') return getAdvisorMoves(row, col);
+            if (piece === '相' || piece === '象') return getElephantMoves(row, col);
+            if (piece === '馬') return getHorseMoves(row, col);
+            if (piece === '車') return getChariotMoves(row, col);
+            if (piece === '炮' || piece === '砲') return getCannonMoves(row, col);
+            if (piece === '兵' || piece === '卒') return getSoldierMoves(row, col);
+            
+            return [];
         }
 
-        function getGeneralMoves(row, col, piece) {
+        function getGeneralMoves(row, col) {
             const moves = [];
-            const isRed = piece === '帥';
-            const palaceRows = isRed ? [7, 8, 9] : [0, 1, 2];
+            const pieceColor = getPieceColor(row, col);
+            const palaceRows = pieceColor === 'red' ? [7, 8, 9] : [0, 1, 2];
             const palaceCols = [3, 4, 5];
 
             const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
@@ -650,7 +486,8 @@
                 const newCol = col + dc;
                 
                 if (palaceRows.includes(newRow) && palaceCols.includes(newCol)) {
-                    if (!board[newRow][newCol] || PIECE_INFO[board[newRow][newCol]].color !== PIECE_INFO[piece].color) {
+                    const targetColor = getPieceColor(newRow, newCol);
+                    if (!board[newRow][newCol] || targetColor !== pieceColor) {
                         moves.push([newRow, newCol]);
                     }
                 }
@@ -659,10 +496,10 @@
             return moves;
         }
 
-        function getAdvisorMoves(row, col, piece) {
+        function getAdvisorMoves(row, col) {
             const moves = [];
-            const isRed = piece === '仕';
-            const palaceRows = isRed ? [7, 8, 9] : [0, 1, 2];
+            const pieceColor = getPieceColor(row, col);
+            const palaceRows = pieceColor === 'red' ? [7, 8, 9] : [0, 1, 2];
             const palaceCols = [3, 4, 5];
 
             const directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
@@ -672,7 +509,8 @@
                 const newCol = col + dc;
                 
                 if (palaceRows.includes(newRow) && palaceCols.includes(newCol)) {
-                    if (!board[newRow][newCol] || PIECE_INFO[board[newRow][newCol]].color !== PIECE_INFO[piece].color) {
+                    const targetColor = getPieceColor(newRow, newCol);
+                    if (!board[newRow][newCol] || targetColor !== pieceColor) {
                         moves.push([newRow, newCol]);
                     }
                 }
@@ -681,11 +519,11 @@
             return moves;
         }
 
-        function getElephantMoves(row, col, piece) {
+        function getElephantMoves(row, col) {
             const moves = [];
-            const isRed = piece === '相';
-            const maxRow = isRed ? 9 : 4;
-            const minRow = isRed ? 5 : 0;
+            const pieceColor = getPieceColor(row, col);
+            const maxRow = pieceColor === 'red' ? 9 : 4;
+            const minRow = pieceColor === 'red' ? 5 : 0;
 
             const directions = [[2, 2], [2, -2], [-2, 2], [-2, -2]];
             
@@ -697,7 +535,8 @@
                 
                 if (newRow >= minRow && newRow <= maxRow && newCol >= 0 && newCol < 9) {
                     if (!board[blockRow][blockCol]) {
-                        if (!board[newRow][newCol] || PIECE_INFO[board[newRow][newCol]].color !== PIECE_INFO[piece].color) {
+                        const targetColor = getPieceColor(newRow, newCol);
+                        if (!board[newRow][newCol] || targetColor !== pieceColor) {
                             moves.push([newRow, newCol]);
                         }
                     }
@@ -709,7 +548,7 @@
 
         function getHorseMoves(row, col) {
             const moves = [];
-            const piece = board[row][col];
+            const pieceColor = getPieceColor(row, col);
             
             const horseMoves = [
                 [[-1, 0], [-2, -1]], [[-1, 0], [-2, 1]],
@@ -727,7 +566,8 @@
                 if (blockRow >= 0 && blockRow < 10 && blockCol >= 0 && blockCol < 9) {
                     if (!board[blockRow][blockCol]) {
                         if (destRow >= 0 && destRow < 10 && destCol >= 0 && destCol < 9) {
-                            if (!board[destRow][destCol] || PIECE_INFO[board[destRow][destCol]].color !== PIECE_INFO[piece].color) {
+                            const targetColor = getPieceColor(destRow, destCol);
+                            if (!board[destRow][destCol] || targetColor !== pieceColor) {
                                 moves.push([destRow, destCol]);
                             }
                         }
@@ -740,7 +580,7 @@
 
         function getChariotMoves(row, col) {
             const moves = [];
-            const piece = board[row][col];
+            const pieceColor = getPieceColor(row, col);
             
             const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
             
@@ -752,7 +592,8 @@
                     if (!board[newRow][newCol]) {
                         moves.push([newRow, newCol]);
                     } else {
-                        if (PIECE_INFO[board[newRow][newCol]].color !== PIECE_INFO[piece].color) {
+                        const targetColor = getPieceColor(newRow, newCol);
+                        if (targetColor !== pieceColor) {
                             moves.push([newRow, newCol]);
                         }
                         break;
@@ -767,7 +608,7 @@
 
         function getCannonMoves(row, col) {
             const moves = [];
-            const piece = board[row][col];
+            const pieceColor = getPieceColor(row, col);
             
             const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
             
@@ -785,7 +626,8 @@
                         if (!jumped) {
                             jumped = true;
                         } else {
-                            if (PIECE_INFO[board[newRow][newCol]].color !== PIECE_INFO[piece].color) {
+                            const targetColor = getPieceColor(newRow, newCol);
+                            if (targetColor !== pieceColor) {
                                 moves.push([newRow, newCol]);
                             }
                             break;
@@ -799,27 +641,32 @@
             return moves;
         }
 
-        function getSoldierMoves(row, col, piece) {
+        function getSoldierMoves(row, col) {
             const moves = [];
-            const isRed = piece === '兵';
-            const direction = isRed ? -1 : 1;
-            const hascrossed = isRed ? row < 5 : row > 4;
+            const pieceColor = getPieceColor(row, col);
+            const direction = pieceColor === 'red' ? -1 : 1;
+            const hasCrossed = pieceColor === 'red' ? row < 5 : row > 4;
 
-            // Forward
             const forwardRow = row + direction;
             if (forwardRow >= 0 && forwardRow < 10) {
-                if (!board[forwardRow][col] || PIECE_INFO[board[forwardRow][col]].color !== PIECE_INFO[piece].color) {
+                const targetColor = getPieceColor(forwardRow, col);
+                if (!board[forwardRow][col] || targetColor !== pieceColor) {
                     moves.push([forwardRow, col]);
                 }
             }
 
-            // Sideways if crossed river
-            if (hascrossed) {
-                if (col > 0 && (!board[row][col-1] || PIECE_INFO[board[row][col-1]].color !== PIECE_INFO[piece].color)) {
-                    moves.push([row, col-1]);
+            if (hasCrossed) {
+                if (col > 0) {
+                    const targetColor = getPieceColor(row, col-1);
+                    if (!board[row][col-1] || targetColor !== pieceColor) {
+                        moves.push([row, col-1]);
+                    }
                 }
-                if (col < 8 && (!board[row][col+1] || PIECE_INFO[board[row][col+1]].color !== PIECE_INFO[piece].color)) {
-                    moves.push([row, col+1]);
+                if (col < 8) {
+                    const targetColor = getPieceColor(row, col+1);
+                    if (!board[row][col+1] || targetColor !== pieceColor) {
+                        moves.push([row, col+1]);
+                    }
                 }
             }
 
@@ -838,20 +685,24 @@
 
             const movingPiece = board[fromRow][fromCol];
             const capturedPiece = board[toRow][toCol];
+            const movingColor = getPieceColor(fromRow, fromCol);
 
             board[toRow][toCol] = movingPiece;
             board[fromRow][fromCol] = '';
+            
+            setPieceColor(toRow, toCol, movingColor);
+            delete pieceColors[`${fromRow}-${fromCol}`];
 
-            const moveNotation = `${PIECE_INFO[movingPiece].name} ${String.fromCharCode(97 + fromCol)}${10 - fromRow} → ${String.fromCharCode(97 + toCol)}${10 - toRow}${capturedPiece ? ' (syö ' + PIECE_INFO[capturedPiece].name + ')' : ''}`;
+            const moveNotation = `${PIECE_NAMES[movingPiece]} ${String.fromCharCode(97 + fromCol)}${10 - fromRow} → ${String.fromCharCode(97 + toCol)}${10 - toRow}${capturedPiece ? ' (syö ' + PIECE_NAMES[capturedPiece] + ')' : ''}`;
             
             moveHistory.push(moveNotation);
             updateMoveHistory();
 
             const lastMoveElement = document.getElementById('lastMove');
-            let moveDescription = `<span class="highlight">${PIECE_INFO[movingPiece].name}</span> siirtyi kohdasta ${String.fromCharCode(97 + fromCol)}${10 - fromRow} kohtaan ${String.fromCharCode(97 + toCol)}${10 - toRow}.`;
+            let moveDescription = `<span class="highlight">${PIECE_NAMES[movingPiece]}</span> siirtyi kohdasta ${String.fromCharCode(97 + fromCol)}${10 - fromRow} kohtaan ${String.fromCharCode(97 + toCol)}${10 - toRow}.`;
             
             if (capturedPiece) {
-                moveDescription += ` <span class="highlight">Söi ${PIECE_INFO[capturedPiece].name}!</span>`;
+                moveDescription += ` <span class="highlight">Söi ${PIECE_NAMES[capturedPiece]}!</span>`;
             }
 
             lastMoveElement.innerHTML = moveDescription;
