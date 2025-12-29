@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xiangqi - Kiinalainen Shakki</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .container {
+            display: flex;
+            gap: 30px;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 1400px;
+        }
+        
+        .game-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .board-container {
+            position: relative;
+            background: #d4a574;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .board {
+            position: relative;
+            width: 540px;
+            height: 600px;
+            background: #e8c89a;
+            border: 3px solid #8b4513;
+        }
+        
+        .board-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .river {
+            position: absolute;
+            top: 270px;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .river-text {
+            background: #e8c89a;
+            padding: 0 20px;
+        }
+        
+        .piece {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            border: 3px solid #333;
+        }
+        
+        .piece.red {
+            background: radial-gradient(circle at 30% 30%, #ff6b6b, #c92a2a);
+            color: #fff;
+        }
+        
+        .piece.black {
+            background: radial-gradient(circle at 30% 30%, #495057, #212529);
+            color: #fff;
+        }
+        
+        .piece:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+        }
+        
+        .piece.selected {
+            transform: scale(1.15);
+            box-shadow: 0 0 20px #ffd700, 0 6px 12px rgba(0,0,0,0.4);
+            border-color: #ffd700;
+        }
+        
+        .valid-move {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: rgba(76, 175, 80, 0.6);
+            pointer-events: none;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+        }
+        
+        .info-panel {
+            width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-box h2 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 20px;
+        }
+        
+        .info-box h3 {
+            margin: 15px 0 10px 0;
+            color: #495057;
+            font-size: 16px;
+        }
+        
+        .info-box p, .info-box ul {
+            margin: 8px 0;
+            color: #666;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        
+        .info-box ul {
+            padding-left: 20px;
+        }
+        
+        .status {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .status.red-turn {
+            background: #ffe0e0;
+            color: #c92a2a;
+        }
+        
+        .status.black-turn {
+            background: #e0e0e0;
+            color: #212529;
+        }
+        
+        .button {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        
+        .button:hover {
+            background: #5568d3;
+        }
+        
+        .move-history {
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+        
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .coordinates {
+            position: absolute;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .coord-top, .coord-bottom {
+            top: -30px;
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0 22px;
+        }
+
+        .coord-bottom {
+            top: auto;
+            bottom: -30px;
+        }
+
+        .coord-left, .coord-right {
+            left: -30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+            padding: 22px 0;
+        }
+
+        .coord-right {
+            left: auto;
+            right: -30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-section">
+            <div class="board-container">
+                <div class="board" id="board">
+                    <svg class="board-lines" width="540" height="600">
+                        <!-- Vertical lines -->
+                        <line x1="60" y1="30" x2="60" y2="570" stroke="#333" stroke-width="2"/>
+                        <line x1="120" y1="30" x2="120" y2="570" stroke="#333" stroke-width="2"/>
+                        <line x1="180" y1="30" x2="180" y2="570" stroke="#333" stroke-width="2"/>
+                        <line x1="240" y1="30" x2="240" y2="570" stroke="#333" stroke-width="2"/>
+                        <line x1="300" y1="30" x2="300" y2="570" stroke="#333" stroke-width="2"/>
+                        <line x1="360" y1="30" x2="360" y2="570" stroke="#333" stroke-width="2"/>
+                        <line x1="420" y1="30" x2="420" y2="570" stroke="#333" stroke-width="2"/>
+                        <line x1="480" y1="30" x2="480" y2="570" stroke="#333" stroke-width="2"/>
+                        
+                        <!-- Horizontal lines -->
+                        <line x1="60" y1="30" x2="480" y2="30" stroke="#333" stroke-width="2"/>
+                        <line x1="60" y1="90" x2="480" y2="90" stroke="#333" stroke-width="2"/>
+                        <line x1="60" y1="150" x2="480" y2="150" stroke="#333" stroke-width="2"/>
+                        <line x1="60" y1="210" x2="480" y2="210" stroke="#333" stroke-width="2"/>
+                        <line x1="60" y1="270" x2="480" y2="270" stroke="#333" stroke-width="2"/>
+                        <line x1="60" y1="330" x2="480" y2="330" stroke="#333" stroke-width="2"/>
+                        <line x1="60" y1="390" x2="480" y2="390" stroke="#333" stroke-width="2"/>
+                        <line x1="60" y1="450" x2="480" y2="450" stroke="#333" stroke-width="2"/>
+                        <line x1="60" y1="510" x2="480" y2="510" stroke="#333" stroke-width="2"/>
+                        <line x1="60" y1="570" x2="480" y2="570" stroke="#333" stroke-width="2"/>
+                        
+                        <!-- Palace diagonals - Black -->
+                        <line x1="240" y1="30" x2="300" y2="90" stroke="#333" stroke-width="2"/>
+                        <line x1="300" y1="30" x2="240" y2="90" stroke="#333" stroke-width="2"/>
+                        
+                        <!-- Palace diagonals - Red -->
+                        <line x1="240" y1="510" x2="300" y2="570" stroke="#333" stroke-width="2"/>
+                        <line x1="300" y1="510" x2="240" y2="570" stroke="#333" stroke-width="2"/>
+                    </svg>
+                    
+                    <div class="river">
+                        <span class="river-text">楚 河 ～ 漢 界</span>
+                    </div>
+
+                    <div class="coordinates coord-top" id="coordTop"></div>
+                    <div class="coordinates coord-bottom" id="coordBottom"></div>
+                    <div class="coordinates coord-left" id="coordLeft"></div>
+                    <div class="coordinates coord-right" id="coordRight"></div>
+                </div>
+            </div>
+            <button class="button" onclick="resetGame()">Uusi peli</button>
+        </div>
+        
+        <div class="info-panel">
+            <div class="info-box">
+                <div id="status" class="status red-turn">Punaisen vuoro</div>
+            </div>
+            
+            <div class="info-box">
+                <h2>Viimeisin siirto</h2>
+                <div id="lastMove">Peli alkaa. Punainen aloittaa!</div>
+            </div>
+            
+            <div class="info-box">
+                <h2>Ohjeet valitulle nappulalle</h2>
+                <div id="pieceInfo">Valitse nappula nähdäksesi sen liikkumissäännöt ja taktiset vinkit.</div>
+            </div>
+            
+            <div class="info-box">
+                <h2>Siirtohistoria</h2>
+                <div id="moveHistory" class="move-history">-</div>
+            </div>
+            
+            <div class="info-box">
+                <h2>Perussäännöt</h2>
+                <p><strong>Tavoite:</strong> Shakkimatti vastustajan kenraali.</p>
+                <p><strong>Erityistä:</strong></p>
+                <ul>
+                    <li>Nappulat liikkuvat viivojen risteyskohdissa</li>
+                    <li>Joki jakaa laudan - vaikuttaa norsun ja sotilaiden liikkeisiin</li>
+                    <li>Kenraalit eivät voi kohdata suoraan ilman nappuloita välissä</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PIECE_INFO = {
+            '帥': {
+                name: 'Kenraali (Shuai)',
+                color: 'red',
+                moves: 'Liikkuu yhden askeleen kerrallaan pysty- tai vaakasuunnassa.',
+                restriction: 'EI VOI POISTUA PALATSISTA (3x3 ruudukon keskialue tukialueellasi).',
+                tactics: 'Pidä kenraali suojattuna! Vältä paljastamasta sitä vastustajan kenraalin kanssa samalle pystyriville ilman nappuloita välissä.'
+            },
+            '將': {
+                name: 'Kenraali (Jiang)',
+                color: 'black',
+                moves: 'Liikkuu yhden askeleen kerrallaan pysty- tai vaakasuunnassa.',
+                restriction: 'EI VOI POISTUA PALATSISTA (3x3 ruudukon keskialue tukialueellasi).',
+                tactics: 'Pidä kenraali suojattuna! Vältä paljastamasta sitä vastustajan kenraalin kanssa samalle pystyriville ilman nappuloita välissä.'
+            },
+            '仕': {
+                name: 'Neuvonantaja (Shi)',
+                color: 'red',
+                moves: 'Liikkuu yhden askeleen viistosti palatsin diagonaaleilla.',
+                restriction: 'EI VOI POISTUA PALATSISTA.',
+                tactics: 'Käytä neuvonantajia kenraalin suojaamiseen. Ne voivat peittää tärkeitä diagonaaleja.'
+            },
+            '士': {
+                name: 'Neuvonantaja (Shi)',
+                color: 'black',
+                moves: 'Liikkuu yhden askeleen viistosti palatsin diagonaaleilla.',
+                restriction: 'EI VOI POISTUA PALATSISTA.',
+                tactics: 'Käytä neuvonantajia kenraalin suojaamiseen. Ne voivat peittää tärkeitä diagonaaleja.'
+            },
+            '相': {
+                name: 'Norsu/Ministeri (Xiang)',
+                color: 'red',
+                moves: 'Liikkuu täsmälleen kaksi ruutua viistosti (muodostaa "X"-muodon).',
+                restriction: 'EI VOI YLITTÄÄ JOKEA. Voidaan estää, jos väliruudussa on nappula.',
+                tactics: 'Norsut ovat hyviä puolustajia omalla puolellasi. Käytä niitä keskialueen kontrollointiin.'
+            },
+            '象': {
+                name: 'Norsu/Ministeri (Xiang)',
+                color: 'black',
+                moves: 'Liikkuu täsmälleen kaksi ruutua viistosti (muodostaa "X"-muodon).',
+                restriction: 'EI VOI YLITTÄÄ JOKEA. Voidaan estää, jos väliruudussa on nappula.',
+                tactics: 'Norsut ovat hyviä puolustajia omalla puolellasi. Käytä niitä keskialueen kontrollointiin.'
+            },
+            '馬': {
+                name: 'Hevonen (Ma)',
+                color: 'red',
+                moves: 'Liikkuu "L"-muodossa: yksi askel suoraan, sitten yksi viistosti.',
+                restriction: 'Voidaan estää ("hobble"), jos viereisessä ruudussa on nappula ennen viistoa liikettä.',
+                tactics: 'Hevoset ovat voimakkaita keskipelissä. Vältä niiden estämistä omilla nappuloillasi. Hyvä hyökkääjä!'
+            },
+            '馬': {
+                name: 'Hevonen (Ma)',
+                color: 'black',
+                moves: 'Liikkuu "L"-muodossa: yksi askel suoraan, sitten yksi viistosti.',
+                restriction: 'Voidaan estää ("hobble"), jos viereisessä ruudussa on nappula ennen viistoa liikettä.',
+                tactics: 'Hevoset ovat voimakkaita keskipelissä. Vältä niiden estämistä omilla nappuloillasi. Hyvä hyökkääjä!'
+            },
+            '車': {
+                name: 'Vaunu (Ju)',
+                color: 'red',
+                moves: 'Liikkuu minkä tahansa matkan pysty- tai vaakasuunnassa.',
+                restriction: 'Ei voi hypätä muiden nappuloiden yli.',
+                tactics: 'Vaunuja pidetään vahvimpina nappuloina! Aktivoi ne varhain. Hallitse avoimia linjoja ja rivejä.'
+            },
+            '車': {
+                name: 'Vaunu (Ju)',
+                color: 'black',
+                moves: 'Liikkuu minkä tahansa matkan pysty- tai vaakasuunnassa.',
+                restriction: 'Ei voi hypätä muiden nappuloiden yli.',
+                tactics: 'Vaunuja pidetään vahvimpina nappuloina! Aktivoi ne varhain. Hallitse avoimia linjoja ja rivejä.'
+            },
+            '炮': {
+                name: 'Tykki (Pao)',
+                color: 'red',
+                moves: 'Liikkuu kuten vaunu MUTTA syödäkseen sen täytyy hypätä täsmälleen yhden nappulan yli.',
+                restriction: 'Tarvitsee "näytön" (screen) hyppääkseen syödäkseen.',
+                tactics: 'Tykit ovat erinomaisia avajaisissa ja keskipelissä. Aseta ne painostamaan kenraalia. Käytä vastustajan nappuloita "näyttöinä"!'
+            },
+            '砲': {
+                name: 'Tykki (Pao)',
+                color: 'black',
+                moves: 'Liikkuu kuten vaunu MUTTA syödäkseen sen täytyy hypätä täsmälleen yhden nappulan yli.',
+                restriction: 'Tarvitsee "näytön" (screen) hyppääkseen syödäkseen.',
+                tactics: 'Tykit ovat erinomaisia avajaisissa ja keskipelissä. Aseta ne painostamaan kenraalia. Käytä vastustajan nappuloita "näyttöinä"!'
+            },
+            '兵': {
+                name: 'Sotilas (Bing)',
+                color: 'red',
+                moves: 'Liikkuu yhden askeleen eteenpäin. Joen ylitettyään voi liikkua myös sivuille (ei taaksepäin).',
+                restriction: 'Ei voi liikkua taaksepäin.',
+                tactics: 'Sotilaat vahvistuvat ylitettyään joen! Työnnä niitä eteenpäin tukeaksesi hyökkäystä. Ryhmä sotilaita voi olla vaarallinen.'
+            },
+            '卒': {
+                name: 'Sotilas (Zu)',
+                color: 'black',
+                moves: 'Liikkuu yhden askeleen eteenpäin. Joen ylitettyään voi liikkua myös sivuille (ei taaksepäin).',
+                restriction: 'Ei voi liikkua taaksepäin.',
+                tactics: 'Sotilaat vahvistuvat ylitettyään joen! Työnnä niitä eteenpäin tukeaksesi hyökkäystä. Ryhmä sotilaita voi olla vaarallinen.'
+            }
+        };
+
+        let board = [];
+        let selectedPiece = null;
+        let currentPlayer = 'red';
+        let moveHistory = [];
+
+        const initialSetup = [
+            ['車', '馬', '象', '士', '將', '士', '象', '馬', '車'],
+            ['', '', '', '', '', '', '', '', ''],
+            ['', '砲', '', '', '', '', '', '砲', ''],
+            ['卒', '', '卒', '', '卒', '', '卒', '', '卒'],
+            ['', '', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', '', ''],
+            ['兵', '', '兵', '', '兵', '', '兵', '', '兵'],
+            ['', '炮', '', '', '', '', '', '炮', ''],
+            ['', '', '', '', '', '', '', '', ''],
+            ['車', '馬', '相', '仕', '帥', '仕', '相', '馬', '車']
+        ];
+
+        function initBoard() {
+            board = initialSetup.map(row => [...row]);
+            renderBoard();
+            setupCoordinates();
+        }
+
+        function setupCoordinates() {
+            const topCoords = document.getElementById('coordTop');
+            const bottomCoords = document.getElementById('coordBottom');
+            const leftCoords = document.getElementById('coordLeft');
+            const rightCoords = document.getElementById('coordRight');
+
+            topCoords.innerHTML = '';
+            bottomCoords.innerHTML = '';
+            leftCoords.innerHTML = '';
+            rightCoords.innerHTML = '';
+
+            // Numbers for top and bottom (9 to 1 for black, 1 to 9 for red)
+            for (let i = 9; i >= 1; i--) {
+                const topSpan = document.createElement('span');
+                topSpan.textContent = i;
+                topCoords.appendChild(topSpan);
+            }
+
+            for (let i = 1; i <= 9; i++) {
+                const bottomSpan = document.createElement('span');
+                bottomSpan.textContent = i;
+                bottomCoords.appendChild(bottomSpan);
+            }
+
+            // Letters for left and right (a-j)
+            const letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
+            letters.forEach(letter => {
+                const leftSpan = document.createElement('span');
+                leftSpan.textContent = letter;
+                leftCoords.appendChild(leftSpan);
+
+                const rightSpan = document.createElement('span');
+                rightSpan.textContent = letter;
+                rightCoords.appendChild(rightSpan);
+            });
+        }
+
+        function renderBoard() {
+            const boardElement = document.getElementById('board');
+            const existingPieces = boardElement.querySelectorAll('.piece');
+            existingPieces.forEach(p => p.remove());
+            
+            const validMoves = boardElement.querySelectorAll('.valid-move');
+            validMoves.forEach(m => m.remove());
+
+            for (let row = 0; row < 10; row++) {
+                for (let col = 0; col < 9; col++) {
+                    const piece = board[row][col];
+                    if (piece) {
+                        const pieceElement = document.createElement('div');
+                        pieceElement.className = `piece ${PIECE_INFO[piece].color}`;
+                        pieceElement.textContent = piece;
+                        pieceElement.style.left = `${35 + col * 60}px`;
+                        pieceElement.style.top = `${5 + row * 60}px`;
+                        pieceElement.dataset.row = row;
+                        pieceElement.dataset.col = col;
+                        pieceElement.onclick = () => selectPiece(row, col);
+                        
+                        if (selectedPiece && selectedPiece.row === row && selectedPiece.col === col) {
+                            pieceElement.classList.add('selected');
+                        }
+                        
+                        boardElement.appendChild(pieceElement);
+                    }
+                }
+            }
+
+            if (selectedPiece) {
+                showValidMoves(selectedPiece.row, selectedPiece.col);
+            }
+        }
+
+        function selectPiece(row, col) {
+            const piece = board[row][col];
+            
+            if (!piece) {
+                if (selectedPiece) {
+                    movePiece(selectedPiece.row, selectedPiece.col, row, col);
+                }
+                return;
+            }
+
+            if (selectedPiece && PIECE_INFO[piece].color !== currentPlayer) {
+                movePiece(selectedPiece.row, selectedPiece.col, row, col);
+                return;
+            }
+
+            if (PIECE_INFO[piece].color !== currentPlayer) {
+                return;
+            }
+
+            selectedPiece = { row, col, piece };
+            renderBoard();
+            displayPieceInfo(piece);
+        }
+
+        function displayPieceInfo(piece) {
+            const info = PIECE_INFO[piece];
+            const infoElement = document.getElementById('pieceInfo');
+            infoElement.innerHTML = `
+                <h3>${info.name}</h3>
+                <p><strong>Liike:</strong> ${info.moves}</p>
+                <p><strong>Rajoitukset:</strong> ${info.restriction}</p>
+                <p><strong>Taktiikka:</strong> ${info.tactics}</p>
+            `;
+        }
+
+        function showValidMoves(row, col) {
+            const moves = getValidMoves(row, col);
+            const boardElement = document.getElementById('board');
+
+            moves.forEach(([r, c]) => {
+                const dot = document.createElement('div');
+                dot.className = 'valid-move';
+                dot.style.left = `${50 + c * 60}px`;
+                dot.style.top = `${20 + r * 60}px`;
+                dot.onclick = () => movePiece(row, col, r, c);
+                boardElement.appendChild(dot);
+            });
+        }
+
+        function getValidMoves(row, col) {
+            const piece = board[row][col];
+            const moves = [];
+
+            switch(piece) {
+                case '帥':
+                case '將':
+                    return getGeneralMoves(row, col, piece);
+                case '仕':
+                case '士':
+                    return getAdvisorMoves(row, col, piece);
+                case '相':
+                case '象':
+                    return getElephantMoves(row, col, piece);
+                case '馬':
+                    return getHorseMoves(row, col);
+                case '車':
+                    return getChariotMoves(row, col);
+                case '炮':
+                case '砲':
+                    return getCannonMoves(row, col);
+                case '兵':
+                case '卒':
+                    return getSoldierMoves(row, col, piece);
+            }
+
+            return moves;
+        }
+
+        function getGeneralMoves(row, col, piece) {
+            const moves = [];
+            const isRed = piece === '帥';
+            const palaceRows = isRed ? [7, 8, 9] : [0, 1, 2];
+            const palaceCols = [3, 4, 5];
+
+            const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+            
+            for (const [dr, dc] of directions) {
+                const newRow = row + dr;
+                const newCol = col + dc;
+                
+                if (palaceRows.includes(newRow) && palaceCols.includes(newCol)) {
+                    if (!board[newRow][newCol] || PIECE_INFO[board[newRow][newCol]].color !== PIECE_INFO[piece].color) {
+                        moves.push([newRow, newCol]);
+                    }
+                }
+            }
+
+            return moves;
+        }
+
+        function getAdvisorMoves(row, col, piece) {
+            const moves = [];
+            const isRed = piece === '仕';
+            const palaceRows = isRed ? [7, 8, 9] : [0, 1, 2];
+            const palaceCols = [3, 4, 5];
+
+            const directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
+            
+            for (const [dr, dc] of directions) {
+                const newRow = row + dr;
+                const newCol = col + dc;
+                
+                if (palaceRows.includes(newRow) && palaceCols.includes(newCol)) {
+                    if (!board[newRow][newCol] || PIECE_INFO[board[newRow][newCol]].color !== PIECE_INFO[piece].color) {
+                        moves.push([newRow, newCol]);
+                    }
+                }
+            }
+
+            return moves;
+        }
+
+        function getElephantMoves(row, col, piece) {
+            const moves = [];
+            const isRed = piece === '相';
+            const maxRow = isRed ? 9 : 4;
+            const minRow = isRed ? 5 : 0;
+
+            const directions = [[2, 2], [2, -2], [-2, 2], [-2, -2]];
+            
+            for (const [dr, dc] of directions) {
+                const newRow = row + dr;
+                const newCol = col + dc;
+                const blockRow = row + dr/2;
+                const blockCol = col + dc/2;
+                
+                if (newRow >= minRow && newRow <= maxRow && newCol >= 0 && newCol < 9) {
+                    if (!board[blockRow][blockCol]) {
+                        if (!board[newRow][newCol] || PIECE_INFO[board[newRow][newCol]].color !== PIECE_INFO[piece].color) {
+                            moves.push([newRow, newCol]);
+                        }
+                    }
+                }
+            }
+
+            return moves;
+        }
+
+        function getHorseMoves(row, col) {
+            const moves = [];
+            const piece = board[row][col];
+            
+            const horseMoves = [
+                [[-1, 0], [-2, -1]], [[-1, 0], [-2, 1]],
+                [[1, 0], [2, -1]], [[1, 0], [2, 1]],
+                [[0, -1], [-1, -2]], [[0, -1], [1, -2]],
+                [[0, 1], [-1, 2]], [[0, 1], [1, 2]]
+            ];
+            
+            for (const [block, dest] of horseMoves) {
+                const blockRow = row + block[0];
+                const blockCol = col + block[1];
+                const destRow = row + dest[0];
+                const destCol = col + dest[1];
+                
+                if (blockRow >= 0 && blockRow < 10 && blockCol >= 0 && blockCol < 9) {
+                    if (!board[blockRow][blockCol]) {
+                        if (destRow >= 0 && destRow < 10 && destCol >= 0 && destCol < 9) {
+                            if (!board[destRow][destCol] || PIECE_INFO[board[destRow][destCol]].color !== PIECE_INFO[piece].color) {
+                                moves.push([destRow, destCol]);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return moves;
+        }
+
+        function getChariotMoves(row, col) {
+            const moves = [];
+            const piece = board[row][col];
+            
+            const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+            
+            for (const [dr, dc] of directions) {
+                let newRow = row + dr;
+                let newCol = col + dc;
+                
+                while (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 9) {
+                    if (!board[newRow][newCol]) {
+                        moves.push([newRow, newCol]);
+                    } else {
+                        if (PIECE_INFO[board[newRow][newCol]].color !== PIECE_INFO[piece].color) {
+                            moves.push([newRow, newCol]);
+                        }
+                        break;
+                    }
+                    newRow += dr;
+                    newCol += dc;
+                }
+            }
+
+            return moves;
+        }
+
+        function getCannonMoves(row, col) {
+            const moves = [];
+            const piece = board[row][col];
+            
+            const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
+            
+            for (const [dr, dc] of directions) {
+                let newRow = row + dr;
+                let newCol = col + dc;
+                let jumped = false;
+                
+                while (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 9) {
+                    if (!board[newRow][newCol]) {
+                        if (!jumped) {
+                            moves.push([newRow, newCol]);
+                        }
+                    } else {
+                        if (!jumped) {
+                            jumped = true;
+                        } else {
+                            if (PIECE_INFO[board[newRow][newCol]].color !== PIECE_INFO[piece].color) {
+                                moves.push([newRow, newCol]);
+                            }
+                            break;
+                        }
+                    }
+                    newRow += dr;
+                    newCol += dc;
+                }
+            }
+
+            return moves;
+        }
+
+        function getSoldierMoves(row, col, piece) {
+            const moves = [];
+            const isRed = piece === '兵';
+            const direction = isRed ? -1 : 1;
+            const hascrossed = isRed ? row < 5 : row > 4;
+
+            // Forward
+            const forwardRow = row + direction;
+            if (forwardRow >= 0 && forwardRow < 10) {
+                if (!board[forwardRow][col] || PIECE_INFO[board[forwardRow][col]].color !== PIECE_INFO[piece].color) {
+                    moves.push([forwardRow, col]);
+                }
+            }
+
+            // Sideways if crossed river
+            if (hascrossed) {
+                if (col > 0 && (!board[row][col-1] || PIECE_INFO[board[row][col-1]].color !== PIECE_INFO[piece].color)) {
+                    moves.push([row, col-1]);
+                }
+                if (col < 8 && (!board[row][col+1] || PIECE_INFO[board[row][col+1]].color !== PIECE_INFO[piece].color)) {
+                    moves.push([row, col+1]);
+                }
+            }
+
+            return moves;
+        }
+
+        function movePiece(fromRow, fromCol, toRow, toCol) {
+            const validMoves = getValidMoves(fromRow, fromCol);
+            const isValid = validMoves.some(([r, c]) => r === toRow && c === toCol);
+
+            if (!isValid) {
+                selectedPiece = null;
+                renderBoard();
+                return;
+            }
+
+            const movingPiece = board[fromRow][fromCol];
+            const capturedPiece = board[toRow][toCol];
+
+            board[toRow][toCol] = movingPiece;
+            board[fromRow][fromCol] = '';
+
+            const moveNotation = `${PIECE_INFO[movingPiece].name} ${String.fromCharCode(97 + fromCol)}${10 - fromRow} → ${String.fromCharCode(97 + toCol)}${10 - toRow}${capturedPiece ? ' (syö ' + PIECE_INFO[capturedPiece].name + ')' : ''}`;
+            
+            moveHistory.push(moveNotation);
+            updateMoveHistory();
+
+            const lastMoveElement = document.getElementById('lastMove');
+            let moveDescription = `<span class="highlight">${PIECE_INFO[movingPiece].name}</span> siirtyi kohdasta ${String.fromCharCode(97 + fromCol)}${10 - fromRow} kohtaan ${String.fromCharCode(97 + toCol)}${10 - toRow}.`;
+            
+            if (capturedPiece) {
+                moveDescription += ` <span class="highlight">Söi ${PIECE_INFO[capturedPiece].name}!</span>`;
+            }
+
+            lastMoveElement.innerHTML = moveDescription;
+
+            currentPlayer = currentPlayer === 'red' ? 'black' : 'red';
+            updateStatus();
+
+            selectedPiece = null;
+            renderBoard();
+        }
+
+        function updateStatus() {
+            const statusElement = document.getElementById('status');
+            statusElement.className = `status ${currentPlayer}-turn`;
+            statusElement.textContent = currentPlayer === 'red' ? 'Punaisen vuoro' : 'Mustan vuoro';
+        }
+
+        function updateMoveHistory() {
+            const historyElement = document.getElementById('moveHistory');
+            if (moveHistory.length === 0) {
+                historyElement.textContent = '-';
+            } else {
+                historyElement.innerHTML = moveHistory.map((move, i) => `${i + 1}. ${move}`).join('<br>');
+                historyElement.scrollTop = historyElement.scrollHeight;
+            }
+        }
+
+        function resetGame() {
+            selectedPiece = null;
+            currentPlayer = 'red';
+            moveHistory = [];
+            initBoard();
+            updateStatus();
+            updateMoveHistory();
+            document.getElementById('lastMove').textContent = 'Peli alkaa. Punainen aloittaa!';
+            document.getElementById('pieceInfo').textContent = 'Valitse nappula nähdäksesi sen liikkumissäännöt ja taktiset vinkit.';
+        }
+
+        // Initialize game
+        initBoard();
+    </script>
+</body>
+</html>
