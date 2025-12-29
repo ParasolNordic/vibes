@@ -40,13 +40,13 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
 
-    /* ✅ FIX: Laudan kuvasuhde lukitaan (Xiangqi.png on 3:4) ja tausta venytetään täsmälleen elementin kokoiseksi */
+    /* ✅ FIX: Lukitaan kuvasuhde (Xiangqi.png 3:4) ja tausta venytetään täsmälleen elementtiin */
     .board {
       position: relative;
       width: 600px;
       aspect-ratio: 3 / 4;           /* 1350:1800 = 3:4 */
       background-image: url('Xiangqi.png');
-      background-size: 100% 100%;    /* ei "contain" -> ei sivutyhjää -> koordinaatit pysyy linjassa */
+      background-size: 100% 100%;
       background-repeat: no-repeat;
       background-position: 0 0;
       user-select: none;
@@ -162,6 +162,12 @@
       color: #212529;
     }
 
+    .status.game-over {
+      background: #fff3cd;
+      color: #664d03;
+      border: 2px solid #ffecb5;
+    }
+
     .button {
       padding: 12px 24px;
       background: #667eea;
@@ -193,7 +199,6 @@
       font-weight: bold;
     }
 
-    /* Pieni responsiivisuus: pienillä näytöillä lauta kaventuu */
     @media (max-width: 1100px) {
       .container { flex-direction: column; align-items: center; }
       .info-panel { width: 100%; max-width: 600px; }
@@ -237,7 +242,8 @@
         <ul>
           <li>Nappulat liikkuvat viivojen risteyskohdissa</li>
           <li>Joki jakaa laudan - vaikuttaa norsun ja sotilaiden liikkeisiin</li>
-          <li>Kenraalit eivät voi kohdata suoraan ilman nappuloita välissä</li>
+          <li>Kenraalit eivät voi kohdata suoraan ilman nappuloita välissä (”flying general” on kielletty asema)</li>
+          <li>Et saa tehdä siirtoa, joka jättää oman kenraalin shakkiin</li>
         </ul>
       </div>
     </div>
@@ -256,8 +262,8 @@
     };
 
     const PIECE_MOVES = {
-      '帥': 'Liikkuu yhden askeleen kerrallaan pysty- tai vaakasuunnassa.',
-      '將': 'Liikkuu yhden askeleen kerrallaan pysty- tai vaakasuunnassa.',
+      '帥': 'Liikkuu yhden askeleen kerrallaan pysty- tai vaakasuunnassa. (Erikoistapaus: voi syödä vastustajan kenraalin suoraan, jos kenraalit kohtaavat ilman nappuloita välissä.)',
+      '將': 'Liikkuu yhden askeleen kerrallaan pysty- tai vaakasuunnassa. (Erikoistapaus: voi syödä vastustajan kenraalin suoraan, jos kenraalit kohtaavat ilman nappuloita välissä.)',
       '仕': 'Liikkuu yhden askeleen viistosti palatsin diagonaaleilla.',
       '士': 'Liikkuu yhden askeleen viistosti palatsin diagonaaleilla.',
       '相': 'Liikkuu täsmälleen kaksi ruutua viistosti (muodostaa "X"-muodon).',
@@ -271,8 +277,8 @@
     };
 
     const PIECE_RESTRICTIONS = {
-      '帥': 'EI VOI POISTUA PALATSISTA (3x3 keskialue).',
-      '將': 'EI VOI POISTUA PALATSISTA (3x3 keskialue).',
+      '帥': 'EI VOI POISTUA PALATSISTA (3x3 keskialue) – paitsi erikoissyönti vastustajan kenraaliin, jos kenraalit ovat samalla linjalla ilman nappuloita välissä.',
+      '將': 'EI VOI POISTUA PALATSISTA (3x3 keskialue) – paitsi erikoissyönti vastustajan kenraaliin, jos kenraalit ovat samalla linjalla ilman nappuloita välissä.',
       '仕': 'EI VOI POISTUA PALATSISTA.',
       '士': 'EI VOI POISTUA PALATSISTA.',
       '相': 'EI VOI YLITTÄÄ JOKEA. Voidaan estää, jos väliruudussa on nappula.',
@@ -286,16 +292,16 @@
     };
 
     const PIECE_TACTICS = {
-      '帥': 'Pidä kenraali suojattuna! Vältä paljastamasta sitä vastustajan kenraalin kanssa samalle riville.',
-      '將': 'Pidä kenraali suojattuna! Vältä paljastamasta sitä vastustajan kenraalin kanssa samalle riville.',
+      '帥': 'Pidä kenraali suojattuna! Et saa koskaan jättää sitä shakkiin. Varo myös ”flying general” -linjaa.',
+      '將': 'Pidä kenraali suojattuna! Et saa koskaan jättää sitä shakkiin. Varo myös ”flying general” -linjaa.',
       '仕': 'Käytä neuvonantajia kenraalin suojaamiseen.',
       '士': 'Käytä neuvonantajia kenraalin suojaamiseen.',
       '相': 'Norsut ovat hyviä puolustajia omalla puolellasi.',
       '象': 'Norsut ovat hyviä puolustajia omalla puolellasi.',
       '馬': 'Hevoset ovat voimakkaita keskipelissä. Vältä niiden estämistä omilla nappuloillasi.',
       '車': 'Vaunuja pidetään vahvimpina nappuloina! Hallitse avoimia linjoja.',
-      '炮': 'Tykit ovat erinomaisia avajaisissa. Aseta ne painostamaan kenraalia. Käytä vastustajan nappuloita "näyttöinä"!',
-      '砲': 'Tykit ovat erinomaisia avajaisissa. Aseta ne painostamaan kenraalia. Käytä vastustajan nappuloita "näyttöinä"!',
+      '炮': 'Tykit ovat erinomaisia avajaisissa. Käytä nappuloita ”näyttöinä” syöntiuhkiin!',
+      '砲': 'Tykit ovat erinomaisia avajaisissa. Käytä nappuloita ”näyttöinä” syöntiuhkiin!',
       '兵': 'Sotilaat vahvistuvat ylitettyään joen! Työnnä niitä eteenpäin tukeaksesi hyökkäystä.',
       '卒': 'Sotilaat vahvistuvat ylitettyään joen! Työnnä niitä eteenpäin tukeaksesi hyökkäystä.'
     };
@@ -305,10 +311,9 @@
     let selectedPiece = null;
     let currentPlayer = 'red';
     let moveHistory = [];
+    let gameOver = false;
 
-    // ✅ FIX: Ruudukko sidotaan taustakuvan "oikeaan" ruudukon alueeseen prosentteina.
-    // Nämä arvot on mitattu Xiangqi.png:stä (1350x1800):
-    // ruudukon vasen x=77, oikea x=1289, ylä y=226, ala y=1573
+    // ✅ FIX: Ruudukko sidotaan taustakuvan ruudukon alueeseen prosentteina (mitattu Xiangqi.png:stä 1350x1800)
     const GRID = {
       leftPct: 77 / 1350,
       rightPct: 1289 / 1350,
@@ -355,6 +360,10 @@
       return pieceColors[`${row}-${col}`] || null;
     }
 
+    function opposite(color) {
+      return color === 'red' ? 'black' : 'red';
+    }
+
     const initialSetup = [
       ['車', '馬', '象', '士', '將', '士', '象', '馬', '車'],  // row 0 - Black
       ['', '', '', '', '', '', '', '', ''],
@@ -371,6 +380,7 @@
     function initBoard() {
       board = initialSetup.map(row => [...row]);
       pieceColors = {};
+      gameOver = false;
 
       for (let row = 0; row < 10; row++) {
         for (let col = 0; col < 9; col++) {
@@ -383,6 +393,7 @@
       }
 
       renderBoard();
+      updateStatus();
     }
 
     function renderBoard() {
@@ -427,6 +438,7 @@
     }
 
     function handleBoardClick(event) {
+      if (gameOver) return;
       if (!selectedPiece) return;
 
       const boardRect = document.getElementById('board').getBoundingClientRect();
@@ -441,6 +453,8 @@
     }
 
     function selectPiece(row, col) {
+      if (gameOver) return;
+
       const piece = board[row][col];
       const pieceColor = getPieceColor(row, col);
 
@@ -472,8 +486,304 @@
       `;
     }
 
+    // -----------------------------
+    // ✅ Xiangqi-säännöt: SHAKKI, LAILLISET SIIRROT, FLYING GENERAL, PELIN PÄÄTTYMINEN
+    // -----------------------------
+
+    function findGeneral(color, b = board, colors = pieceColors) {
+      const target = color === 'red' ? '帥' : '將';
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (b[r][c] === target && (colors[`${r}-${c}`] || null) === color) {
+            return { row: r, col: c };
+          }
+        }
+      }
+      return null;
+    }
+
+    function generalsFacing(b = board, colors = pieceColors) {
+      const rg = findGeneral('red', b, colors);
+      const bg = findGeneral('black', b, colors);
+      if (!rg || !bg) return false;
+      if (rg.col !== bg.col) return false;
+
+      const c = rg.col;
+      const start = Math.min(rg.row, bg.row) + 1;
+      const end = Math.max(rg.row, bg.row) - 1;
+      for (let r = start; r <= end; r++) {
+        if (b[r][c]) return false;
+      }
+      return true;
+    }
+
+    function palaceContains(color, row, col) {
+      const palaceRows = color === 'red' ? [7, 8, 9] : [0, 1, 2];
+      const palaceCols = [3, 4, 5];
+      return palaceRows.includes(row) && palaceCols.includes(col);
+    }
+
+    function elephantSideOk(color, row) {
+      // Red elephants stay on rows 5..9 ; Black elephants stay on rows 0..4
+      if (color === 'red') return row >= 5 && row <= 9;
+      return row >= 0 && row <= 4;
+    }
+
+    function cloneState(b = board, colors = pieceColors) {
+      const nb = b.map(r => r.slice());
+      const nc = { ...colors };
+      return { nb, nc };
+    }
+
+    function simulateMove(fromRow, fromCol, toRow, toCol, b = board, colors = pieceColors) {
+      const { nb, nc } = cloneState(b, colors);
+      const movingPiece = nb[fromRow][fromCol];
+      const movingColor = nc[`${fromRow}-${fromCol}`];
+
+      const capturedPiece = nb[toRow][toCol];
+      const capturedColor = nc[`${toRow}-${toCol}`];
+
+      nb[toRow][toCol] = movingPiece;
+      nb[fromRow][fromCol] = '';
+
+      nc[`${toRow}-${toCol}`] = movingColor;
+      delete nc[`${fromRow}-${fromCol}`];
+
+      // jos syötiin, poista väri (varmistus)
+      if (capturedPiece && capturedColor) {
+        // yllä jo ylikirjoitettiin toRow-toCol movingColorilla, ok.
+      }
+      return { nb, nc, movingPiece, capturedPiece, movingColor };
+    }
+
+    function isSquareAttacked(row, col, byColor, b = board, colors = pieceColors) {
+      // Tarkistetaan kaikki byColor nappulat ja niiden "capture attack" -kuviot.
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 9; c++) {
+          const p = b[r][c];
+          if (!p) continue;
+          const pc = colors[`${r}-${c}`] || null;
+          if (pc !== byColor) continue;
+
+          if (pieceAttacksSquare(p, byColor, r, c, row, col, b, colors)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    function pieceAttacksSquare(piece, color, fr, fc, tr, tc, b, colors) {
+      const dr = tr - fr;
+      const dc = tc - fc;
+
+      // Helper: clear line for rook-like
+      function rookLineClearAndTarget() {
+        if (fr !== tr && fc !== tc) return false;
+        const stepR = tr === fr ? 0 : (tr > fr ? 1 : -1);
+        const stepC = tc === fc ? 0 : (tc > fc ? 1 : -1);
+        let r = fr + stepR;
+        let c = fc + stepC;
+        while (r >= 0 && r < 10 && c >= 0 && c < 9) {
+          if (r === tr && c === tc) return true; // reached target without blockers
+          if (b[r][c]) return false;
+          r += stepR;
+          c += stepC;
+        }
+        return false;
+      }
+
+      // Helper: cannon capture line (exactly one screen between)
+      function cannonCanCaptureTargetAssumingOccupied() {
+        if (fr !== tr && fc !== tc) return false;
+        const stepR = tr === fr ? 0 : (tr > fr ? 1 : -1);
+        const stepC = tc === fc ? 0 : (tc > fc ? 1 : -1);
+        let r = fr + stepR;
+        let c = fc + stepC;
+        let screens = 0;
+        while (r >= 0 && r < 10 && c >= 0 && c < 9) {
+          if (r === tr && c === tc) {
+            return screens === 1;
+          }
+          if (b[r][c]) screens++;
+          if (screens > 1) return false;
+          r += stepR;
+          c += stepC;
+        }
+        return false;
+      }
+
+      // Helper: horse attack with leg block
+      function horseAttacks() {
+        const horseMoves = [
+          { leg: [-1, 0], dst: [-2, -1] }, { leg: [-1, 0], dst: [-2, 1] },
+          { leg: [1, 0], dst: [2, -1] },   { leg: [1, 0], dst: [2, 1] },
+          { leg: [0, -1], dst: [-1, -2] }, { leg: [0, -1], dst: [1, -2] },
+          { leg: [0, 1], dst: [-1, 2] },   { leg: [0, 1], dst: [1, 2] }
+        ];
+        for (const m of horseMoves) {
+          const legR = fr + m.leg[0], legC = fc + m.leg[1];
+          const dstR = fr + m.dst[0], dstC = fc + m.dst[1];
+          if (dstR === tr && dstC === tc) {
+            if (legR >= 0 && legR < 10 && legC >= 0 && legC < 9) {
+              return !b[legR][legC];
+            }
+          }
+        }
+        return false;
+      }
+
+      // Helper: elephant attack with eye block + river restriction
+      function elephantAttacks() {
+        const options = [[2,2],[2,-2],[-2,2],[-2,-2]];
+        for (const [er, ec] of options) {
+          const nr = fr + er, nc = fc + ec;
+          const br = fr + er/2, bc = fc + ec/2;
+          if (nr === tr && nc === tc) {
+            if (nr >= 0 && nr < 10 && nc >= 0 && nc < 9) {
+              if (!elephantSideOk(color, nr)) return false;
+              return !b[br][bc];
+            }
+          }
+        }
+        return false;
+      }
+
+      // Helper: advisor attack within palace
+      function advisorAttacks() {
+        const options = [[1,1],[1,-1],[-1,1],[-1,-1]];
+        for (const [ar, ac] of options) {
+          const nr = fr + ar, nc = fc + ac;
+          if (nr === tr && nc === tc) {
+            return palaceContains(color, nr, nc);
+          }
+        }
+        return false;
+      }
+
+      // Helper: general adjacent within palace + flying line capture attack
+      function generalAttacks() {
+        const adj = [[1,0],[-1,0],[0,1],[0,-1]];
+        for (const [gr, gc] of adj) {
+          const nr = fr + gr, nc = fc + gc;
+          if (nr === tr && nc === tc) {
+            return palaceContains(color, nr, nc);
+          }
+        }
+        // flying general attack: if target is opposing general and no pieces between on same file
+        // Treat as attack to that square (king would be captured).
+        const targetPiece = b[tr][tc];
+        if (!targetPiece) return false;
+        const targetIsGeneral = (targetPiece === '帥' || targetPiece === '將');
+        if (!targetIsGeneral) return false;
+        if (fc !== tc) return false;
+
+        const start = Math.min(fr, tr) + 1;
+        const end = Math.max(fr, tr) - 1;
+        for (let r = start; r <= end; r++) {
+          if (b[r][fc]) return false;
+        }
+        return true;
+      }
+
+      // Helper: soldier attack (same as movement squares)
+      function soldierAttacks() {
+        const dir = color === 'red' ? -1 : 1;
+        const crossed = color === 'red' ? fr < 5 : fr > 4;
+        // forward
+        if (fr + dir === tr && fc === tc) return true;
+        // sideways after crossing
+        if (crossed && fr === tr && Math.abs(dc) === 1 && dc !== 0) return true;
+        return false;
+      }
+
+      switch (piece) {
+        case '車': return rookLineClearAndTarget();
+        case '炮':
+        case '砲': return cannonCanCaptureTargetAssumingOccupied();
+        case '馬': return horseAttacks();
+        case '相':
+        case '象': return elephantAttacks();
+        case '仕':
+        case '士': return advisorAttacks();
+        case '兵':
+        case '卒': return soldierAttacks();
+        case '帥':
+        case '將': return generalAttacks();
+        default: return false;
+      }
+    }
+
+    function isInCheck(color, b = board, colors = pieceColors) {
+      const g = findGeneral(color, b, colors);
+      if (!g) return false; // jos general puuttuu, peli käytännössä ohi
+      // Jos generalsFacing, asema olisi laiton; käytännössä se tarkoittaa että general on "uhattu" suoraan.
+      if (generalsFacing(b, colors)) return true;
+      return isSquareAttacked(g.row, g.col, opposite(color), b, colors);
+    }
+
+    function hasAnyLegalMove(color) {
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 9; c++) {
+          const p = board[r][c];
+          if (!p) continue;
+          const pc = getPieceColor(r, c);
+          if (pc !== color) continue;
+          const moves = getLegalMoves(r, c);
+          if (moves.length > 0) return true;
+        }
+      }
+      return false;
+    }
+
+    function isLegalAfterMove(fromRow, fromCol, toRow, toCol, moverColor) {
+      const { nb, nc } = simulateMove(fromRow, fromCol, toRow, toCol);
+      // Ei saa päätyä tilanteeseen jossa kenraalit katsovat suoraan.
+      if (generalsFacing(nb, nc)) return false;
+      // Ei saa jättää omaa kenraalia shakkiin.
+      if (isInCheck(moverColor, nb, nc)) return false;
+      return true;
+    }
+
+    // -----------------------------
+    // ✅ Move generation (raakasiirrot) + laillisten suodatus
+    // -----------------------------
+    function getValidMoves(row, col) {
+      const piece = board[row][col];
+      if (!piece) return [];
+
+      if (piece === '帥' || piece === '將') return getGeneralMoves(row, col);
+      if (piece === '仕' || piece === '士') return getAdvisorMoves(row, col);
+      if (piece === '相' || piece === '象') return getElephantMoves(row, col);
+      if (piece === '馬') return getHorseMoves(row, col);
+      if (piece === '車') return getChariotMoves(row, col);
+      if (piece === '炮' || piece === '砲') return getCannonMoves(row, col);
+      if (piece === '兵' || piece === '卒') return getSoldierMoves(row, col);
+
+      return [];
+    }
+
+    function getLegalMoves(row, col) {
+      const piece = board[row][col];
+      if (!piece) return [];
+      const moverColor = getPieceColor(row, col);
+      const raw = getValidMoves(row, col);
+
+      return raw.filter(([r, c]) => {
+        // perusrajat
+        if (r < 0 || r >= 10 || c < 0 || c >= 9) return false;
+
+        // ei syödä omaa
+        const targetColor = getPieceColor(r, c);
+        if (targetColor && targetColor === moverColor) return false;
+
+        // tärkein: ei saa jättää omaa kenraalia shakkiin eikä saa aiheuttaa generalsFacing
+        return isLegalAfterMove(row, col, r, c, moverColor);
+      });
+    }
+
     function showValidMoves(row, col) {
-      const moves = getValidMoves(row, col);
+      const moves = getLegalMoves(row, col);
       const boardElement = document.getElementById('board');
 
       moves.forEach(([r, c]) => {
@@ -490,20 +800,6 @@
       });
     }
 
-    function getValidMoves(row, col) {
-      const piece = board[row][col];
-
-      if (piece === '帥' || piece === '將') return getGeneralMoves(row, col);
-      if (piece === '仕' || piece === '士') return getAdvisorMoves(row, col);
-      if (piece === '相' || piece === '象') return getElephantMoves(row, col);
-      if (piece === '馬') return getHorseMoves(row, col);
-      if (piece === '車') return getChariotMoves(row, col);
-      if (piece === '炮' || piece === '砲') return getCannonMoves(row, col);
-      if (piece === '兵' || piece === '卒') return getSoldierMoves(row, col);
-
-      return [];
-    }
-
     function getGeneralMoves(row, col) {
       const moves = [];
       const pieceColor = getPieceColor(row, col);
@@ -511,16 +807,29 @@
       const palaceCols = [3, 4, 5];
 
       const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-
       for (const [dr, dc] of directions) {
         const newRow = row + dr;
         const newCol = col + dc;
-
         if (palaceRows.includes(newRow) && palaceCols.includes(newCol)) {
           const targetColor = getPieceColor(newRow, newCol);
           if (!board[newRow][newCol] || targetColor !== pieceColor) {
             moves.push([newRow, newCol]);
           }
+        }
+      }
+
+      // ✅ Flying general -erikoissyönti: jos vastustajan kenraali on samalla sarakkeella eikä välissä nappuloita
+      const enemyColor = opposite(pieceColor);
+      const enemyGeneral = findGeneral(enemyColor);
+      if (enemyGeneral && enemyGeneral.col === col) {
+        const start = Math.min(row, enemyGeneral.row) + 1;
+        const end = Math.max(row, enemyGeneral.row) - 1;
+        let clear = true;
+        for (let r = start; r <= end; r++) {
+          if (board[r][col]) { clear = false; break; }
+        }
+        if (clear) {
+          moves.push([enemyGeneral.row, enemyGeneral.col]); // suora syönti
         }
       }
 
@@ -534,11 +843,9 @@
       const palaceCols = [3, 4, 5];
 
       const directions = [[1, 1], [1, -1], [-1, 1], [-1, -1]];
-
       for (const [dr, dc] of directions) {
         const newRow = row + dr;
         const newCol = col + dc;
-
         if (palaceRows.includes(newRow) && palaceCols.includes(newCol)) {
           const targetColor = getPieceColor(newRow, newCol);
           if (!board[newRow][newCol] || targetColor !== pieceColor) {
@@ -546,7 +853,6 @@
           }
         }
       }
-
       return moves;
     }
 
@@ -557,7 +863,6 @@
       const minRow = pieceColor === 'red' ? 5 : 0;
 
       const directions = [[2, 2], [2, -2], [-2, 2], [-2, -2]];
-
       for (const [dr, dc] of directions) {
         const newRow = row + dr;
         const newCol = col + dc;
@@ -573,7 +878,6 @@
           }
         }
       }
-
       return moves;
     }
 
@@ -614,7 +918,6 @@
       const pieceColor = getPieceColor(row, col);
 
       const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-
       for (const [dr, dc] of directions) {
         let newRow = row + dr;
         let newCol = col + dc;
@@ -642,7 +945,6 @@
       const pieceColor = getPieceColor(row, col);
 
       const directions = [[0, 1], [0, -1], [1, 0], [-1, 0]];
-
       for (const [dr, dc] of directions) {
         let newRow = row + dr;
         let newCol = col + dc;
@@ -650,17 +952,13 @@
 
         while (newRow >= 0 && newRow < 10 && newCol >= 0 && newCol < 9) {
           if (!board[newRow][newCol]) {
-            if (!jumped) {
-              moves.push([newRow, newCol]);
-            }
+            if (!jumped) moves.push([newRow, newCol]);
           } else {
             if (!jumped) {
               jumped = true;
             } else {
               const targetColor = getPieceColor(newRow, newCol);
-              if (targetColor !== pieceColor) {
-                moves.push([newRow, newCol]);
-              }
+              if (targetColor !== pieceColor) moves.push([newRow, newCol]);
               break;
             }
           }
@@ -704,11 +1002,16 @@
       return moves;
     }
 
+    // -----------------------------
+    // ✅ Move execution + endgame/check logic
+    // -----------------------------
     function movePiece(fromRow, fromCol, toRow, toCol) {
-      const validMoves = getValidMoves(fromRow, fromCol);
-      const isValid = validMoves.some(([r, c]) => r === toRow && c === toCol);
+      if (gameOver) return;
 
-      if (!isValid) {
+      const legalMoves = getLegalMoves(fromRow, fromCol);
+      const isLegal = legalMoves.some(([r, c]) => r === toRow && c === toCol);
+
+      if (!isLegal) {
         selectedPiece = null;
         renderBoard();
         return;
@@ -718,6 +1021,7 @@
       const capturedPiece = board[toRow][toCol];
       const movingColor = getPieceColor(fromRow, fromCol);
 
+      // apply move
       board[toRow][toCol] = movingPiece;
       board[fromRow][fromCol] = '';
 
@@ -732,6 +1036,7 @@
       moveHistory.push(moveNotation);
       updateMoveHistory();
 
+      // last move text
       const lastMoveElement = document.getElementById('lastMove');
       let moveDescription =
         `<span class="highlight">${PIECE_NAMES[movingPiece]}</span> siirtyi kohdasta ` +
@@ -742,19 +1047,67 @@
         moveDescription += ` <span class="highlight">Söi ${PIECE_NAMES[capturedPiece]}!</span>`;
       }
 
-      lastMoveElement.innerHTML = moveDescription;
+      // ✅ End immediately if general captured
+      if (capturedPiece === '帥' || capturedPiece === '將') {
+        gameOver = true;
+        lastMoveElement.innerHTML = moveDescription + ` <span class="highlight">Peli päättyi: kenraali syötiin.</span>`;
+        declareWinner(movingColor, 'Kenraali syötiin');
+        selectedPiece = null;
+        renderBoard();
+        return;
+      }
 
+      // switch turn
       currentPlayer = currentPlayer === 'red' ? 'black' : 'red';
+
+      // check + mate/stalemate detection
+      const inCheck = isInCheck(currentPlayer);
+      const anyMove = hasAnyLegalMove(currentPlayer);
+
+      if (!anyMove) {
+        gameOver = true;
+        if (inCheck) {
+          lastMoveElement.innerHTML = moveDescription + ` <span class="highlight">Shakkimatti!</span>`;
+          declareWinner(opposite(currentPlayer), 'Shakkimatti');
+        } else {
+          // usein xiangqissa "ei laillisia siirtoja" = häviö (patti häviö)
+          lastMoveElement.innerHTML = moveDescription + ` <span class="highlight">Ei laillisia siirtoja (patti).</span>`;
+          declareWinner(opposite(currentPlayer), 'Patti (ei laillisia siirtoja)');
+        }
+      } else {
+        // show check info in last move/status
+        if (inCheck) {
+          lastMoveElement.innerHTML = moveDescription + ` <span class="highlight">Shakki!</span>`;
+        } else {
+          lastMoveElement.innerHTML = moveDescription;
+        }
+      }
+
       updateStatus();
 
       selectedPiece = null;
       renderBoard();
     }
 
+    function declareWinner(winnerColor, reason) {
+      const statusElement = document.getElementById('status');
+      statusElement.className = 'status game-over';
+      statusElement.textContent =
+        `${winnerColor === 'red' ? 'Punainen' : 'Musta'} voitti! (${reason})`;
+    }
+
     function updateStatus() {
       const statusElement = document.getElementById('status');
+
+      if (gameOver) {
+        // declareWinner hoitaa yleensä tekstin; mutta jos resetin jälkeen tms.
+        return;
+      }
+
+      const turnText = currentPlayer === 'red' ? 'Punaisen vuoro' : 'Mustan vuoro';
+      const checkText = isInCheck(currentPlayer) ? ' — SHAKKI!' : '';
       statusElement.className = `status ${currentPlayer}-turn`;
-      statusElement.textContent = currentPlayer === 'red' ? 'Punaisen vuoro' : 'Mustan vuoro';
+      statusElement.textContent = turnText + checkText;
     }
 
     function updateMoveHistory() {
@@ -772,14 +1125,13 @@
       currentPlayer = 'red';
       moveHistory = [];
       initBoard();
-      updateStatus();
       updateMoveHistory();
       document.getElementById('lastMove').textContent = 'Peli alkaa. Punainen aloittaa!';
       document.getElementById('pieceInfo').textContent =
         'Valitse nappula nähdäksesi sen liikkumissäännöt ja taktiset vinkit.';
     }
 
-    // ✅ Renderöi nappulat myös kun selainikkunan koko muuttuu (koska koordinaatit riippuu boardin koosta)
+    // Renderöi nappulat myös kun selainikkunan koko muuttuu (koordinaatit riippuu boardin koosta)
     window.addEventListener('resize', () => renderBoard());
 
     // Initialize game
