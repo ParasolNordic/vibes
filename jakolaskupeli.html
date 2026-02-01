@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐶 Koiran Jakolaskuseikkailu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700;800&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Hauska animoitu tausta */
+        body::before {
+            content: '🦴🐾🦴🐾🦴🐾🦴🐾🦴🐾';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            font-size: 60px;
+            opacity: 0.05;
+            animation: float 120s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(50%, 50%) rotate(360deg); }
+        }
+
+        .container {
+            background: white;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+            position: relative;
+            z-index: 1;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-family: 'Baloo 2', cursive;
+            color: #667eea;
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 0px #f093fb;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #764ba2;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 20px;
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            transition: transform 0.3s;
+        }
+
+        .stat-box:hover {
+            transform: scale(1.05) rotate(-2deg);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: 800;
+            font-family: 'Baloo 2', cursive;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .question-area {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .question {
+            font-family: 'Baloo 2', cursive;
+            font-size: 1.8em;
+            color: #764ba2;
+            text-align: center;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .math-problem {
+            font-size: 2.5em;
+            color: #667eea;
+            text-align: center;
+            margin: 20px 0;
+            font-weight: 800;
+            font-family: 'Baloo 2', cursive;
+        }
+
+        .answer-input {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.5em;
+            border: 4px solid #667eea;
+            border-radius: 15px;
+            text-align: center;
+            font-family: 'Quicksand', sans-serif;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+            transform: scale(1.02);
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 1.3em;
+            border-radius: 15px;
+            cursor: pointer;
+            font-family: 'Baloo 2', cursive;
+            font-weight: 700;
+            width: 100%;
+            margin-top: 15px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .feedback {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: 600;
+            animation: popIn 0.4s ease-out;
+        }
+
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .feedback.correct {
+            background: linear-gradient(135deg, #56ab2f, #a8e063);
+            color: white;
+        }
+
+        .feedback.incorrect {
+            background: linear-gradient(135deg, #ff6b6b, #feca57);
+            color: white;
+        }
+
+        .dog-reward {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .dog-image {
+            max-width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: wiggle 1s ease-in-out;
+        }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
+        }
+
+        .completion-screen {
+            text-align: center;
+        }
+
+        .completion-title {
+            font-family: 'Baloo 2', cursive;
+            font-size: 2.5em;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .completion-message {
+            font-size: 1.3em;
+            color: #764ba2;
+            margin-bottom: 30px;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+            height: 100%;
+            transition: width 0.5s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-family: 'Baloo 2', cursive;
+        }
+
+        .paws {
+            font-size: 3em;
+            margin: 20px 0;
+        }
+
+        .start-screen {
+            text-align: center;
+        }
+
+        .start-title {
+            font-family: 'Baloo 2', cursive;
+            font-size: 3em;
+            color: #667eea;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 0px #f093fb;
+        }
+
+        .start-description {
+            font-size: 1.2em;
+            color: #764ba2;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .dog-emoji {
+            font-size: 5em;
+            margin: 20px 0;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .math-problem {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="app"></div>
+    </div>
+
+    <script>
+        const app = document.getElementById('app');
+        
+        let currentQuestion = 0;
+        let score = 0;
+        let totalQuestions = 10;
+        let questions = [];
+        let currentAnswer = null;
+
+        // Koirakuvien URL:t (käytetään picsum.photos, dog.ceo ja placekitten vaihtoehtona)
+        const dogImageSources = [
+            'https://dog.ceo/api/breeds/image/random',
+            'https://random.dog/woof.json'
+        ];
+
+        const questionTypes = [
+            {
+                name: 'tasajako',
+                generate: () => {
+                    const divisor = Math.floor(Math.random() * 5) + 2; // 2-6
+                    const quotient = Math.floor(Math.random() * 10) + 2; // 2-11
+                    const dividend = divisor * quotient;
+                    return {
+                        text: `Sinulla on ${dividend} koirannamia. Jaat ne tasaisesti ${divisor} koiralle. Montako namia jokainen koira saa?`,
+                        problem: `${dividend} ÷ ${divisor}`,
+                        answer: quotient
+                    };
+                }
+            },
+            {
+                name: 'ryhmittely',
+                generate: () => {
+                    const divisor = Math.floor(Math.random() * 5) + 2; // 2-6
+                    const quotient = Math.floor(Math.random() * 10) + 2; // 2-11
+                    const dividend = divisor * quotient;
+                    return {
+                        text: `Koirapuistossa on ${dividend} koiraa. Ne muodostavat ${divisor} koiran ryhmiä. Montako ryhmää syntyy?`,
+                        problem: `${dividend} ÷ ${divisor}`,
+                        answer: quotient
+                    };
+                }
+            },
+            {
+                name: 'kertolasku_kaanteinen',
+                generate: () => {
+                    const multiplier = Math.floor(Math.random() * 9) + 2; // 2-10
+                    const multiplicand = Math.floor(Math.random() * 9) + 2; // 2-10
+                    const product = multiplier * multiplicand;
+                    return {
+                        text: `Jos ${multiplier} × ? = ${product}, mikä luku tulee kysymysmerkin tilalle?`,
+                        problem: `${product} ÷ ${multiplier}`,
+                        answer: multiplicand
+                    };
+                }
+            },
+            {
+                name: 'perus_jakolasku',
+                generate: () => {
+                    const divisor = Math.floor(Math.random() * 8) + 2; // 2-9
+                    const quotient = Math.floor(Math.random() * 10) + 1; // 1-10
+                    const dividend = divisor * quotient;
+                    return {
+                        text: `Laske jakolasku:`,
+                        problem: `${dividend} ÷ ${divisor}`,
+                        answer: quotient
+                    };
+                }
+            }
+        ];
+
+        function generateQuestions() {
+            questions = [];
+            for (let i = 0; i < totalQuestions; i++) {
+                const type = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+                questions.push(type.generate());
+            }
+        }
+
+        function showStartScreen() {
+            app.innerHTML = `
+                <div class="start-screen">
+                    <h1 class="start-title">🐶 Koiran Jakolaskuseikkailu</h1>
+                    <div class="dog-emoji">🐕</div>
+                    <p class="start-description">
+                        Tervetuloa harjoittelemaan jakolaskua!<br><br>
+                        Ratkaise 10 tehtävää ja ansaitse tassupisteitä. 🐾<br>
+                        Jokaisen tehtävän jälkeen saat nähdä söpön koirakuvan!<br><br>
+                        <strong>Valmis aloittamaan?</strong>
+                    </p>
+                    <button class="button" onclick="startGame()">🎮 Aloita peli!</button>
+                </div>
+            `;
+        }
+
+        function startGame() {
+            currentQuestion = 0;
+            score = 0;
+            generateQuestions();
+            showQuestion();
+        }
+
+        function showQuestion() {
+            if (currentQuestion >= totalQuestions) {
+                showCompletionScreen();
+                return;
+            }
+
+            const q = questions[currentQuestion];
+            currentAnswer = q.answer;
+
+            app.innerHTML = `
+                <h1>🐶 Koiran Jakolaskuseikkailu</h1>
+                <p class="subtitle">Auta koiria jakamaan nameja!</p>
+                
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-number">${currentQuestion + 1}/${totalQuestions}</div>
+                        <div class="stat-label">Tehtävä</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-number">${score} 🐾</div>
+                        <div class="stat-label">Tassupisteet</div>
+                    </div>
+                </div>
+
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${(currentQuestion / totalQuestions) * 100}%">
+                        ${Math.round((currentQuestion / totalQuestions) * 100)}%
+                    </div>
+                </div>
+
+                <div class="question-area">
+                    <div class="question">${q.text}</div>
+                    <div class="math-problem">${q.problem} = ?</div>
+                    <input type="number" class="answer-input" id="answerInput" placeholder="Kirjoita vastauksesi tähän">
+                    <button class="button" onclick="checkAnswer()">✓ Tarkista vastaus</button>
+                </div>
+
+                <div id="feedback"></div>
+            `;
+
+            document.getElementById('answerInput').focus();
+            document.getElementById('answerInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') checkAnswer();
+            });
+        }
+
+        async function fetchDogImage() {
+            try {
+                // Yritä ensin dog.ceo API:a
+                const response = await fetch('https://dog.ceo/api/breeds/image/random');
+                const data = await response.json();
+                if (data.status === 'success') {
+                    return data.message;
+                }
+            } catch (e) {
+                console.log('Dog API ei toiminut, käytetään varasuunnitelmaa');
+            }
+
+            try {
+                // Varasuunnitelma: random.dog
+                const response = await fetch('https://random.dog/woof.json');
+                const data = await response.json();
+                return data.url;
+            } catch (e) {
+                console.log('Random.dog ei toiminut');
+            }
+
+            // Viimeinen varasuunnitelma: picsum
+            return `https://picsum.photos/400/300?random=${Math.random()}`;
+        }
+
+        async function checkAnswer() {
+            const userAnswer = parseInt(document.getElementById('answerInput').value);
+            const feedbackDiv = document.getElementById('feedback');
+
+            if (isNaN(userAnswer)) {
+                feedbackDiv.innerHTML = `
+                    <div class="feedback incorrect">
+                        Kirjoita numero vastaukseksi! 🤔
+                    </div>
+                `;
+                return;
+            }
+
+            const isCorrect = userAnswer === currentAnswer;
+            
+            if (isCorrect) {
+                score += 10;
+                const dogImageUrl = await fetchDogImage();
+                
+                feedbackDiv.innerHTML = `
+                    <div class="feedback correct">
+                        🎉 Oikein! Hienoa työtä! +10 tassua 🐾
+                    </div>
+                    <div class="dog-reward">
+                        <img src="${dogImageUrl}" alt="Palkinto koirakuva" class="dog-image" onerror="this.src='https://picsum.photos/400/300?random=${Math.random()}'">
+                        <p style="margin-top: 15px; font-weight: 600; color: #667eea;">🎁 Ansaitsit söpön koirakuvan!</p>
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    currentQuestion++;
+                    showQuestion();
+                }, 3000);
+            } else {
+                feedbackDiv.innerHTML = `
+                    <div class="feedback incorrect">
+                        ❌ Voi ei! Oikea vastaus on ${currentAnswer}. Yritä seuraava tehtävä! 💪
+                    </div>
+                `;
+                
+                setTimeout(() => {
+                    currentQuestion++;
+                    showQuestion();
+                }, 2500);
+            }
+        }
+
+        async function showCompletionScreen() {
+            const dogImageUrl = await fetchDogImage();
+            const pawRating = Math.floor(score / 20);
+            const pawEmojis = '🐾'.repeat(pawRating);
+            
+            let message = '';
+            if (score >= 90) {
+                message = 'Uskomaton suoritus! Olet jakolaskumestari! 🏆';
+            } else if (score >= 70) {
+                message = 'Hienoa työtä! Olet todella hyvä jakolaskussa! 🌟';
+            } else if (score >= 50) {
+                message = 'Hyvin tehty! Harjoituksella tulet yhä paremmaksi! 👍';
+            } else {
+                message = 'Hyvä yritys! Harjoittele lisää, niin onnistut paremmin! 💪';
+            }
+
+            app.innerHTML = `
+                <div class="completion-screen">
+                    <h1 class="completion-title">🎉 Onnittelut!</h1>
+                    <div class="paws">${pawEmojis}</div>
+                    <div class="completion-message">
+                        <p><strong>Sait yhteensä ${score} tassupistettä!</strong></p>
+                        <p>${message}</p>
+                    </div>
+                    <div class="dog-reward">
+                        <img src="${dogImageUrl}" alt="Loppupalkinto" class="dog-image" onerror="this.src='https://picsum.photos/400/300?random=${Math.random()}'">
+                        <p style="margin-top: 20px; font-size: 1.3em; color: #764ba2;">
+                            🎁 Tässä erikoinen koirakuva palkinnoksi!
+                        </p>
+                    </div>
+                    <button class="button" onclick="startGame()">🔄 Pelaa uudelleen</button>
+                </div>
+            `;
+        }
+
+        // Aloita peli
+        showStartScreen();
+    </script>
+</body>
+</html>
