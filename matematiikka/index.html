@@ -357,54 +357,167 @@
 
         const questionTypes = [
             {
-                name: 'tasajako',
+                name: 'tasajako_nami',
                 generate: () => {
                     const divisor = Math.floor(Math.random() * 5) + 2; // 2-6
-                    const quotient = Math.floor(Math.random() * 10) + 2; // 2-11
+                    const quotient = Math.floor(Math.random() * 8) + 2; // 2-9
                     const dividend = divisor * quotient;
                     return {
                         text: `Sinulla on ${dividend} koirannamia. Jaat ne tasaisesti ${divisor} koiralle. Montako namia jokainen koira saa?`,
                         problem: `${dividend} ÷ ${divisor}`,
-                        answer: quotient
+                        answer: quotient,
+                        explanation: `Kun jaat ${dividend} namia ${divisor} koiralle, jokainen koira saa ${quotient} namia. Voit tarkistaa: ${divisor} × ${quotient} = ${dividend}`
                     };
                 }
             },
             {
-                name: 'ryhmittely',
+                name: 'tasajako_lelu',
                 generate: () => {
-                    const divisor = Math.floor(Math.random() * 5) + 2; // 2-6
-                    const quotient = Math.floor(Math.random() * 10) + 2; // 2-11
+                    const divisor = Math.floor(Math.random() * 4) + 2; // 2-5
+                    const quotient = Math.floor(Math.random() * 7) + 3; // 3-9
+                    const dividend = divisor * quotient;
+                    return {
+                        text: `Koirakerhossa on ${dividend} palloa. Ne jaetaan tasaisesti ${divisor} koiralle. Montako palloa kukin koira saa?`,
+                        problem: `${dividend} ÷ ${divisor}`,
+                        answer: quotient,
+                        explanation: `Vastaus: ${quotient} palloa. Tarkistus: ${divisor} koiraa × ${quotient} palloa = ${dividend} palloa`
+                    };
+                }
+            },
+            {
+                name: 'ryhmittely_koirat',
+                generate: () => {
+                    const divisor = Math.floor(Math.random() * 4) + 3; // 3-6
+                    const quotient = Math.floor(Math.random() * 6) + 2; // 2-7
                     const dividend = divisor * quotient;
                     return {
                         text: `Koirapuistossa on ${dividend} koiraa. Ne muodostavat ${divisor} koiran ryhmiä. Montako ryhmää syntyy?`,
                         problem: `${dividend} ÷ ${divisor}`,
-                        answer: quotient
+                        answer: quotient,
+                        explanation: `Kun ${dividend} koiraa jakautuu ${divisor}:n koiran ryhmiin, syntyy ${quotient} ryhmää.`
                     };
                 }
             },
             {
-                name: 'kertolasku_kaanteinen',
+                name: 'ryhmittely_jaljet',
                 generate: () => {
-                    const multiplier = Math.floor(Math.random() * 9) + 2; // 2-10
-                    const multiplicand = Math.floor(Math.random() * 9) + 2; // 2-10
+                    const divisor = 4; // Koiralla on 4 jalkaa
+                    const quotient = Math.floor(Math.random() * 8) + 3; // 3-10 koiraa
+                    const dividend = divisor * quotient;
+                    return {
+                        text: `Hiekassa näkyy ${dividend} koiran jälkeä. Koiralla on ${divisor} jalkaa. Montako koiraa on käynyt paikalla?`,
+                        problem: `${dividend} ÷ ${divisor}`,
+                        answer: quotient,
+                        explanation: `Koska jokaisella koiralla on 4 tassua, ${dividend} jälkeä tarkoittaa ${quotient} koiraa.`
+                    };
+                }
+            },
+            {
+                name: 'kertolauku_kaanteinen_perus',
+                generate: () => {
+                    const multiplier = Math.floor(Math.random() * 7) + 2; // 2-8
+                    const multiplicand = Math.floor(Math.random() * 8) + 2; // 2-9
                     const product = multiplier * multiplicand;
                     return {
                         text: `Jos ${multiplier} × ? = ${product}, mikä luku tulee kysymysmerkin tilalle?`,
                         problem: `${product} ÷ ${multiplier}`,
-                        answer: multiplicand
+                        answer: multiplicand,
+                        explanation: `Jakolaskulla selvitämme: ${product} ÷ ${multiplier} = ${multiplicand}. Tarkistus: ${multiplier} × ${multiplicand} = ${product}`
                     };
                 }
             },
             {
-                name: 'perus_jakolasku',
+                name: 'kertolasku_kaanteinen_tarina',
                 generate: () => {
-                    const divisor = Math.floor(Math.random() * 8) + 2; // 2-9
-                    const quotient = Math.floor(Math.random() * 10) + 1; // 1-10
+                    const boxes = Math.floor(Math.random() * 6) + 2; // 2-7
+                    const perBox = Math.floor(Math.random() * 7) + 3; // 3-9
+                    const total = boxes * perBox;
+                    return {
+                        text: `Koiratarha sai ${total} koiranruokapussia. Ne pakattiin ${boxes}:een laatikkoon, jokaisessa yhtä monta. Montako pussia kussakin laatikossa?`,
+                        problem: `${total} ÷ ${boxes}`,
+                        answer: perBox,
+                        explanation: `Vastaus: ${perBox} pussia per laatikko. Tämä on sama kuin kysyä: ${boxes} × ? = ${total}`
+                    };
+                }
+            },
+            {
+                name: 'perus_jakolasku_pieni',
+                generate: () => {
+                    const divisor = Math.floor(Math.random() * 5) + 2; // 2-6
+                    const quotient = Math.floor(Math.random() * 8) + 2; // 2-9
                     const dividend = divisor * quotient;
                     return {
                         text: `Laske jakolasku:`,
                         problem: `${dividend} ÷ ${divisor}`,
-                        answer: quotient
+                        answer: quotient,
+                        explanation: `${dividend} jaettuna ${divisor}:lla on ${quotient}. Muista: jakolasku on kertolaskun käänteinen toimitus!`
+                    };
+                }
+            },
+            {
+                name: 'perus_jakolasku_isompi',
+                generate: () => {
+                    const divisor = Math.floor(Math.random() * 6) + 4; // 4-9
+                    const quotient = Math.floor(Math.random() * 8) + 4; // 4-11
+                    const dividend = divisor * quotient;
+                    return {
+                        text: `Laske jakolasku:`,
+                        problem: `${dividend} ÷ ${divisor}`,
+                        answer: quotient,
+                        explanation: `${dividend} ÷ ${divisor} = ${quotient}. Voit ajatella: montako kertaa ${divisor} mahtuu lukuun ${dividend}?`
+                    };
+                }
+            },
+            {
+                name: 'puuttuva_tekija',
+                generate: () => {
+                    const divisor = Math.floor(Math.random() * 6) + 3; // 3-8
+                    const quotient = Math.floor(Math.random() * 7) + 3; // 3-9
+                    const dividend = divisor * quotient;
+                    return {
+                        text: `Täydennä: ? × ${divisor} = ${dividend}. Mikä luku tulee kysymysmerkin tilalle?`,
+                        problem: `${dividend} ÷ ${divisor}`,
+                        answer: quotient,
+                        explanation: `Puuttuva luku on ${quotient}, koska ${quotient} × ${divisor} = ${dividend}`
+                    };
+                }
+            },
+            {
+                name: 'kaksinkertainen_maara',
+                generate: () => {
+                    const base = Math.floor(Math.random() * 8) + 2; // 2-9
+                    const dividend = base * 2;
+                    return {
+                        text: `Koirapuistossa oli eilen ${base} koiraa. Tänään koiria on kaksinkertainen määrä, yhteensä ${dividend}. Laske: ${dividend} ÷ 2`,
+                        problem: `${dividend} ÷ 2`,
+                        answer: base,
+                        explanation: `Kun jaat ${dividend} kahdella, saat ${base}. Tämä on se alkuperäinen määrä ennen kaksinkertaistamista.`
+                    };
+                }
+            },
+            {
+                name: 'viikko_paivat',
+                generate: () => {
+                    const weeks = Math.floor(Math.random() * 6) + 2; // 2-7 viikkoa
+                    const days = weeks * 7;
+                    return {
+                        text: `Koira kävi ulkoiluttajalla ${days} päivää. Montako täyttä viikkoa (7 päivää) tämä on?`,
+                        problem: `${days} ÷ 7`,
+                        answer: weeks,
+                        explanation: `${days} päivää ÷ 7 päivää/viikko = ${weeks} viikkoa`
+                    };
+                }
+            },
+            {
+                name: 'symmetria',
+                generate: () => {
+                    const half = Math.floor(Math.random() * 12) + 4; // 4-15
+                    const whole = half * 2;
+                    return {
+                        text: `Koiran lenkkireitillä on yhteensä ${whole} puuta, puolet reitin kummallakin puolella. Montako puuta on toisella puolella?`,
+                        problem: `${whole} ÷ 2`,
+                        answer: half,
+                        explanation: `Puolet luvusta ${whole} on ${half}. Laskutoimitus: ${whole} ÷ 2 = ${half}`
                     };
                 }
             }
@@ -515,6 +628,8 @@
         async function checkAnswer() {
             const userAnswer = parseInt(document.getElementById('answerInput').value);
             const feedbackDiv = document.getElementById('feedback');
+            const answerInput = document.getElementById('answerInput');
+            const checkButton = document.querySelector('.button');
 
             if (isNaN(userAnswer)) {
                 feedbackDiv.innerHTML = `
@@ -525,7 +640,12 @@
                 return;
             }
 
+            // Poistetaan input ja tarkista-nappi käytöstä
+            answerInput.disabled = true;
+            checkButton.style.display = 'none';
+
             const isCorrect = userAnswer === currentAnswer;
+            const q = questions[currentQuestion];
             
             if (isCorrect) {
                 score += 10;
@@ -534,29 +654,29 @@
                 feedbackDiv.innerHTML = `
                     <div class="feedback correct">
                         🎉 Oikein! Hienoa työtä! +10 tassua 🐾
+                        <p style="margin-top: 10px; font-size: 0.9em;">${q.explanation}</p>
                     </div>
                     <div class="dog-reward">
                         <img src="${dogImageUrl}" alt="Palkinto koirakuva" class="dog-image" onerror="this.src='https://picsum.photos/400/300?random=${Math.random()}'">
                         <p style="margin-top: 15px; font-weight: 600; color: #667eea;">🎁 Ansaitsit söpön koirakuvan!</p>
                     </div>
+                    <button class="button" onclick="nextQuestion()" style="margin-top: 20px;">➡️ Jatka seuraavaan</button>
                 `;
-                
-                setTimeout(() => {
-                    currentQuestion++;
-                    showQuestion();
-                }, 3000);
             } else {
                 feedbackDiv.innerHTML = `
                     <div class="feedback incorrect">
-                        ❌ Voi ei! Oikea vastaus on ${currentAnswer}. Yritä seuraava tehtävä! 💪
+                        ❌ Voi ei! Oikea vastaus on ${currentAnswer}. 
+                        <p style="margin-top: 10px; font-size: 0.9em;">${q.explanation}</p>
+                        <p style="margin-top: 10px; font-size: 0.85em; font-style: italic;">Ei hätää! Harjoittelemalla opit! 💪</p>
                     </div>
+                    <button class="button" onclick="nextQuestion()" style="margin-top: 20px;">➡️ Yritä seuraavaa</button>
                 `;
-                
-                setTimeout(() => {
-                    currentQuestion++;
-                    showQuestion();
-                }, 2500);
             }
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            showQuestion();
         }
 
         async function showCompletionScreen() {
