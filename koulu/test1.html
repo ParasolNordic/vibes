@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦁 Meine Lieblingstiere – Lernspiel!</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;800&family=Nunito:wght@400;600;700;900&display=swap');
+  :root {
+    --sky:#87CEEB;--grass:#4CAF50;--sun:#FFD700;--orange:#FF8C42;
+    --pink:#FF6B9D;--purple:#9B5DE5;--teal:#00BFA5;--red:#FF4757;--dark:#2D2D44;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Nunito',sans-serif;background:linear-gradient(180deg,#87CEEB 0%,#B0E0FF 40%,#C8F7C5 70%,#4CAF50 100%);min-height:100vh;color:var(--dark);}
+
+  .cloud-bg{position:fixed;top:0;left:0;width:100%;height:200px;pointer-events:none;z-index:0;overflow:hidden;}
+  .cloud{position:absolute;background:white;border-radius:50px;opacity:.85;animation:float linear infinite;}
+  .cloud::before,.cloud::after{content:'';position:absolute;background:white;border-radius:50%;}
+  .cloud:nth-child(1){width:120px;height:40px;top:20px;left:-140px;animation-duration:25s;}
+  .cloud:nth-child(1)::before{width:60px;height:60px;top:-30px;left:20px;}
+  .cloud:nth-child(1)::after{width:40px;height:40px;top:-20px;left:55px;}
+  .cloud:nth-child(2){width:80px;height:30px;top:60px;left:-100px;animation-duration:35s;animation-delay:-10s;opacity:.6;}
+  .cloud:nth-child(2)::before{width:45px;height:45px;top:-22px;left:10px;}
+  .cloud:nth-child(3){width:160px;height:50px;top:10px;left:-180px;animation-duration:40s;animation-delay:-20s;}
+  .cloud:nth-child(3)::before{width:70px;height:70px;top:-35px;left:25px;}
+  .cloud:nth-child(3)::after{width:55px;height:55px;top:-28px;left:75px;}
+  @keyframes float{from{transform:translateX(0)}to{transform:translateX(110vw)}}
+
+  .sun{position:fixed;top:20px;right:30px;width:70px;height:70px;background:var(--sun);border-radius:50%;
+    box-shadow:0 0 0 12px rgba(255,215,0,.3),0 0 0 24px rgba(255,215,0,.15);
+    animation:sunPulse 4s ease-in-out infinite;z-index:1;}
+  .sun::before{content:'☀️';position:absolute;font-size:48px;top:50%;left:50%;transform:translate(-50%,-50%);}
+  @keyframes sunPulse{0%,100%{box-shadow:0 0 0 12px rgba(255,215,0,.3),0 0 0 24px rgba(255,215,0,.15)}50%{box-shadow:0 0 0 18px rgba(255,215,0,.4),0 0 0 36px rgba(255,215,0,.2)}}
+
+  .container{position:relative;z-index:2;max-width:780px;margin:0 auto;padding:20px 16px 60px;}
+
+  .header{text-align:center;padding:30px 20px 20px;animation:dropIn .6s cubic-bezier(.34,1.56,.64,1);}
+  @keyframes dropIn{from{transform:translateY(-60px) scale(.7);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+  .header h1{font-family:'Baloo 2',cursive;font-size:clamp(2rem,6vw,3.2rem);font-weight:800;color:white;
+    text-shadow:3px 4px 0 #1a6b2e,0 0 30px rgba(255,255,255,.5);line-height:1.1;}
+  .header p{font-size:1.1rem;color:white;text-shadow:1px 2px 0 rgba(0,0,0,.2);margin-top:6px;}
+
+  .score-bar{background:white;border-radius:20px;padding:12px 20px;display:flex;align-items:center;
+    justify-content:space-between;gap:16px;margin-bottom:20px;
+    box-shadow:0 6px 20px rgba(0,0,0,.12);flex-wrap:wrap;}
+  .score-item{display:flex;flex-direction:column;align-items:center;}
+  .score-label{font-size:.7rem;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;}
+  .score-val{font-family:'Baloo 2',cursive;font-size:1.8rem;font-weight:800;line-height:1;}
+  .score-val.green{color:var(--grass);}.score-val.orange{color:var(--orange);}.score-val.purple{color:var(--purple);}
+  .trophy-bar{flex:1;min-width:160px;background:#f0f9ff;border-radius:12px;padding:6px 10px;
+    text-align:center;font-size:1.4rem;letter-spacing:2px;min-height:44px;
+    display:flex;align-items:center;justify-content:center;flex-wrap:wrap;}
+
+  .categories{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;justify-content:center;}
+  .cat-btn{background:white;border:3px solid transparent;border-radius:30px;padding:8px 16px;
+    font-family:'Nunito',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;
+    transition:all .2s;box-shadow:0 3px 8px rgba(0,0,0,.1);color:var(--dark);}
+  .cat-btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.15);}
+  .cat-btn.active{color:white;transform:translateY(-2px);}
+  .cat-btn[data-cat="all"].active{background:#444;border-color:#222;}
+  .cat-btn[data-cat="vocab"].active{background:var(--orange);border-color:#e07030;}
+  .cat-btn[data-cat="artikel"].active{background:var(--purple);border-color:#7a3cc4;}
+  .cat-btn[data-cat="kannkann"].active{background:var(--teal);border-color:#009688;}
+  .cat-btn[data-cat="imperativ"].active{background:var(--pink);border-color:#e0457a;}
+  .cat-btn[data-cat="possessiv"].active{background:var(--grass);border-color:#2e7d32;}
+  .cat-btn[data-cat="welcher"].active{background:#FF8F00;border-color:#e65100;}
+  .cat-btn[data-cat="pflichten"].active{background:#7986CB;border-color:#3949AB;}
+  .cat-btn[data-cat="lexikon"].active{background:#26A69A;border-color:#00796B;}
+
+  .progress-bar-wrap{background:rgba(255,255,255,.5);border-radius:20px;height:10px;margin-bottom:16px;overflow:hidden;}
+  .progress-bar-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--orange),var(--sun));transition:width .5s ease;}
+
+  .question-card{background:white;border-radius:28px;padding:28px 24px;
+    box-shadow:0 10px 40px rgba(0,0,0,.12),0 3px 8px rgba(0,0,0,.06);
+    margin-bottom:20px;animation:slideUp .4s cubic-bezier(.34,1.56,.64,1);
+    position:relative;overflow:hidden;}
+  @keyframes slideUp{from{transform:translateY(40px) scale(.95);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+  .question-card::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;border-radius:28px 28px 0 0;}
+  .question-card[data-type="vocab"]::before{background:linear-gradient(90deg,var(--orange),#FFB347);}
+  .question-card[data-type="artikel"]::before{background:linear-gradient(90deg,var(--purple),#C39BD3);}
+  .question-card[data-type="kannkann"]::before{background:linear-gradient(90deg,var(--teal),#80CBC4);}
+  .question-card[data-type="imperativ"]::before{background:linear-gradient(90deg,var(--pink),#F1948A);}
+  .question-card[data-type="possessiv"]::before{background:linear-gradient(90deg,var(--grass),#82E0AA);}
+  .question-card[data-type="welcher"]::before{background:linear-gradient(90deg,#FF8F00,#FFD54F);}
+  .question-card[data-type="pflichten"]::before{background:linear-gradient(90deg,#7986CB,#B0BEC5);}
+  .question-card[data-type="lexikon"]::before{background:linear-gradient(90deg,#26A69A,#80CBC4);}
+
+  .badge-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .q-badge{display:inline-block;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+    padding:3px 10px;border-radius:20px;color:white;}
+  .q-badge.vocab{background:var(--orange);}.q-badge.artikel{background:var(--purple);}.q-badge.kannkann{background:var(--teal);}
+  .q-badge.imperativ{background:var(--pink);}.q-badge.possessiv{background:var(--grass);}.q-badge.welcher{background:#FF8F00;}
+  .q-badge.pflichten{background:#7986CB;}.q-badge.lexikon{background:#26A69A;}
+  .type-pill{display:inline-block;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;
+    padding:3px 9px;border-radius:20px;}
+  .type-pill.mc{background:#f0e6ff;color:var(--purple);}
+  .type-pill.write{background:#e0f7f0;color:#00897b;}
+
+  .q-emoji{font-size:2.8rem;display:block;text-align:center;margin-bottom:10px;}
+  .q-text{font-family:'Baloo 2',cursive;font-size:clamp(1.1rem,3.5vw,1.5rem);font-weight:600;
+    color:var(--dark);text-align:center;margin-bottom:18px;line-height:1.4;}
+  .q-hint{font-size:.9rem;color:#999;text-align:center;margin-bottom:14px;font-style:italic;}
+  .q-counter{font-size:.85rem;color:#bbb;text-align:right;margin-bottom:6px;}
+
+  /* MC */
+  .choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;}
+  .choice-btn{background:#f7f9fc;border:3px solid #e8eef4;border-radius:16px;padding:14px 12px;
+    font-family:'Nunito',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;transition:all .18s;
+    color:var(--dark);text-align:center;min-height:56px;display:flex;align-items:center;justify-content:center;}
+  .choice-btn:hover:not(:disabled){background:#EEF2FF;border-color:var(--purple);transform:translateY(-3px);box-shadow:0 6px 16px rgba(155,93,229,.2);}
+  .choice-btn.correct{background:#E8F5E9!important;border-color:var(--grass)!important;color:#2e7d32!important;animation:correctPop .4s cubic-bezier(.34,1.56,.64,1);}
+  .choice-btn.wrong{background:#FFEBEE!important;border-color:var(--red)!important;color:var(--red)!important;animation:wrongShake .4s ease;}
+  .choice-btn:disabled{cursor:default;}
+  @keyframes correctPop{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+  @keyframes wrongShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+  /* Write */
+  .write-area{display:flex;flex-direction:column;align-items:center;gap:12px;}
+  .write-input{width:100%;max-width:440px;padding:16px 20px;border:3px solid #e0e8f4;border-radius:18px;
+    font-family:'Baloo 2',cursive;font-size:1.25rem;font-weight:600;color:var(--dark);
+    text-align:center;outline:none;transition:all .2s;background:#fafcff;}
+  .write-input:focus{border-color:var(--purple);box-shadow:0 0 0 4px rgba(155,93,229,.15);}
+  .write-input.correct{border-color:var(--grass)!important;background:#E8F5E9!important;color:#2e7d32!important;}
+  .write-input.wrong{border-color:var(--red)!important;background:#FFEBEE!important;color:var(--red)!important;animation:wrongShake .4s ease;}
+  .submit-btn{background:linear-gradient(135deg,var(--purple),var(--pink));color:white;border:none;
+    border-radius:14px;padding:13px 36px;font-family:'Baloo 2',cursive;font-size:1.1rem;font-weight:800;
+    cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(155,93,229,.4);}
+  .submit-btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(155,93,229,.5);}
+  .submit-btn:disabled{opacity:.45;cursor:default;transform:none;}
+
+  .feedback{text-align:center;padding:14px;border-radius:16px;font-weight:700;font-size:1.1rem;
+    margin-top:14px;animation:fadeIn .3s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+  .feedback.correct{background:#E8F5E9;color:#2e7d32;}
+  .feedback.wrong{background:#FFEBEE;color:#c62828;}
+  .correct-answer{background:#fff3e0;color:#e65100;padding:5px 14px;border-radius:10px;
+    display:inline-block;margin-top:6px;font-size:1rem;}
+
+  .next-btn{display:block;margin:16px auto 0;
+    background:linear-gradient(135deg,var(--orange),var(--sun));color:white;border:none;
+    border-radius:14px;padding:13px 36px;font-family:'Baloo 2',cursive;font-size:1.1rem;font-weight:800;
+    cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(255,140,66,.4);
+    animation:dropIn .4s cubic-bezier(.34,1.56,.64,1);}
+  .next-btn:hover{transform:translateY(-3px) scale(1.04);box-shadow:0 8px 22px rgba(255,140,66,.5);}
+
+  .reward-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);
+    background:white;border-radius:30px;padding:36px 44px;text-align:center;z-index:1000;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);transition:transform .4s cubic-bezier(.34,1.56,.64,1);}
+  .reward-popup.show{transform:translate(-50%,-50%) scale(1);}
+  .reward-popup .big-emoji{font-size:5rem;display:block;margin-bottom:10px;}
+  .reward-popup h2{font-family:'Baloo 2',cursive;font-size:1.8rem;font-weight:800;color:var(--dark);margin-bottom:6px;}
+  .reward-popup p{font-size:1rem;color:#666;}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:999;display:none;}
+  .overlay.show{display:block;}
+
+  .confetti-piece{position:fixed;width:10px;height:14px;border-radius:2px;z-index:1001;
+    pointer-events:none;animation:confettiFall 1.8s ease-in forwards;}
+  @keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+  .final-screen{background:white;border-radius:28px;padding:40px 24px;text-align:center;
+    box-shadow:0 10px 40px rgba(0,0,0,.15);animation:slideUp .5s cubic-bezier(.34,1.56,.64,1);}
+  .final-screen .big-trophy{font-size:5rem;display:block;margin-bottom:10px;}
+  .final-screen h2{font-family:'Baloo 2',cursive;font-size:2.1rem;font-weight:800;color:var(--dark);margin-bottom:8px;}
+  .final-screen .collected-animals{font-size:2rem;letter-spacing:6px;margin:16px 0;min-height:3rem;}
+  .restart-btn{background:linear-gradient(135deg,var(--grass),var(--teal));color:white;border:none;
+    border-radius:16px;padding:14px 36px;font-family:'Baloo 2',cursive;font-size:1.15rem;font-weight:800;
+    cursor:pointer;margin-top:16px;box-shadow:0 4px 14px rgba(76,175,80,.4);transition:all .2s;}
+  .restart-btn:hover{transform:translateY(-3px);box-shadow:0 8px 22px rgba(76,175,80,.5);}
+
+  @media(max-width:480px){.choices{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+
+<div class="cloud-bg"><div class="cloud"></div><div class="cloud"></div><div class="cloud"></div></div>
+<div class="sun"></div>
+
+<div class="container">
+  <div class="header">
+    <h1>🦁 Meine Lieblingstiere 🐧</h1>
+    <p>Kapitel 11 – Lernspiel! Sammle Tierpreise! 🏆</p>
+  </div>
+
+  <div class="score-bar">
+    <div class="score-item"><span class="score-label">✅ Richtig</span><span class="score-val green" id="scoreCorrect">0</span></div>
+    <div class="score-item"><span class="score-label">❌ Falsch</span><span class="score-val orange" id="scoreWrong">0</span></div>
+    <div class="score-item"><span class="score-label">🔥 Serie</span><span class="score-val purple" id="scoreStreak">0</span></div>
+    <div class="trophy-bar" id="trophyBar">–</div>
+  </div>
+
+  <div class="categories">
+    <button class="cat-btn active" data-cat="all">🌍 Alle</button>
+    <button class="cat-btn" data-cat="vocab">🔤 Wörter</button>
+    <button class="cat-btn" data-cat="artikel">📰 Artikel</button>
+    <button class="cat-btn" data-cat="lexikon">📖 Lexikon</button>
+    <button class="cat-btn" data-cat="kannkann">💪 kann?</button>
+    <button class="cat-btn" data-cat="imperativ">📢 Imperativ</button>
+    <button class="cat-btn" data-cat="possessiv">👤 Possessiv</button>
+    <button class="cat-btn" data-cat="welcher">❓ welcher?</button>
+    <button class="cat-btn" data-cat="pflichten">📋 Pflichten</button>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+  </div>
+
+  <div id="quizArea"></div>
+</div>
+
+<div class="overlay" id="overlay"></div>
+<div class="reward-popup" id="rewardPopup">
+  <span class="big-emoji" id="rewardEmoji">🦁</span>
+  <h2 id="rewardTitle">Wunderbar!</h2>
+  <p id="rewardText">Du hast ein neues Tier gesammelt!</p>
+  <button class="next-btn" onclick="closeReward()" style="margin:16px auto 0">Weiter! →</button>
+</div>
+
+<script>
+const animalRewards=['🦁','🐘','🦒','🐧','🦓','🐊','🦘','🐍','🐺','🐻','🦜','🦭','🐒','🐯','🦔','🐸','🐋','🦅','🐆','🦛'];
+let collectedAnimals=[],score=0,wrong=0,streak=0,currentCat='all',filteredQ=[],qIndex=0;
+
+// ══════════════════════════════════════════════════════════════
+// FRAGEN-BANK  (type: 'mc' oder 'write')
+// ══════════════════════════════════════════════════════════════
+const questions=[
+
+  // ─── WÖRTER: Schreiben ───
+  {cat:'vocab',type:'write',emoji:'🐺',q:'Was ist das Tier? Schreib mit Artikel! 🐺',hint:'der / die / das ___',correct:['der Wolf'],accept:['wolf','der wolf']},
+  {cat:'vocab',type:'write',emoji:'🐻',q:'Was ist das Tier? Schreib mit Artikel! 🐻',hint:'der / die / das ___',correct:['der Bär'],accept:['bär','der bär']},
+  {cat:'vocab',type:'write',emoji:'🦒',q:'Was ist das Tier? Schreib mit Artikel! 🦒',hint:'der / die / das ___',correct:['die Giraffe'],accept:['giraffe','die giraffe']},
+  {cat:'vocab',type:'write',emoji:'🐘',q:'Was ist das Tier? Schreib mit Artikel! 🐘',hint:'der / die / das ___',correct:['der Elefant'],accept:['elefant','der elefant']},
+  {cat:'vocab',type:'write',emoji:'🦁',q:'Was ist das Tier? Schreib mit Artikel! 🦁',hint:'der / die / das ___',correct:['der Löwe'],accept:['löwe','der löwe','lowe','der lowe']},
+  {cat:'vocab',type:'write',emoji:'🐧',q:'Was ist das Tier? Schreib mit Artikel! 🐧',hint:'der / die / das ___',correct:['der Pinguin'],accept:['pinguin','der pinguin']},
+  {cat:'vocab',type:'write',emoji:'🦘',q:'Was ist das Tier? Schreib mit Artikel! 🦘',hint:'der / die / das ___',correct:['das Känguru'],accept:['känguru','das känguru','kanguru','das kanguru']},
+  {cat:'vocab',type:'write',emoji:'🐊',q:'Was ist das Tier? Schreib mit Artikel! 🐊',hint:'der / die / das ___',correct:['das Krokodil'],accept:['krokodil','das krokodil']},
+  {cat:'vocab',type:'write',emoji:'🦜',q:'Was ist das Tier? Schreib mit Artikel! 🦜',hint:'der / die / das ___',correct:['der Papagei'],accept:['papagei','der papagei']},
+  {cat:'vocab',type:'write',emoji:'🦭',q:'Was ist das Tier? Schreib mit Artikel! 🦭',hint:'der / die / das ___',correct:['die Robbe'],accept:['robbe','die robbe']},
+  {cat:'vocab',type:'write',emoji:'🐯',q:'Was ist das Tier? Schreib mit Artikel! 🐯',hint:'der / die / das ___',correct:['der Tiger'],accept:['tiger','der tiger']},
+  {cat:'vocab',type:'write',emoji:'🦓',q:'Was ist das Tier? Schreib mit Artikel! 🦓',hint:'der / die / das ___',correct:['das Zebra'],accept:['zebra','das zebra']},
+  {cat:'vocab',type:'write',emoji:'🐍',q:'Was ist das Tier? Schreib mit Artikel! 🐍',hint:'der / die / das ___',correct:['die Schlange'],accept:['schlange','die schlange']},
+  {cat:'vocab',type:'write',emoji:'🐒',q:'Was ist das Tier? Schreib mit Artikel! 🐒',hint:'der / die / das ___',correct:['der Affe'],accept:['affe','der affe']},
+
+  // ─── WÖRTER: MC ───
+  {cat:'vocab',type:'mc',emoji:'🌍',q:'Wo lebt der Tiger?',correct:'Asien',options:['Asien','Afrika','Europa','Australien']},
+  {cat:'vocab',type:'mc',emoji:'🌍',q:'Wo lebt die Giraffe?',correct:'Afrika',options:['Afrika','Asien','Europa','Nordamerika']},
+  {cat:'vocab',type:'mc',emoji:'🌍',q:'Woher kommt das Känguru?',correct:'Australien',options:['Australien','Afrika','Asien','Nordamerika']},
+  {cat:'vocab',type:'mc',emoji:'🌍',q:'Wo lebt der Wolf?',correct:'Europa',options:['Europa','Australien','Afrika','Südamerika']},
+  {cat:'vocab',type:'mc',emoji:'🌿',q:'Was bedeutet "die Pflanze"?',correct:'eine Pflanze (Baum, Gras, ...)',options:['eine Pflanze (Baum, Gras, ...)','ein Tier','ein Haus','ein Käfig']},
+  {cat:'vocab',type:'mc',emoji:'🥩',q:'Was bedeutet "das Fleisch"?',correct:'viande / Tierfleisch',options:['viande / Tierfleisch','Gemüse','Fisch','Käse']},
+
+  // ─── ARTIKEL: MC ───
+  {cat:'artikel',type:'mc',emoji:'🐺',q:'___ Wolf',correct:'der Wolf',options:['der Wolf','die Wolf','das Wolf']},
+  {cat:'artikel',type:'mc',emoji:'🦒',q:'___ Giraffe',correct:'die Giraffe',options:['der Giraffe','die Giraffe','das Giraffe']},
+  {cat:'artikel',type:'mc',emoji:'🦘',q:'___ Känguru',correct:'das Känguru',options:['der Känguru','die Känguru','das Känguru']},
+  {cat:'artikel',type:'mc',emoji:'🐊',q:'___ Krokodil',correct:'das Krokodil',options:['der Krokodil','die Krokodil','das Krokodil']},
+  {cat:'artikel',type:'mc',emoji:'🦭',q:'___ Robbe',correct:'die Robbe',options:['der Robbe','die Robbe','das Robbe']},
+  {cat:'artikel',type:'mc',emoji:'🐍',q:'___ Schlange',correct:'die Schlange',options:['der Schlange','die Schlange','das Schlange']},
+  {cat:'artikel',type:'mc',emoji:'🦜',q:'___ Papagei',correct:'der Papagei',options:['der Papagei','die Papagei','das Papagei']},
+  {cat:'artikel',type:'mc',emoji:'🐧',q:'___ Pinguin',correct:'der Pinguin',options:['der Pinguin','die Pinguin','das Pinguin']},
+  {cat:'artikel',type:'mc',emoji:'🐒',q:'___ Affe',correct:'der Affe',options:['der Affe','die Affe','das Affe']},
+  {cat:'artikel',type:'mc',emoji:'🐘',q:'___ Elefant',correct:'der Elefant',options:['der Elefant','die Elefant','das Elefant']},
+  {cat:'artikel',type:'mc',emoji:'🐯',q:'___ Tiger',correct:'der Tiger',options:['der Tiger','die Tiger','das Tiger']},
+  {cat:'artikel',type:'mc',emoji:'🦁',q:'___ Löwe',correct:'der Löwe',options:['der Löwe','die Löwe','das Löwe']},
+  {cat:'artikel',type:'mc',emoji:'🐻',q:'___ Bär',correct:'der Bär',options:['der Bär','die Bär','das Bär']},
+  {cat:'artikel',type:'mc',emoji:'🦓',q:'___ Zebra',correct:'das Zebra',options:['der Zebra','die Zebra','das Zebra']},
+  {cat:'artikel',type:'mc',emoji:'🐹',q:'___ Hamster',correct:'der Hamster',options:['der Hamster','die Hamster','das Hamster']},
+  {cat:'artikel',type:'mc',emoji:'🐭',q:'___ Maus',correct:'die Maus',options:['der Maus','die Maus','das Maus']},
+  {cat:'artikel',type:'mc',emoji:'🐢',q:'___ Schildkröte',correct:'die Schildkröte',options:['der Schildkröte','die Schildkröte','das Schildkröte']},
+  {cat:'artikel',type:'mc',emoji:'🐾',q:'___ Hund',correct:'der Hund',options:['der Hund','die Hund','das Hund']},
+  {cat:'artikel',type:'mc',emoji:'🐱',q:'___ Katze',correct:'die Katze',options:['der Katze','die Katze','das Katze']},
+  {cat:'artikel',type:'mc',emoji:'🐴',q:'___ Pferd',correct:'das Pferd',options:['der Pferd','die Pferd','das Pferd']},
+
+  // ─── LEXIKON: MC ───
+  {cat:'lexikon',type:'mc',emoji:'🐯',q:'Welche Farbe hat der Tiger?',correct:'orange und schwarz',options:['orange und schwarz','grau','braun','grau-braun']},
+  {cat:'lexikon',type:'mc',emoji:'🐊',q:'Welche Farbe hat das Krokodil?',correct:'grau-braun',options:['grau-braun','braun','orange und schwarz','grau']},
+  {cat:'lexikon',type:'mc',emoji:'🐘',q:'Wie schwer ist der Elefant?',correct:'6000 kg',options:['6000 kg','400 kg','1600 kg','3000 kg']},
+  {cat:'lexikon',type:'mc',emoji:'🦭',q:'Wie schwer ist die Robbe?',correct:'bis 400 kg',options:['bis 400 kg','bis 6000 kg','bis 1600 kg','bis 80 kg']},
+  {cat:'lexikon',type:'mc',emoji:'🐯',q:'Wie lang ist der Tiger?',correct:'bis 3 m',options:['bis 3 m','bis 6 m','bis 1,80 m','bis 80 cm']},
+  {cat:'lexikon',type:'mc',emoji:'🦒',q:'Wie groß ist die Giraffe?',correct:'bis 6 m',options:['bis 6 m','bis 3 m','bis 1,80 m','bis 80 cm']},
+  {cat:'lexikon',type:'mc',emoji:'🦜',q:'Was frisst der Papagei?',correct:'Pflanzen',options:['Pflanzen','Fleisch','Fleisch und Fisch','nur Fisch']},
+  {cat:'lexikon',type:'mc',emoji:'🐘',q:'Was frisst der Elefant?',correct:'Pflanzen',options:['Pflanzen','Fleisch','Fleisch und Fisch','Pflanzen und Fleisch']},
+  {cat:'lexikon',type:'mc',emoji:'🦭',q:'Was frisst die Robbe?',correct:'Fleisch und Fisch',options:['Fleisch und Fisch','nur Pflanzen','nur Fleisch','Pflanzen und Fleisch']},
+  {cat:'lexikon',type:'mc',emoji:'🐒',q:'Was frisst der Affe?',correct:'Pflanzen und Fleisch',options:['Pflanzen und Fleisch','nur Pflanzen','nur Fleisch','nur Fisch']},
+  {cat:'lexikon',type:'mc',emoji:'🐯',q:'Was kann der Tiger?',correct:'schnell rennen, klettern, springen',options:['schnell rennen, klettern, springen','schwimmen und tauchen','fliegen und klettern','robben']},
+  {cat:'lexikon',type:'mc',emoji:'🦭',q:'Was kann die Robbe?',correct:'schwimmen, tauchen, robben',options:['schwimmen, tauchen, robben','laufen und klettern','schnell rennen','fliegen']},
+
+  // ─── LEXIKON: Schreiben ───
+  {cat:'lexikon',type:'write',emoji:'🐘',q:'Wo lebt der Elefant? Nenn zwei Kontinente!',hint:'___ und ___',
+    correct:['Asien und Afrika','Afrika und Asien'],
+    accept:['asien und afrika','afrika und asien','asien, afrika','afrika, asien']},
+  {cat:'lexikon',type:'write',emoji:'🦭',q:'Wo lebt die Robbe? Nenn zwei Regionen!',hint:'___ und ___',
+    correct:['Europa und Nordamerika','Nordamerika und Europa'],
+    accept:['europa und nordamerika','nordamerika und europa','europa, nordamerika']},
+  {cat:'lexikon',type:'write',emoji:'🦜',q:'Was kann der Papagei? Schreib zwei Verben!',hint:'Er kann ___ und ___.',
+    correct:['fliegen und klettern','klettern und fliegen'],
+    accept:['fliegen klettern','klettern fliegen','fliegen und klettern','klettern und fliegen']},
+  {cat:'lexikon',type:'write',emoji:'🐊',q:'Was kann das Krokodil? Schreib drei Verben!',hint:'Es kann ___, ___ und ___.',
+    correct:['laufen, schwimmen und tauchen'],
+    accept:['laufen schwimmen tauchen','schwimmen tauchen laufen','tauchen laufen schwimmen','laufen, schwimmen, tauchen','laufen schwimmen und tauchen']},
+
+  // ─── KANN / KANN NICHT: MC ───
+  {cat:'kannkann',type:'mc',emoji:'🦒',q:'Die Giraffe ___ schnell laufen.',correct:'kann',options:['kann','können','kannst','könnt']},
+  {cat:'kannkann',type:'mc',emoji:'🐊',q:'Der Löwe und das Zebra ___ schnell rennen.',correct:'können',options:['können','kann','kannst','könnt']},
+  {cat:'kannkann',type:'mc',emoji:'🐒',q:'___ Robben fliegen? – Nein!',correct:'Können',options:['Können','Kann','Kannst','Könnt']},
+  {cat:'kannkann',type:'mc',emoji:'🐧',q:'Was kann der Pinguin NICHT?',correct:'Er kann nicht fliegen.',options:['Er kann nicht fliegen.','Er kann nicht schwimmen.','Er kann nicht laufen.','Er kann nicht tauchen.']},
+  {cat:'kannkann',type:'mc',emoji:'🐘',q:'Was kann der Elefant?',correct:'Er kann schnell rennen.',options:['Er kann schnell rennen.','Er kann fliegen.','Er kann klettern.','Er kann tauchen.']},
+
+  // ─── KANN: Schreiben ───
+  {cat:'kannkann',type:'write',emoji:'🦭',q:'Was kann die Robbe? Schreib drei Verben!',hint:'Sie kann ___, ___ und ___.',
+    correct:['schwimmen, tauchen und robben','schwimmen, tauchen, robben'],
+    accept:['schwimmen tauchen robben','robben tauchen schwimmen','tauchen schwimmen robben','schwimmen tauchen und robben']},
+  {cat:'kannkann',type:'write',emoji:'🐒',q:'Was kann der Affe? Schreib zwei Verben!',hint:'Er kann ___ und ___.',
+    correct:['laufen und klettern','klettern und laufen'],
+    accept:['laufen klettern','klettern laufen','laufen und klettern','klettern und laufen']},
+  {cat:'kannkann',type:'write',emoji:'🐧',q:'Schreib einen Satz über den Pinguin!\n(Was kann er? Was kann er nicht?)',hint:'Er kann ___, aber er kann nicht ___.',
+    correct:['Er kann schwimmen, aber er kann nicht fliegen.'],
+    accept:['kann schwimmen','kann nicht fliegen','schwimmen aber nicht fliegen']},
+
+  // ─── IMPERATIV: MC ───
+  {cat:'imperativ',type:'mc',emoji:'📢',q:'du machst → ___ ! (Imperativ, du)',correct:'Mach',options:['Mach','Machst','Machen','Macht']},
+  {cat:'imperativ',type:'mc',emoji:'📖',q:'du liest → ___ ! (Imperativ, du)',correct:'Lies',options:['Lies','Liest','Lesen','Lese']},
+  {cat:'imperativ',type:'mc',emoji:'🗣️',q:'du sprichst → ___ Deutsch! (Imperativ, du)',correct:'Sprich',options:['Sprich','Sprichst','Sprechen','Sprecht']},
+  {cat:'imperativ',type:'mc',emoji:'🏠',q:'du fährst → ___ nach Hause! (Imperativ, du)',correct:'Fahr',options:['Fahr','Fährst','Fahren','Fahrt']},
+  {cat:'imperativ',type:'mc',emoji:'👥',q:'ihr macht → ___ einen Plan! (Imperativ, ihr)',correct:'Macht',options:['Macht','Mach','Machen','Machst']},
+  {cat:'imperativ',type:'mc',emoji:'👥',q:'ihr lest → ___ den Text! (Imperativ, ihr)',correct:'Lest',options:['Lest','Lies','Lesen','Liest']},
+  {cat:'imperativ',type:'mc',emoji:'👥',q:'ihr sprecht → ___ Deutsch! (Imperativ, ihr)',correct:'Sprecht',options:['Sprecht','Sprich','Sprechen','Sprichst']},
+
+  // ─── IMPERATIV: Schreiben ───
+  {cat:'imperativ',type:'write',emoji:'🏠',q:'Imperativ (du): du räumst dein Zimmer auf →',hint:'___ dein Zimmer ___!',
+    correct:['Räum dein Zimmer auf'],accept:['räum dein zimmer auf','räum dein zimmer auf!']},
+  {cat:'imperativ',type:'write',emoji:'📚',q:'Imperativ (du): du machst Hausaufgaben →',hint:'___ deine Hausaufgaben!',
+    correct:['Mach deine Hausaufgaben'],accept:['mach deine hausaufgaben','mach deine hausaufgaben!']},
+  {cat:'imperativ',type:'write',emoji:'🐹',q:'Imperativ (du): du fütterst den Hamster →',hint:'___ bitte den Hamster!',
+    correct:['Füttere bitte den Hamster','Füttere den Hamster'],
+    accept:['füttere den hamster','füttere bitte den hamster','futtere den hamster','futtere bitte den hamster']},
+  {cat:'imperativ',type:'write',emoji:'💪',q:'Imperativ (du): du machst mehr Sport →',hint:'___ mehr Sport!',
+    correct:['Mach mehr Sport'],accept:['mach mehr sport','mach mehr sport!']},
+  {cat:'imperativ',type:'write',emoji:'🥤',q:'Imperativ (du): du trinkst keine Cola →',hint:'___ keine Cola!',
+    correct:['Trink keine Cola'],accept:['trink keine cola','trink keine cola!']},
+  {cat:'imperativ',type:'write',emoji:'🥗',q:'Imperativ (du): du isst mehr Obst →',hint:'___ mehr Obst und Gemüse!',
+    correct:['Iss mehr Obst und Gemüse','Iss mehr Obst'],
+    accept:['iss mehr obst und gemüse','iss obst und gemüse','iss mehr obst']},
+  {cat:'imperativ',type:'write',emoji:'✍️',q:'Imperativ (du): du schreibst die Nummer →',hint:'___ die Nummer auf!',
+    correct:['Schreib die Nummer auf'],accept:['schreib die nummer auf','schreib die nummer auf!']},
+
+  // ─── POSSESSIV: MC ───
+  {cat:'possessiv',type:'mc',emoji:'🐱',q:'Ich habe eine Katze.\n___ Katze ist weiß.',correct:'Meine',options:['Meine','Deine','Seine','Ihre']},
+  {cat:'possessiv',type:'mc',emoji:'🐾',q:'Du hast einen Hund.\n___ Hund ist groß.',correct:'Dein',options:['Dein','Mein','Sein','Unser']},
+  {cat:'possessiv',type:'mc',emoji:'🐟',q:'Jan hat Fische.\n___ Fische sind bunt.',correct:'Seine',options:['Seine','Ihre','Meine','Deine']},
+  {cat:'possessiv',type:'mc',emoji:'🐾',q:'Wir haben einen Hund.\n___ Hund ist klein.',correct:'Unser',options:['Unser','Euer','Ihr','Mein']},
+  {cat:'possessiv',type:'mc',emoji:'🐴',q:'Ihr habt ein Pferd.\n___ Pferd ist schnell.',correct:'Euer',options:['Euer','Unser','Ihr','Sein']},
+  {cat:'possessiv',type:'mc',emoji:'🐱',q:'Mara und Lisa haben eine Katze.\n___ Katze ist braun.',correct:'Ihre',options:['Ihre','Eure','Unsere','Seine']},
+  {cat:'possessiv',type:'mc',emoji:'🐾',q:'Wir haben Tiere.\n___ Tiere sind toll!',correct:'Unsere',options:['Unsere','Eure','Ihre','Meine']},
+  {cat:'possessiv',type:'mc',emoji:'🐱',q:'Ihr habt Katzen.\n___ Katzen sind süß!',correct:'Eure',options:['Eure','Unsere','Ihre','Deine']},
+  {cat:'possessiv',type:'mc',emoji:'🐹',q:'Sonja hat einen Hamster.\n___ Hamster ist lustig.',correct:'Ihr',options:['Ihr','Sein','Mein','Dein']},
+
+  // ─── POSSESSIV: Schreiben ───
+  {cat:'possessiv',type:'write',emoji:'🐢',q:'du und ich: Schildkröte • alt\nSchreib den Satz!',hint:'___ Schildkröte ist alt.',
+    correct:['Unsere Schildkröte ist alt'],accept:['unsere schildkröte ist alt','unsere schildkröte ist alt.']},
+  {cat:'possessiv',type:'write',emoji:'🐭',q:'du: Maus • klein\nSchreib den Satz!',hint:'___ Maus ist klein.',
+    correct:['Deine Maus ist klein'],accept:['deine maus ist klein','deine maus ist klein.']},
+  {cat:'possessiv',type:'write',emoji:'🐠',q:'Mara und Mia: Meerschweinchen • lustig\nSchreib den Satz!',hint:'___ Meerschweinchen sind lustig.',
+    correct:['Ihre Meerschweinchen sind lustig'],accept:['ihre meerschweinchen sind lustig','ihre meerschweinchen sind lustig.']},
+  {cat:'possessiv',type:'write',emoji:'🐾',q:'Jan: Hund • gefährlich\nSchreib den Satz!',hint:'___ Hund ist gefährlich.',
+    correct:['Sein Hund ist gefährlich'],accept:['sein hund ist gefährlich','sein hund ist gefährlich.']},
+
+  // ─── WELCHER: MC ───
+  {cat:'welcher',type:'mc',emoji:'❓',q:'___ Tier kann fliegen?\n(das Tier)',correct:'Welches',options:['Welches','Welcher','Welche']},
+  {cat:'welcher',type:'mc',emoji:'❓',q:'___ Vogel kann nicht fliegen?\n(der Vogel)',correct:'Welcher',options:['Welcher','Welches','Welche']},
+  {cat:'welcher',type:'mc',emoji:'❓',q:'___ Tiere können tauchen?\n(Plural)',correct:'Welche',options:['Welche','Welcher','Welches']},
+  {cat:'welcher',type:'mc',emoji:'❓',q:'___ Farbe hat der Tiger?\n(die Farbe)',correct:'Welche',options:['Welche','Welcher','Welches']},
+  {cat:'welcher',type:'mc',emoji:'❓',q:'___ Beruf gefällt dir?\n(der Beruf)',correct:'Welcher',options:['Welcher','Welches','Welche']},
+  {cat:'welcher',type:'mc',emoji:'❓',q:'___ Tier kann robben?\n(das Tier)',correct:'Welches',options:['Welches','Welcher','Welche']},
+  {cat:'welcher',type:'mc',emoji:'❓',q:'___ Affe kann nicht klettern?\n(der Affe)',correct:'Welcher',options:['Welcher','Welches','Welche']},
+
+  // ─── WELCHER: Schreiben ───
+  {cat:'welcher',type:'write',emoji:'❓',q:'Ergänze:\n___ Tiere fressen nur Pflanzen? (Plural)',hint:'Welch___',
+    correct:['Welche'],accept:['welche']},
+  {cat:'welcher',type:'write',emoji:'❓',q:'Ergänze:\n___ Kontinent ist das? (der Kontinent)',hint:'Welch___',
+    correct:['Welcher'],accept:['welcher']},
+  {cat:'welcher',type:'write',emoji:'❓',q:'Ergänze:\n___ Tier kann schnell rennen? (das Tier)',hint:'Welch___',
+    correct:['Welches'],accept:['welches']},
+  {cat:'welcher',type:'write',emoji:'❓',q:'Ergänze:\n___ Schlange ist das? (die Schlange)',hint:'Welch___',
+    correct:['Welche'],accept:['welche']},
+
+  // ─── PFLICHTEN: MC ───
+  {cat:'pflichten',type:'mc',emoji:'🐹',q:'Patricia möchte ein Kaninchen.\nWas rät Herr Kluge zuerst?',
+    correct:'Mach mehr zu Hause.',options:['Mach mehr zu Hause.','Kauf ein Kaninchen.','Schreib einen Plan.','Geh ins Zoogeschäft.']},
+  {cat:'pflichten',type:'mc',emoji:'🏫',q:'Wie viele Hamster hat die Tier-AG?',
+    correct:'4 Hamster',options:['4 Hamster','2 Hamster','3 Hamster','5 Hamster']},
+  {cat:'pflichten',type:'mc',emoji:'🐭',q:'Wie viele weiße Mäuse hat die Tier-AG?',
+    correct:'5 Mäuse',options:['5 Mäuse','3 Mäuse','2 Mäuse','4 Mäuse']},
+  {cat:'pflichten',type:'mc',emoji:'🐦',q:'Wie viele Papageien hat die Tier-AG?',
+    correct:'3 Papageien',options:['3 Papageien','2 Papageien','4 Papageien','5 Papageien']},
+  {cat:'pflichten',type:'mc',emoji:'👩‍⚕️',q:'Was ist Frau Meier von Beruf?',
+    correct:'Tierärztin',options:['Tierärztin','Biologielehrerin','Zoodirektorin','Tierpflegerin']},
+  {cat:'pflichten',type:'mc',emoji:'🦭',q:'Was ist Herr Peters von Beruf?',
+    correct:'Tierpfleger',options:['Tierpfleger','Tierarzt','Biologielehrer','Zoodirektor']},
+  {cat:'pflichten',type:'mc',emoji:'🇩🇪',q:'Wie viele Katzen gibt es in Deutschland?',
+    correct:'11 Millionen',options:['11 Millionen','7 Millionen','6 Millionen','3 Millionen']},
+  {cat:'pflichten',type:'mc',emoji:'🐶',q:'Wie viele Hunde gibt es in Deutschland?',
+    correct:'7 Millionen',options:['7 Millionen','11 Millionen','6 Millionen','3 Millionen']},
+
+  // ─── PFLICHTEN: Schreiben ───
+  {cat:'pflichten',type:'write',emoji:'🧹',q:'Imperativ (du):\nMach den Käfig sauber!',hint:'___ den Käfig ___!',
+    correct:['Mach den Käfig sauber'],accept:['mach den käfig sauber','mach den kafig sauber','mach den käfig sauber!']},
+  {cat:'pflichten',type:'write',emoji:'👩‍⚕️',q:'Frage an Frau Meier (Sie-Form):\n"Was bist du von Beruf?"',hint:'Was sind ___ von Beruf?',
+    correct:['Was sind Sie von Beruf'],accept:['was sind sie von beruf','was sind sie von beruf?']},
+  {cat:'pflichten',type:'write',emoji:'🏠',q:'Sie-Form:\n"Woher kommst du?"',hint:'Woher ___ ___?',
+    correct:['Woher kommen Sie'],accept:['woher kommen sie','woher kommen sie?']},
+  {cat:'pflichten',type:'write',emoji:'📞',q:'Sie-Form:\n"Wie heißt du?"',hint:'Wie ___ ___?',
+    correct:['Wie heißen Sie'],accept:['wie heißen sie','wie heissen sie','wie heißen sie?']},
+  {cat:'pflichten',type:'write',emoji:'🏠',q:'Was macht die Tier-AG in den Ferien?\n(einen Satz schreiben)',hint:'Die Kinder nehmen ...',
+    correct:['Die Kinder nehmen die Tiere mit nach Hause.','Sie nehmen die Tiere mit nach Hause.'],
+    accept:['nehmen die tiere mit nach hause','mit nach hause','die kinder nehmen die tiere mit','die tiere nach hause']},
+];
+
+// ══════════════════════════════════════════════════════════════
+// HILFSFUNKTIONEN
+// ══════════════════════════════════════════════════════════════
+function shuffle(arr){let a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function normalize(s){
+  return s.toLowerCase()
+    .replace(/[!?.,"']/g,'')
+    .replace(/ß/g,'ss')
+    .trim();
+}
+
+function checkAnswer(userInput,q){
+  const n=normalize(userInput);
+  if(!n)return false;
+  // Check all accepted forms
+  const allForms=[...q.correct,...(q.accept||[])].map(normalize);
+  if(allForms.some(a=>a===n))return true;
+  // Partial: all key words present
+  const keyWords=normalize(q.correct[0]).split(/\s+/).filter(w=>w.length>2);
+  if(keyWords.length>=2&&keyWords.every(w=>n.includes(w)))return true;
+  return false;
+}
+
+function catLabel(c){
+  return {vocab:'🔤 Wörter',artikel:'📰 Artikel',lexikon:'📖 Lexikon',
+    kannkann:'💪 kann?',imperativ:'📢 Imperativ',possessiv:'👤 Possessiv',
+    welcher:'❓ welcher?',pflichten:'📋 Pflichten'}[c]||c;
+}
+function escQ(s){return s.replace(/'/g,"&#39;").replace(/"/g,'&quot;');}
+
+// ══════════════════════════════════════════════════════════════
+// SPIELLOGIK
+// ══════════════════════════════════════════════════════════════
+function getFilteredQ(){
+  const pool=currentCat==='all'?questions:questions.filter(q=>q.cat===currentCat);
+  return shuffle(pool);
+}
+
+function init(){
+  filteredQ=getFilteredQ();qIndex=0;score=0;wrong=0;streak=0;collectedAnimals=[];
+  updateScoreUI();showQuestion();
+}
+
+function updateScoreUI(){
+  document.getElementById('scoreCorrect').textContent=score;
+  document.getElementById('scoreWrong').textContent=wrong;
+  document.getElementById('scoreStreak').textContent=streak;
+  document.getElementById('trophyBar').textContent=collectedAnimals.length?collectedAnimals.join(''):'–';
+  const pct=filteredQ.length?(qIndex/filteredQ.length)*100:0;
+  document.getElementById('progressBar').style.width=Math.min(pct,100)+'%';
+}
+
+function showQuestion(){
+  if(qIndex>=filteredQ.length){showFinal();return;}
+  const q=filteredQ[qIndex];
+  const isWrite=q.type==='write';
+  const counter=`<div class="q-counter">Frage ${qIndex+1} / ${filteredQ.length}</div>`;
+  const badge=`<div class="badge-row">
+    <span class="q-badge ${q.cat}">${catLabel(q.cat)}</span>
+    <span class="type-pill ${q.type}">${isWrite?'✏️ Schreiben':'🔘 Auswählen'}</span>
+  </div>`;
+  const emojiEl=`<span class="q-emoji">${q.emoji}</span>`;
+  const qtext=`<div class="q-text">${q.q.replace(/\n/g,'<br>')}</div>`;
+
+  let body='';
+  if(isWrite){
+    const hint=q.hint?`<div class="q-hint">${q.hint}</div>`:'';
+    body=`<div class="write-area">${hint}
+      <input class="write-input" id="wInp" type="text" placeholder="Deine Antwort..." autocomplete="off" autocorrect="off" spellcheck="false"
+        onkeydown="if(event.key==='Enter')checkWrite()">
+      <button class="submit-btn" id="subBtn" onclick="checkWrite()">Antwort prüfen ✓</button>
+    </div>`;
+  } else {
+    const opts=shuffle(q.options);
+    body=`<div class="choices">`+
+      opts.map(o=>`<button class="choice-btn" onclick="checkMC(this,'${escQ(o)}','${escQ(q.correct)}')">${o}</button>`).join('')+
+    `</div>`;
+  }
+
+  document.getElementById('quizArea').innerHTML=
+    `<div class="question-card" data-type="${q.cat}">${counter}${badge}${emojiEl}${qtext}${body}<div id="feedback"></div></div>`;
+
+  if(isWrite)setTimeout(()=>{const el=document.getElementById('wInp');if(el)el.focus();},80);
+  updateScoreUI();
+}
+
+function checkMC(btn,selected,correct){
+  document.querySelectorAll('.choice-btn').forEach(b=>{
+    b.disabled=true;
+    if(b.textContent.trim()===correct)b.classList.add('correct');
+  });
+  const ok=selected===correct;
+  if(!ok)btn.classList.add('wrong');
+  ok?handleCorrect():handleWrong();
+  showFeedback(ok,correct);
+}
+
+function checkWrite(){
+  const inp=document.getElementById('wInp');
+  const btn=document.getElementById('subBtn');
+  if(!inp||btn.disabled)return;
+  const val=inp.value.trim();
+  if(!val)return;
+  btn.disabled=true;
+  const q=filteredQ[qIndex];
+  const ok=checkAnswer(val,q);
+  inp.classList.add(ok?'correct':'wrong');
+  ok?handleCorrect():handleWrong();
+  showFeedback(ok,q.correct[0]);
+}
+
+function showFeedback(ok,correctAnswer){
+  const fb=document.getElementById('feedback');
+  if(ok){
+    const msgs=['Super! 🌟','Toll! 🎉','Ausgezeichnet! ⭐','Wunderbar! 🌈','Richtig! 🎊','Fantastisch! 🚀','Prima! 💪','Sehr gut! 🦁'];
+    fb.className='feedback correct';
+    fb.innerHTML=msgs[Math.floor(Math.random()*msgs.length)];
+  } else {
+    fb.className='feedback wrong';
+    fb.innerHTML=`Leider falsch! ❌<br><span class="correct-answer">Richtig: ${correctAnswer}</span>`;
+  }
+  const nb=document.createElement('button');
+  nb.className='next-btn';
+  nb.textContent=qIndex<filteredQ.length-1?'Nächste Frage →':'Ergebnis! 🏆';
+  nb.onclick=nextQuestion;
+  fb.after(nb);
+}
+
+function handleCorrect(){score++;streak++;updateScoreUI();
+  if(score%3===0){
+    const animal=animalRewards[collectedAnimals.length%animalRewards.length];
+    collectedAnimals.push(animal);showReward(animal);
+  } else {launchConfetti();}
+}
+function handleWrong(){wrong++;streak=0;updateScoreUI();}
+function nextQuestion(){qIndex++;showQuestion();}
+
+function showReward(emoji){
+  launchConfetti();
+  const msgs=[['Wunderbar!','Du hast ein neues Tier gesammelt! 🎁'],['Fantastisch!','Drei richtige Antworten! 🌟'],
+    ['Super!','Du bist ein Tierfan! 🚀'],['Toll!','Weiter so! 🏆']];
+  const m=msgs[Math.floor(Math.random()*msgs.length)];
+  document.getElementById('rewardEmoji').textContent=emoji;
+  document.getElementById('rewardTitle').textContent=m[0];
+  document.getElementById('rewardText').textContent=m[1];
+  document.getElementById('rewardPopup').classList.add('show');
+  document.getElementById('overlay').classList.add('show');
+}
+function closeReward(){
+  document.getElementById('rewardPopup').classList.remove('show');
+  document.getElementById('overlay').classList.remove('show');
+}
+
+function launchConfetti(){
+  const colors=['#FF6B9D','#FFD700','#4CAF50','#9B5DE5','#FF8C42','#87CEEB'];
+  for(let i=0;i<18;i++)setTimeout(()=>{
+    const c=document.createElement('div');c.className='confetti-piece';
+    c.style.left=Math.random()*100+'vw';c.style.top='-20px';
+    c.style.background=colors[Math.floor(Math.random()*colors.length)];
+    c.style.animationDuration=(1.2+Math.random()*.8)+'s';
+    c.style.animationDelay=(Math.random()*.3)+'s';
+    c.style.transform=`rotate(${Math.random()*360}deg)`;
+    document.body.appendChild(c);setTimeout(()=>c.remove(),2500);
+  },i*40);
+}
+
+function showFinal(){
+  const total=score+wrong,pct=total>0?Math.round(score/total*100):0;
+  let medal='📚',msg='Übe weiter – du schaffst das! 🔄';
+  if(pct>=90){medal='🥇';msg='Perfekt! Du bist ein Deutschprofi! 🌟';}
+  else if(pct>=70){medal='🥈';msg='Sehr gut! Fast fertig für die Prüfung! 🎉';}
+  else if(pct>=50){medal='🥉';msg='Gut! Übe noch ein bisschen mehr! 💪';}
+  document.getElementById('quizArea').innerHTML=`
+    <div class="final-screen">
+      <span class="big-trophy">${medal}</span>
+      <h2>${msg}</h2>
+      <p style="font-size:1.3rem;margin:10px 0">✅ ${score} richtig &nbsp;❌ ${wrong} falsch &nbsp;📊 ${pct}%</p>
+      <p style="color:#888;margin-bottom:8px">Deine gesammelten Tiere:</p>
+      <div class="collected-animals">${collectedAnimals.length?collectedAnimals.join(' '):'–'}</div>
+      <button class="restart-btn" onclick="init()">🔄 Nochmal spielen!</button>
+      <button class="restart-btn" onclick="switchCat('all')" style="background:linear-gradient(135deg,var(--purple),var(--pink));margin-left:10px">🌍 Alle Themen</button>
+    </div>`;
+}
+
+function switchCat(cat){
+  currentCat=cat;
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.toggle('active',b.dataset.cat===cat));
+  init();
+}
+document.querySelectorAll('.cat-btn').forEach(btn=>btn.addEventListener('click',()=>switchCat(btn.dataset.cat)));
+
+init();
+</script>
+</body>
+</html>
