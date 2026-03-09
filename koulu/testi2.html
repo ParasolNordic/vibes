@@ -1,1 +1,1191 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌿 Murtolukumetsä</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lilita+One&family=Quicksand:wght@500;600;700&display=swap');
 
+:root {
+  --forest:   #1a4a2e;
+  --leaf:     #2d8653;
+  --lime:     #6fcf3f;
+  --sky:      #b8eaff;
+  --sun:      #ffd84d;
+  --orange:   #ff8c2a;
+  --pink:     #ff6b9d;
+  --coral:    #ff5252;
+  --cream:    #fffbf0;
+  --brown:    #7c4f1a;
+  --mud:      #5c3610;
+  --water:    #4ab3d4;
+  --purple:   #9b5de5;
+  --card-bg:  #ffffff;
+  --shadow:   rgba(26,74,46,0.18);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Quicksand', sans-serif;
+  background: radial-gradient(ellipse at 20% 0%, #c8f5a0 0%, #7ed95a 30%, #3aaa5c 60%, #1a4a2e 100%);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── FOREST DECO ─────────────────────────────────── */
+.tree { position: fixed; bottom: 0; pointer-events: none; z-index: 0; }
+.tree-l { left: -30px; }
+.tree-r { right: -30px; }
+
+.stars-wrap { position: fixed; top: 0; left: 0; width: 100%; height: 160px; pointer-events: none; z-index: 0; }
+.star-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: white;
+  animation: twinkle ease-in-out infinite;
+}
+@keyframes twinkle { 0%,100%{opacity:.8;transform:scale(1)} 50%{opacity:.2;transform:scale(.5)} }
+
+/* ─── CONTAINER ───────────────────────────────────── */
+.wrap {
+  position: relative; z-index: 1;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 16px 14px 80px;
+}
+
+/* ─── HEADER ──────────────────────────────────────── */
+.header { text-align: center; padding: 20px 0 10px; }
+.header h1 {
+  font-family: 'Lilita One', cursive;
+  font-size: clamp(2.2rem, 8vw, 3.8rem);
+  color: var(--sun);
+  text-shadow: 3px 5px 0 var(--mud), 0 0 40px rgba(255,216,77,.5);
+  line-height: 1;
+  letter-spacing: .5px;
+}
+.header .tagline {
+  color: #d4f9b0;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-top: 5px;
+  letter-spacing: .3px;
+}
+
+/* ─── STATUS BAR ──────────────────────────────────── */
+.status-bar {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 12px 0 16px;
+}
+.s-chip {
+  background: rgba(255,255,255,.15);
+  border: 2px solid rgba(255,255,255,.3);
+  backdrop-filter: blur(6px);
+  border-radius: 30px;
+  padding: 7px 16px;
+  font-weight: 700;
+  font-size: .88rem;
+  color: white;
+  display: flex; align-items: center; gap: 6px;
+  text-shadow: 0 1px 3px rgba(0,0,0,.3);
+}
+.s-chip .val { font-family: 'Lilita One', cursive; font-size: 1.3rem; }
+.animal-chips { font-size: 1.5rem; letter-spacing: 3px; min-width: 60px; }
+
+/* ─── SECTION TABS ────────────────────────────────── */
+.tabs {
+  display: flex; gap: 7px; flex-wrap: wrap; justify-content: center; margin-bottom: 14px;
+}
+.tab {
+  background: rgba(255,255,255,.18);
+  border: 2.5px solid rgba(255,255,255,.35);
+  border-radius: 22px;
+  padding: 7px 13px;
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 700;
+  font-size: .78rem;
+  cursor: pointer;
+  transition: all .2s;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,.3);
+}
+.tab:hover { background: rgba(255,255,255,.3); transform: translateY(-2px); }
+.tab.on { border-color: transparent; transform: translateY(-3px); box-shadow: 0 5px 16px rgba(0,0,0,.25); color: var(--forest); text-shadow: none; font-weight: 800; }
+.tab[data-t="0"].on { background: var(--water); }
+.tab[data-t="1"].on { background: var(--orange); }
+.tab[data-t="2"].on { background: var(--lime); }
+.tab[data-t="3"].on { background: var(--coral); }
+.tab[data-t="4"].on { background: var(--pink); }
+.tab[data-t="5"].on { background: var(--sun); }
+
+/* ─── PROGRESS ────────────────────────────────────── */
+.prog-wrap {
+  height: 11px;
+  background: rgba(255,255,255,.2);
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  border: 1.5px solid rgba(255,255,255,.25);
+}
+.prog-fill {
+  height: 100%;
+  border-radius: 20px;
+  background: linear-gradient(90deg, var(--sun), var(--lime));
+  transition: width .6s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 0 8px rgba(255,216,77,.6);
+}
+
+/* ─── TEORIA BANNER ───────────────────────────────── */
+.teoria {
+  background: linear-gradient(135deg, rgba(255,255,255,.95), rgba(240,255,230,.9));
+  border-radius: 22px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  border-left: 6px solid var(--lime);
+  box-shadow: 0 6px 24px var(--shadow);
+  animation: fadeSlide .4s ease;
+}
+.teoria-title {
+  font-family: 'Lilita One', cursive;
+  font-size: 1.2rem;
+  color: var(--leaf);
+  margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.teoria p, .teoria li {
+  font-size: .92rem;
+  font-weight: 600;
+  color: var(--forest);
+  line-height: 1.7;
+}
+.teoria .ex {
+  background: rgba(111,207,63,.12);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-top: 10px;
+  font-weight: 700;
+  font-size: .95rem;
+  color: var(--mud);
+  border: 1.5px solid rgba(111,207,63,.3);
+}
+
+/* ─── QUESTION CARD ───────────────────────────────── */
+.qcard {
+  background: var(--card-bg);
+  border-radius: 26px;
+  padding: 22px 20px 20px;
+  box-shadow: 0 10px 40px var(--shadow), 0 2px 6px rgba(0,0,0,.08);
+  margin-bottom: 14px;
+  animation: popIn .38s cubic-bezier(.34,1.56,.64,1);
+  position: relative;
+  overflow: hidden;
+}
+@keyframes popIn { from{transform:scale(.88) translateY(20px);opacity:0} to{transform:scale(1) translateY(0);opacity:1} }
+@keyframes fadeSlide { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+
+.qcard-stripe {
+  position: absolute; top: 0; left: 0; right: 0; height: 6px; border-radius: 26px 26px 0 0;
+}
+.stripe-0 { background: linear-gradient(90deg,var(--water),#90e0ff); }
+.stripe-1 { background: linear-gradient(90deg,var(--orange),var(--sun)); }
+.stripe-2 { background: linear-gradient(90deg,var(--lime),#b8f078); }
+.stripe-3 { background: linear-gradient(90deg,var(--coral),var(--pink)); }
+.stripe-4 { background: linear-gradient(90deg,var(--pink),var(--purple)); }
+.stripe-5 { background: linear-gradient(90deg,var(--sun),var(--orange)); }
+
+.q-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.q-badge {
+  font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .8px;
+  padding: 3px 10px; border-radius: 20px; color: white;
+}
+.badge-0{background:var(--water);} .badge-1{background:var(--orange);} .badge-2{background:var(--lime);color:var(--forest);}
+.badge-3{background:var(--coral);} .badge-4{background:var(--pink);} .badge-5{background:#d4a017;color:var(--forest);}
+.q-num { font-size: .8rem; color: #bbb; font-weight: 700; }
+
+.q-animal { font-size: 2.4rem; display: block; text-align: center; margin: 4px 0 8px; filter: drop-shadow(0 3px 5px rgba(0,0,0,.15)); }
+
+.q-text {
+  font-family: 'Lilita One', cursive;
+  font-size: clamp(1rem, 3.3vw, 1.3rem);
+  color: var(--forest);
+  text-align: center;
+  line-height: 1.45;
+  margin-bottom: 18px;
+}
+
+/* ─── FRACTION DISPLAY ────────────────────────────── */
+.fr {
+  display: inline-flex; flex-direction: column; align-items: center;
+  font-weight: 800; line-height: 1; vertical-align: middle; margin: 0 2px;
+}
+.fr .fn, .fr .fd { padding: 0 3px; }
+.fr .fl { width: 100%; border-top: 2.5px solid currentColor; margin: 1px 0; }
+.fr.lg { font-size: 1.4rem; }
+.fr.md { font-size: 1.15rem; }
+.fr.sm { font-size: .95rem; }
+
+/* ─── PIE SVG ─────────────────────────────────────── */
+.pie-svg { filter: drop-shadow(0 3px 5px rgba(0,0,0,.15)); transition: transform .2s; }
+.pie-svg:hover { transform: scale(1.07); }
+
+/* ─── MC CHOICES ──────────────────────────────────── */
+.choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 9px; }
+.ch {
+  background: #f4f8ff;
+  border: 3px solid #dde6f0;
+  border-radius: 16px;
+  padding: 13px 10px;
+  font-family: 'Quicksand', sans-serif;
+  font-weight: 800;
+  font-size: 1.05rem;
+  cursor: pointer; transition: all .16s;
+  color: var(--forest);
+  text-align: center;
+  min-height: 54px;
+  display: flex; align-items: center; justify-content: center;
+}
+.ch:hover:not(:disabled) { background: #e8f2ff; border-color: var(--water); transform: translateY(-3px); box-shadow: 0 6px 14px rgba(74,179,212,.25); }
+.ch.ok  { background: #e8f9ee!important; border-color: var(--leaf)!important; color: var(--leaf)!important; animation: bounce .35s cubic-bezier(.34,1.56,.64,1); }
+.ch.bad { background: #ffeaea!important; border-color: var(--coral)!important; color: var(--coral)!important; animation: wiggle .4s ease; }
+.ch:disabled { cursor: default; }
+
+@keyframes bounce  { 0%{transform:scale(1)} 50%{transform:scale(1.1)} 100%{transform:scale(1)} }
+@keyframes wiggle  { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+/* ─── OPERATOR CHOICE ─────────────────────────────── */
+.op-row { display: flex; gap: 10px; justify-content: center; margin-bottom: 6px; }
+.op-btn {
+  background: #f4f8ff; border: 3px solid #dde6f0;
+  border-radius: 50%; width: 56px; height: 56px;
+  font-family: 'Lilita One', cursive; font-size: 1.5rem;
+  cursor: pointer; transition: all .16s; color: var(--forest);
+  display: flex; align-items: center; justify-content: center;
+}
+.op-btn:hover { background: #e8f2ff; border-color: var(--water); transform: scale(1.1); }
+.op-btn.ok  { background: #e8f9ee!important; border-color: var(--leaf)!important; color: var(--leaf)!important; }
+.op-btn.bad { background: #ffeaea!important; border-color: var(--coral)!important; color: var(--coral)!important; animation: wiggle .4s ease; }
+
+/* ─── WRITE INPUT ─────────────────────────────────── */
+.write-area { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+
+.frac-input-box {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.frac-input-box input {
+  width: 58px; height: 40px;
+  border: 3px solid #c8d8ee; border-radius: 11px;
+  font-family: 'Lilita One', cursive; font-size: 1.25rem;
+  text-align: center; color: var(--forest); background: #fafcff;
+  outline: none; transition: all .2s; -moz-appearance: textfield;
+}
+.frac-input-box input::-webkit-outer-spin-button,
+.frac-input-box input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.frac-input-box input:focus { border-color: var(--water); box-shadow: 0 0 0 3px rgba(74,179,212,.2); }
+.frac-input-box input.ok  { border-color: var(--leaf)!important; background: #e8f9ee!important; color: var(--leaf)!important; }
+.frac-input-box input.bad { border-color: var(--coral)!important; background: #ffeaea!important; color: var(--coral)!important; animation: wiggle .4s ease; }
+.frac-bar { width: 58px; border-top: 3px solid var(--forest); }
+
+.go-btn {
+  background: linear-gradient(135deg, var(--leaf), var(--lime));
+  color: white; border: none; border-radius: 14px;
+  padding: 12px 34px;
+  font-family: 'Lilita One', cursive; font-size: 1.1rem;
+  cursor: pointer; transition: all .2s;
+  box-shadow: 0 5px 16px rgba(45,134,83,.4);
+  text-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.go-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(45,134,83,.5); }
+.go-btn:disabled { opacity: .4; cursor: default; transform: none; }
+
+/* ─── FEEDBACK ────────────────────────────────────── */
+.feedback {
+  text-align: center; padding: 12px 18px; border-radius: 14px;
+  font-weight: 700; font-size: 1rem; margin-top: 12px;
+  animation: fadeSlide .28s ease;
+  line-height: 1.5;
+}
+.feedback.ok  { background: #e8f9ee; color: #1e7c3a; border: 2px solid #a8e6be; }
+.feedback.bad { background: #ffeaea; color: #c0392b; border: 2px solid #ffbbbb; }
+.answer-reveal {
+  display: inline-block; margin-top: 5px;
+  background: #fff3dd; color: var(--mud);
+  padding: 4px 12px; border-radius: 8px; border: 1.5px solid #ffe0a0;
+  font-size: .95rem;
+}
+.next-btn {
+  display: block; margin: 14px auto 0;
+  background: linear-gradient(135deg, var(--orange), var(--sun));
+  color: var(--forest); border: none; border-radius: 14px;
+  padding: 13px 38px;
+  font-family: 'Lilita One', cursive; font-size: 1.15rem;
+  cursor: pointer; transition: all .2s;
+  box-shadow: 0 5px 16px rgba(255,140,42,.4);
+  text-shadow: 0 1px 2px rgba(255,255,255,.3);
+  animation: fadeSlide .3s ease;
+}
+.next-btn:hover { transform: translateY(-3px) scale(1.04); }
+
+/* ─── PIE PICK ────────────────────────────────────── */
+.pie-row { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+.pie-pick {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  cursor: pointer; border-radius: 16px; padding: 10px; border: 3px solid transparent;
+  transition: all .18s;
+}
+.pie-pick:hover { background: #f0f8ff; border-color: var(--water); transform: scale(1.05); }
+.pie-pick.ok  { background: #e8f9ee; border-color: var(--leaf); }
+.pie-pick.bad { background: #ffeaea; border-color: var(--coral); animation: wiggle .4s ease; }
+.pie-pick .label { font-weight: 800; font-size: .9rem; color: var(--forest); }
+
+/* ─── LUKUSUORA ───────────────────────────────────── */
+.numline-wrap { overflow-x: auto; padding: 6px 0 14px; }
+.numline-svg { min-width: 280px; width: 100%; max-width: 500px; display: block; margin: 0 auto; }
+.nl-input {
+  width: 52px; height: 36px;
+  border: 3px solid #c8d8ee; border-radius: 10px;
+  font-family: 'Lilita One', cursive; font-size: 1.1rem;
+  text-align: center; color: var(--forest); background: white;
+  outline: none; transition: all .2s; -moz-appearance: textfield;
+}
+.nl-input::-webkit-outer-spin-button,
+.nl-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.nl-input:focus { border-color: var(--water); }
+.nl-input.ok  { border-color: var(--leaf)!important; background: #e8f9ee!important; color: var(--leaf)!important; }
+.nl-input.bad { border-color: var(--coral)!important; background: #ffeaea!important; animation: wiggle .4s ease; }
+
+/* ─── KOMATO ──────────────────────────────────────── */
+.komato-wrap {
+  display: flex; align-items: center; flex-wrap: wrap;
+  gap: 2px; justify-content: center; margin-bottom: 14px;
+}
+.kseg {
+  width: 68px; height: 68px; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-family: 'Lilita One', cursive; font-size: 1rem;
+  color: white; box-shadow: 0 4px 10px rgba(0,0,0,.18); flex-shrink: 0; margin: 2px;
+}
+.kseg.val  { background: linear-gradient(135deg, #3aaa5c, #1a4a2e); }
+.kseg.op   { background: linear-gradient(135deg, var(--orange), var(--sun)); font-size: .88rem; width: 58px; height: 58px; color: var(--forest); }
+.kseg.head { background: linear-gradient(135deg, var(--pink), var(--purple)); font-size: 2rem; width: 76px; height: 76px; }
+.kseg.blank {
+  background: white;
+  border: 4px solid var(--water);
+  color: var(--forest);
+  cursor: default;
+}
+.kseg.blank.ok  { border-color: var(--leaf); background: #e8f9ee; }
+.kseg.blank.bad { border-color: var(--coral); background: #ffeaea; animation: wiggle .4s ease; }
+.k-inp {
+  width: 46px; height: 30px;
+  border: none; outline: none; background: transparent;
+  font-family: 'Lilita One', cursive; font-size: 1rem;
+  text-align: center; color: var(--forest);
+  -moz-appearance: textfield;
+}
+.k-inp::-webkit-outer-spin-button, .k-inp::-webkit-inner-spin-button { -webkit-appearance: none; }
+.k-bar { width: 46px; border-top: 2.5px solid var(--forest); }
+
+@media (max-width:480px) {
+  .kseg { width:56px; height:56px; font-size:.85rem; }
+  .kseg.op { width:46px; height:46px; }
+  .kseg.head { width:62px; height:62px; }
+}
+
+/* ─── REWARD POPUP ────────────────────────────────── */
+.overlay { position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:900;display:none; }
+.overlay.on { display:block; }
+.reward-box {
+  position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  background: linear-gradient(135deg, #fffdf0, #e8f9ee);
+  border-radius: 28px; padding: 36px 40px; text-align: center;
+  z-index: 1000; min-width: 280px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+  border: 4px solid var(--lime);
+  transition: transform .45s cubic-bezier(.34,1.56,.64,1);
+}
+.reward-box.on { transform: translate(-50%,-50%) scale(1); }
+.r-emo { font-size: 5.5rem; display: block; filter: drop-shadow(0 4px 8px rgba(0,0,0,.2)); }
+.r-title { font-family: 'Lilita One', cursive; font-size: 2rem; color: var(--leaf); margin: 8px 0 4px; }
+.r-sub { font-weight: 700; color: var(--forest); font-size: .95rem; margin-bottom: 16px; }
+.r-close {
+  background: linear-gradient(135deg, var(--leaf), var(--lime));
+  color: white; border: none; border-radius: 14px;
+  padding: 12px 32px; font-family: 'Lilita One', cursive; font-size: 1.1rem;
+  cursor: pointer; box-shadow: 0 4px 14px rgba(45,134,83,.35);
+  text-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+
+/* ─── CONFETTI ────────────────────────────────────── */
+.cfl {
+  position: fixed; width: 10px; height: 14px; border-radius: 3px;
+  z-index: 1001; pointer-events: none;
+  animation: cfall 1.9s ease-in forwards;
+}
+@keyframes cfall { 0%{transform:translateY(-20px) rotate(0);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+
+/* ─── FINAL ───────────────────────────────────────── */
+.final {
+  background: linear-gradient(135deg, #fffdf0, #e8f9ee);
+  border-radius: 28px; padding: 40px 24px; text-align: center;
+  box-shadow: 0 10px 40px var(--shadow); animation: popIn .5s cubic-bezier(.34,1.56,.64,1);
+  border: 4px solid var(--lime);
+}
+.final .trophy { font-size: 5rem; display: block; }
+.final h2 { font-family: 'Lilita One', cursive; font-size: 2.2rem; color: var(--leaf); margin: 10px 0 6px; }
+.final .animals { font-size: 2rem; letter-spacing: 5px; margin: 14px 0; min-height: 2.5rem; }
+.play-again {
+  background: linear-gradient(135deg, var(--leaf), var(--lime));
+  color: white; border: none; border-radius: 16px;
+  padding: 14px 38px; font-family: 'Lilita One', cursive; font-size: 1.2rem;
+  cursor: pointer; margin: 12px 6px 0;
+  box-shadow: 0 5px 16px rgba(45,134,83,.4); transition: all .2s;
+  text-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.play-again:hover { transform: translateY(-3px); }
+
+/* ─── COMPANION ───────────────────────────────────── */
+.buddy-wrap { display: flex; justify-content: center; margin-bottom: 14px; }
+.buddy {
+  display: flex; align-items: flex-end; gap: 8px;
+  max-width: 380px;
+}
+.buddy-emo {
+  font-size: 3rem;
+  animation: bobb 2.4s ease-in-out infinite;
+  flex-shrink: 0;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,.2));
+}
+@keyframes bobb { 0%,100%{transform:translateY(0) rotate(-4deg)} 50%{transform:translateY(-9px) rotate(4deg)} }
+.bubble {
+  background: white;
+  border-radius: 18px 18px 18px 4px;
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: .88rem;
+  color: var(--forest);
+  box-shadow: 0 4px 14px rgba(0,0,0,.12);
+  line-height: 1.4;
+  border: 2px solid rgba(111,207,63,.3);
+  position: relative;
+}
+.bubble::after {
+  content: '';
+  position: absolute; bottom: 6px; left: -10px;
+  border: 5px solid transparent;
+  border-right-color: white;
+}
+</style>
+</head>
+<body>
+
+<!-- Stars -->
+<div class="stars-wrap" id="stars"></div>
+
+<!-- Trees -->
+<svg class="tree tree-l" width="100" height="320" viewBox="0 0 100 320" fill="none">
+  <rect x="38" y="220" width="24" height="100" rx="6" fill="#5c3610"/>
+  <ellipse cx="50" cy="180" rx="46" ry="90" fill="#1a4a2e" opacity=".9"/>
+  <ellipse cx="50" cy="140" rx="36" ry="70" fill="#2d8653" opacity=".85"/>
+  <ellipse cx="50" cy="100" rx="26" ry="55" fill="#6fcf3f" opacity=".8"/>
+</svg>
+<svg class="tree tree-r" width="100" height="280" viewBox="0 0 100 280" fill="none">
+  <rect x="38" y="190" width="24" height="90" rx="6" fill="#5c3610"/>
+  <ellipse cx="50" cy="155" rx="44" ry="80" fill="#1a4a2e" opacity=".9"/>
+  <ellipse cx="50" cy="115" rx="34" ry="65" fill="#2d8653" opacity=".85"/>
+  <ellipse cx="50" cy="75"  rx="24" ry="50" fill="#6fcf3f" opacity=".8"/>
+</svg>
+
+<!-- Overlay & Reward -->
+<div class="overlay" id="overlay"></div>
+<div class="reward-box" id="rewardBox">
+  <span class="r-emo" id="rEmo">🦔</span>
+  <div class="r-title" id="rTitle">Hienoa!</div>
+  <div class="r-sub"   id="rSub">Uusi kaveri!</div>
+  <button class="r-close" onclick="closeReward()">Jatka metsässä →</button>
+</div>
+
+<div class="wrap">
+  <div class="header">
+    <h1>🌿 Murtolukumetsä</h1>
+    <div class="tagline">Opitaan murtolukuja eläinten kanssa! 🦔🐸🦋</div>
+  </div>
+
+  <div class="status-bar">
+    <div class="s-chip">✅ <span class="val" id="sOk">0</span> oikein</div>
+    <div class="s-chip">🔥 <span class="val" id="sStreak">0</span> putki</div>
+    <div class="s-chip animal-chips" id="sAnimals">–</div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button class="tab on" data-t="0">🥧 Perusteet</button>
+    <button class="tab" data-t="1">📊 Vertailu</button>
+    <button class="tab" data-t="2">➕ Yhteenlasku</button>
+    <button class="tab" data-t="3">➖ Vähennysl.</button>
+    <button class="tab" data-t="4">📖 Sanallinen</button>
+    <button class="tab" data-t="5">🐛 Komato</button>
+  </div>
+
+  <div class="prog-wrap"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+
+  <div class="buddy-wrap">
+    <div class="buddy">
+      <div class="buddy-emo" id="buddyEmo">🦔</div>
+      <div class="bubble" id="bubbleText">Tervetuloa Murtolukumetsään! Minä olen Siiri Siili. Opitaan yhdessä! 🌿</div>
+    </div>
+  </div>
+
+  <div id="area"></div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+// STARS
+// ════════════════════════════════════════════════════════
+;(()=>{
+  const w=document.getElementById('stars');
+  for(let i=0;i<28;i++){
+    const s=document.createElement('div'); s.className='star-dot';
+    const sz=1+Math.random()*3;
+    Object.assign(s.style,{
+      width:sz+'px',height:sz+'px',
+      left:(Math.random()*100)+'%',
+      top:(Math.random()*100)+'%',
+      animationDuration:(1.5+Math.random()*3)+'s',
+      animationDelay:(-Math.random()*3)+'s',
+      opacity: Math.random()*.8+.2,
+    });
+    w.appendChild(s);
+  }
+})();
+
+// ════════════════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════════════════
+function fr(n,d,size='md'){
+  return `<span class="fr ${size}"><span class="fn">${n}</span><span class="fl"></span><span class="fd">${d}</span></span>`;
+}
+
+function pieSVG(num,den,col,px=84){
+  if(!den) return '';
+  const r=34,cx=40,cy=40;
+  const a0=-Math.PI/2, a1=a0+(2*Math.PI*num/den);
+  const x1=cx+r*Math.cos(a0),y1=cy+r*Math.sin(a0);
+  const x2=cx+r*Math.cos(a1),y2=cy+r*Math.sin(a1);
+  const big=num/den>.5?1:0;
+  let p=`<circle cx="40" cy="40" r="34" fill="#dde8f0"/>`;
+  if(num===den){
+    p+=`<circle cx="40" cy="40" r="34" fill="${col}"/>`;
+  } else if(num>0){
+    p+=`<path d="M40,40 L${x1},${y1} A34,34 0 ${big},1 ${x2},${y2} Z" fill="${col}"/>`;
+  }
+  for(let i=0;i<den;i++){
+    const a=a0+(2*Math.PI*i/den);
+    p+=`<line x1="40" y1="40" x2="${40+34*Math.cos(a)}" y2="${40+34*Math.sin(a)}" stroke="white" stroke-width="1.5"/>`;
+  }
+  p+=`<circle cx="40" cy="40" r="34" fill="none" stroke="#99aabb" stroke-width="1.5"/>`;
+  return `<svg class="pie-svg" width="${px}" height="${px}" viewBox="0 0 80 80">${p}</svg>`;
+}
+
+function shuffle(a){let b=[...a];for(let i=b.length-1;i>0;i--){const j=0|Math.random()*(i+1);[b[i],b[j]]=[b[j],b[i]];}return b;}
+function esc(s){return String(s).replace(/'/g,'&#39;');}
+
+// ════════════════════════════════════════════════════════
+// QUESTIONS
+// ════════════════════════════════════════════════════════
+const QS=[
+
+  // ── 0: PERUSTEET ─────────────────────────────────────
+  {t:0,type:'mc',emo:'🦔',
+    q:'Katso piirakka! Kuinka monta osaa on yhteensä?',
+    pie:{n:0,d:6,c:'#aabbcc'},
+    ans:'6',opts:['4','5','6','8'],
+    tip:'Nimittäjä = kokonaisosien lukumäärä'},
+  {t:0,type:'mc',emo:'🐸',
+    q:'Mikä murtoluku kuvaa väritetyn alueen?',
+    pie:{n:3,d:8,c:'#ff6b9d'},
+    ans:'3/8',opts:['3/8','5/8','3/5','8/3'],
+    tip:'Osoittaja = väritetyt osat • Nimittäjä = kaikki osat'},
+  {t:0,type:'mc',emo:'🦋',
+    q:'Murtoluvussa 5/8:\nmikä on osoittaja?',
+    ans:'5',opts:['5','8','3','13'],
+    tip:'Osoittaja on YLÄOSA – kertoo kuinka monta osaa on valittu'},
+  {t:0,type:'mc',emo:'🐢',
+    q:'Murtoluvussa 3/7:\nmikä on nimittäjä?',
+    ans:'7',opts:['7','3','4','10'],
+    tip:'Nimittäjä on ALAOSA – kertoo kuinka moneen osaan kokonainen on jaettu'},
+  {t:0,type:'mc',emo:'🐝',
+    q:'Mikä murtoluku tarkoittaa\n"viisi kahdeksasosaa"?',
+    ans:'5/8',opts:['5/8','8/5','5/7','2/8'],
+    tip:'Viisi = osoittaja • kahdeksas = nimittäjä'},
+  {t:0,type:'pie_pick',emo:'🦔',
+    q:'Valitse piirakkakuva, joka vastaa\nmurtolukua 3/4!',
+    correct_label:'3/4',
+    opts:[{n:1,d:4,c:'#4ab3d4',label:'1/4'},{n:3,d:4,c:'#ff6b9d',label:'3/4'},{n:2,d:4,c:'#6fcf3f',label:'2/4'},{n:4,d:4,c:'#9b5de5',label:'4/4'}],
+    tip:'3/4 = kolme neljäsosaa'},
+  {t:0,type:'mc',emo:'🐸',
+    q:'Mikä murtoluku tarkoittaa\nyksi kokonainen?',
+    ans:'5/5',opts:['5/5','4/5','5/4','1/5'],
+    tip:'Kun osoittaja = nimittäjä, tulos = 1 kokonainen!'},
+  {t:0,type:'mc',emo:'🦋',
+    q:'"Kaksi neljäsosaa" kirjoitetaan:',
+    ans:'2/4',opts:['2/4','4/2','2/2','4/4'],
+    tip:'kaksi = osoittaja • neljäsosa = nimittäjä 4'},
+  {t:0,type:'mc',emo:'🐢',
+    q:'Mikä murtoluku vastaa\n"kolme kahdeksasosaa"?',
+    ans:'3/8',opts:['3/8','8/3','3/5','5/3'],
+    tip:'"kolme kahdeksasosaa" → 3/8'},
+
+  // ── 1: VERTAILU ───────────────────────────────────────
+  {t:1,type:'op',emo:'🐺',
+    left:{n:4,d:5},right:{n:2,d:5},
+    ans:'>',
+    tip:'Samannimisistä murtoluvuista suurempi osoittaja → suurempi luku'},
+  {t:1,type:'op',emo:'🦊',
+    left:{n:1,d:3},right:{n:2,d:3},
+    ans:'<',
+    tip:'1 < 2, joten 1/3 < 2/3'},
+  {t:1,type:'op',emo:'🐸',
+    left:{n:5,d:7},right:{n:5,d:7},
+    ans:'=',
+    tip:'Täsmälleen samat luvut ovat yhtä suuret'},
+  {t:1,type:'op',emo:'🦋',
+    left:{n:8,d:9},right:{n:6,d:9},
+    ans:'>',
+    tip:'8 > 6, nimittäjät samat'},
+  {t:1,type:'op',emo:'🐢',
+    left:{n:3,d:4},right:{n:4,d:4},
+    ans:'<',
+    tip:'4/4 = 1 kokonainen > 3/4'},
+  {t:1,type:'op',emo:'🐝',
+    left:{n:5,d:8},right:{n:7,d:8},
+    ans:'<',
+    tip:'5 < 7, joten 5/8 < 7/8'},
+  {t:1,type:'op',emo:'🦔',
+    left:{n:6,d:6},right:{n:1,d:1},
+    ans:'=',
+    tip:'6/6 = 1 kokonainen ja 1/1 = 1 kokonainen'},
+  {t:1,type:'mc',emo:'🦊',
+    q:'Mikä on suurin?\n2/9 • 7/9 • 4/9',
+    ans:'7/9',opts:['7/9','4/9','2/9'],
+    tip:'Samannimisistä murtoluvuista suurin osoittaja voittaa'},
+  {t:1,type:'op',emo:'🐸',
+    left:{n:11,d:12},right:{n:9,d:12},
+    ans:'>',
+    tip:'11 > 9'},
+  {t:1,type:'op',emo:'🐺',
+    left:{n:3,d:5},right:{n:4,d:5},
+    ans:'<',
+    tip:'3 < 4'},
+
+  // ── 2: YHTEENLASKU ────────────────────────────────────
+  {t:2,type:'write_frac',emo:'🦋',
+    q:'Laske:\n2/13 + 4/13 + 5/13 = ?',
+    ans:{n:11,d:13},
+    tip:'Lisää osoittajat: 2+4+5=11 • Nimittäjä pysyy 13'},
+  {t:2,type:'write_frac',emo:'🐢',
+    q:'Laske:\n2/10 + 7/10 = ?',
+    ans:{n:9,d:10},
+    tip:'2+7=9 • nimittäjä 10'},
+  {t:2,type:'write_frac',emo:'🐝',
+    q:'Laske:\n3/8 + 2/8 = ?',
+    ans:{n:5,d:8},
+    tip:'3+2=5 • nimittäjä 8'},
+  {t:2,type:'write_frac',emo:'🦔',
+    q:'Laske:\n4/9 + 3/9 = ?',
+    ans:{n:7,d:9},
+    tip:'4+3=7'},
+  {t:2,type:'write_frac',emo:'🐸',
+    q:'Laske:\n7/10 + 2/10 = ?',
+    ans:{n:9,d:10},
+    tip:'7+2=9'},
+  {t:2,type:'write_frac',emo:'🦋',
+    q:'Laske:\n5/12 + 6/12 = ?',
+    ans:{n:11,d:12},
+    tip:'5+6=11'},
+  {t:2,type:'write_frac',emo:'🐢',
+    q:'Laske:\n8/11 + 2/11 = ?',
+    ans:{n:10,d:11},
+    tip:'8+2=10'},
+  {t:2,type:'mc',emo:'🐝',
+    q:'Mikä on 2/5 + 2/5?',
+    ans:'4/5',opts:['4/5','4/10','2/5','1/5'],
+    tip:'Lisää osoittajat, nimittäjä pysyy!'},
+  {t:2,type:'write_frac',emo:'🦔',
+    q:'Laske:\n1/6 + 2/6 + 3/6 = ?',
+    ans:{n:6,d:6},
+    tip:'1+2+3=6 • 6/6 = 1 kokonainen!'},
+
+  // ── 3: VÄHENNYSLASK. ─────────────────────────────────
+  {t:3,type:'write_frac',emo:'🐸',
+    q:'Laske:\n9/9 − 4/9 − 3/9 = ?',
+    ans:{n:2,d:9},
+    tip:'9−4−3=2 • nimittäjä pysyy 9'},
+  {t:3,type:'write_frac',emo:'🦋',
+    q:'Laske:\n8/11 − 2/11 = ?',
+    ans:{n:6,d:11},
+    tip:'8−2=6'},
+  {t:3,type:'write_frac',emo:'🐢',
+    q:'Laske:\n10/11 − 4/11 = ?',
+    ans:{n:6,d:11},
+    tip:'10−4=6'},
+  {t:3,type:'write_frac',emo:'🐝',
+    q:'Laske:\n10/10 − 3/10 = ?',
+    ans:{n:7,d:10},
+    tip:'10−3=7'},
+  {t:3,type:'write_frac',emo:'🦔',
+    q:'Laske:\n7/8 − 3/8 = ?',
+    ans:{n:4,d:8},
+    tip:'7−3=4'},
+  {t:3,type:'write_1',emo:'🐸',
+    q:'Laske:\n1 − 3/4 = ?',
+    ans:{n:1,d:4},
+    tip:'1 = 4/4 • Laske 4/4 − 3/4 = 1/4'},
+  {t:3,type:'write_1',emo:'🦋',
+    q:'Laske:\n1 − 6/10 = ?',
+    ans:{n:4,d:10},
+    tip:'1 = 10/10 • 10−6=4'},
+  {t:3,type:'write_1',emo:'🐢',
+    q:'Laske:\n1 − 1/3 = ?',
+    ans:{n:2,d:3},
+    tip:'1 = 3/3 • 3−1=2'},
+  {t:3,type:'mc',emo:'🐝',
+    q:'Mikä on 5/6 − 3/6?',
+    ans:'2/6',opts:['2/6','8/6','2/0','3/6'],
+    tip:'5−3=2 • nimittäjä pysyy!'},
+  {t:3,type:'write_1',emo:'🦔',
+    q:'Laske:\n1 − 5/5 = ?',
+    ans:{n:0,d:5},
+    tip:'1 = 5/5 • 5−5=0'},
+
+  // ── 4: SANALLINEN ─────────────────────────────────────
+  {t:4,type:'word',emo:'🍕',
+    story:'Atte syö pizzasta ensin 5/8 ja sitten 2/8.\nKuinka suuri osa pizzasta jää jäljelle?',
+    ans:{n:1,d:8},
+    tip:'Syöty yhteensä: 5/8+2/8=7/8 • Jäljellä: 8/8−7/8=1/8'},
+  {t:4,type:'word',emo:'📚',
+    story:'Sara lukee kirjasta iltapäivällä 3/10,\nillalla 1/10 ja seuraavana päivänä 5/10.\nKuinka suuri osa on vielä lukematta?',
+    ans:{n:1,d:10},
+    tip:'Luettu: 3+1+5=9/10 • Lukematta: 10/10−9/10=1/10'},
+  {t:4,type:'word',emo:'🥤',
+    story:'Oona juo limsasta 5/8.\nKuinka suuri osa limsasta jää juomatta?',
+    ans:{n:3,d:8},
+    tip:'8/8−5/8=3/8'},
+  {t:4,type:'word',emo:'🍕',
+    story:'Jimi syö pizzasta 3/5.\nKuinka suuri osa jää jäljelle?',
+    ans:{n:2,d:5},
+    tip:'5/5−3/5=2/5'},
+  {t:4,type:'word',emo:'🧃',
+    story:'Emma juo mehusta 2/7 ja Atte 3/7.\nKuinka suuren osan he juovat yhteensä?',
+    ans:{n:5,d:7},
+    tip:'2/7+3/7=5/7'},
+  {t:4,type:'word',emo:'🍫',
+    story:'Sara syö suklaasta 1/8 ja Ella 2/8.\nKuinka suuren osan he syövät yhteensä?',
+    ans:{n:3,d:8},
+    tip:'1/8+2/8=3/8'},
+  {t:4,type:'word',emo:'🏫',
+    story:'Atte on kulkenut koulumatkastaan 1/4.\nKuinka suuri osa matkasta on jäljellä?',
+    ans:{n:3,d:4},
+    tip:'4/4−1/4=3/4'},
+  {t:4,type:'word',emo:'🍫',
+    story:'Atte syö pitsasta 1/5 ja Emma 2/5.\nKuinka suuren osan pitsasta he syövät yhteensä?',
+    ans:{n:3,d:5},
+    tip:'1/5+2/5=3/5'},
+  {t:4,type:'word',emo:'🍰',
+    story:'Emma syö karkkipäivänä 2/6\nja sitten 1/6 lisää.\nKuinka suuren osan suklaasta hän syö?',
+    ans:{n:3,d:6},
+    tip:'2/6+1/6=3/6'},
+
+  // ── 5: KOMATO ─────────────────────────────────────────
+  {t:5,type:'komato',emo:'🐛',
+    q:'Täydennä murtolukomato!',
+    start:'7/12',
+    ops:['+1/12','-6/12','+3/12','-4/12'],
+    tip:'Laske askel askeleelta'},
+  {t:5,type:'komato',emo:'🐛',
+    q:'Täydennä murtolukomato!',
+    start:'6/10',
+    ops:['-1/10','+5/10','-4/10','+2/10'],
+    tip:'Laske askel askeleelta'},
+  {t:5,type:'komato',emo:'🐛',
+    q:'Täydennä murtolukomato!',
+    start:'4/9',
+    ops:['-3/9','+5/9','+2/9','-6/9'],
+    tip:'Laske askel askeleelta'},
+  {t:5,type:'miss',emo:'🦔',
+    q:'Päättele puuttuva murtoluku:\n3/6 + ___ = 4/6',
+    ans:{n:1,d:6},
+    tip:'? = 4/6 − 3/6 = 1/6'},
+  {t:5,type:'miss',emo:'🐸',
+    q:'Päättele puuttuva murtoluku:\n4/5 + ___ = 1',
+    ans:{n:1,d:5},
+    tip:'1 = 5/5 • ? = 5/5 − 4/5 = 1/5'},
+  {t:5,type:'miss',emo:'🦋',
+    q:'Päättele puuttuva murtoluku:\n7/8 − ___ = 3/8',
+    ans:{n:4,d:8},
+    tip:'? = 7/8 − 3/8 = 4/8'},
+  {t:5,type:'miss',emo:'🐢',
+    q:'Päättele puuttuva murtoluku:\n2/4 + ___ = 3/4',
+    ans:{n:1,d:4},
+    tip:'? = 3/4 − 2/4 = 1/4'},
+];
+
+// ════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════
+const prizes=['🦔','🐸','🦋','🐢','🐝','🦊','🐺','🦅','🐙','🦩','🐨','🦛'];
+let collected=[], okCount=0, streak=0, curTab=0, pool=[], qi=0;
+
+const buddies=[
+  ['🦔','Hei! Minä olen Siiri Siili! Opitaan yhdessä! 🌿'],
+  ['🐸','Hei! Konnanen tässä! Vertaillaan murtolukuja! 🍃'],
+  ['🦋','Hoi! Olen Piia Perhonen! Lasketaan yhteen! 🌸'],
+  ['🐢','Moi! Tuomas Kilpikonna täällä! Vähennetään rauhassa! 🐢'],
+  ['🐝','Bzz! Berta Mehiläinen! Ratkaistaan sanallisia! 🍯'],
+  ['🐛','Hei! Olen Konrad Komato! Lasketaan ketjua! 🌿'],
+];
+
+function setBuddy(sec,msg){
+  const [emo,defMsg]=buddies[sec]||buddies[0];
+  document.getElementById('buddyEmo').textContent=emo;
+  document.getElementById('bubbleText').textContent=msg||defMsg;
+}
+
+// komato calc
+function calcKomato(start,ops){
+  const[sn,sd]=start.split('/').map(Number);
+  let res=[{n:sn,d:sd}];
+  ops.forEach(op=>{
+    const s=op[0]==='+'?1:-1;
+    const[on,od]=op.slice(1).split('/').map(Number);
+    const prev=res[res.length-1];
+    res.push({n:prev.n+s*on,d:od});
+  });
+  return res;
+}
+
+// ════════════════════════════════════════════════════════
+// INIT / SWITCH
+// ════════════════════════════════════════════════════════
+function getPool(t){ return shuffle(QS.filter(q=>q.t===t)); }
+
+function init(){
+  pool=getPool(curTab); qi=0;
+  updateStatus(); showQ();
+}
+function updateStatus(){
+  document.getElementById('sOk').textContent=okCount;
+  document.getElementById('sStreak').textContent=streak;
+  document.getElementById('sAnimals').textContent=collected.length?collected.join(''):'–';
+  const pct=pool.length?(qi/pool.length)*100:0;
+  document.getElementById('prog').style.width=Math.min(pct,100)+'%';
+}
+
+document.getElementById('tabs').addEventListener('click',e=>{
+  const btn=e.target.closest('.tab'); if(!btn) return;
+  curTab=+btn.dataset.t;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',+b.dataset.t===curTab));
+  setBuddy(curTab);
+  pool=getPool(curTab); qi=0; okCount=0; streak=0;
+  updateStatus(); showQ();
+});
+
+// ════════════════════════════════════════════════════════
+// RENDER QUESTION
+// ════════════════════════════════════════════════════════
+function showQ(){
+  if(qi>=pool.length){showFinal();return;}
+  const q=pool[qi];
+  setBuddy(q.t);
+  document.getElementById('area').innerHTML=buildQ(q);
+  updateStatus();
+}
+
+function buildQ(q){
+  const num=`<div class="q-num">Kysymys ${qi+1}/${pool.length}</div>`;
+  const sec_labels=['🥧 Perusteet','📊 Vertailu','➕ Yhteenlasku','➖ Vähennysl.','📖 Sanallinen','🐛 Komato'];
+  const badge=`<span class="q-badge badge-${q.t}">${sec_labels[q.t]}</span>`;
+  const meta=`<div class="q-meta">${badge}${num}</div>`;
+  const emo=`<span class="q-animal">${q.emo}</span>`;
+
+  let body='';
+
+  if(q.type==='mc'){
+    const opts=shuffle(q.opts);
+    const pie=q.pie?`<div style="display:flex;justify-content:center;margin-bottom:12px">${pieSVG(q.pie.n,q.pie.d,q.pie.c,100)}</div>`:'';
+    body=pie+`<div class="q-text">${q.q.replace(/\n/g,'<br>')}</div>
+      <div class="choices">${opts.map(o=>`<button class="ch" onclick="chkMC(this,'${esc(o)}','${esc(q.ans)}')">${o.includes('/')?fr(o.split('/')[0],o.split('/')[1],'sm'):o}</button>`).join('')}</div>`;
+  }
+  else if(q.type==='pie_pick'){
+    const items=shuffle(q.opts).map((o,i)=>
+      `<div class="pie-pick" id="pp${i}" onclick="chkPie('${esc(o.label)}','${esc(q.correct_label)}',${i})">
+        ${pieSVG(o.n,o.d,o.c,88)}
+        <div class="label">${fr(o.label.split('/')[0],o.label.split('/')[1],'sm')}</div>
+      </div>`).join('');
+    body=`<div class="q-text">${q.q.replace(/\n/g,'<br>')}</div><div class="pie-row">${items}</div>`;
+  }
+  else if(q.type==='op'){
+    body=`<div class="q-text">Valitse oikea merkki!</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:14px;font-size:1.4rem;font-weight:800;color:var(--forest)">
+        ${fr(q.left.n,q.left.d,'lg')}
+        <span style="font-size:1.8rem;color:#aaa">?</span>
+        ${fr(q.right.n,q.right.d,'lg')}
+      </div>
+      <div class="op-row">
+        <button class="op-btn" onclick="chkOp(this,'<','${q.ans}')">&lt;</button>
+        <button class="op-btn" onclick="chkOp(this,'=','${q.ans}')">=</button>
+        <button class="op-btn" onclick="chkOp(this,'>','${q.ans}')">&gt;</button>
+      </div>`;
+  }
+  else if(q.type==='write_frac'||q.type==='write_1'||q.type==='miss'){
+    body=`<div class="q-text">${(q.q||q.story||'').replace(/\n/g,'<br>')}</div>
+      <div class="write-area">
+        <div style="display:flex;align-items:center;gap:6px;font-size:1.2rem;font-weight:800;color:var(--forest)">
+          <span>Vastaus:</span>
+          <div class="frac-input-box">
+            <input type="number" id="iNum" min="0" max="99" placeholder="?" onkeydown="if(event.key==='Enter')chkFrac()" style="width:58px">
+            <div class="frac-bar"></div>
+            <input type="number" id="iDen" min="1" max="99" placeholder="?" onkeydown="if(event.key==='Enter')chkFrac()" style="width:58px">
+          </div>
+        </div>
+        <button class="go-btn" id="goBtn" onclick="chkFrac()">Tarkista ✓</button>
+      </div>`;
+  }
+  else if(q.type==='word'){
+    body=`<div class="q-text" style="text-align:left;background:#f8fef0;border-radius:14px;padding:14px 16px;margin-bottom:14px;border:2px solid rgba(111,207,63,.3)">${q.story.replace(/\n/g,'<br>')}</div>
+      <div class="write-area">
+        <div style="display:flex;align-items:center;gap:8px;font-size:1.1rem;font-weight:800;color:var(--forest)">
+          <span>Vastaus:</span>
+          <div class="frac-input-box">
+            <input type="number" id="iNum" min="0" max="99" placeholder="?" onkeydown="if(event.key==='Enter')chkFrac()">
+            <div class="frac-bar"></div>
+            <input type="number" id="iDen" min="1" max="99" placeholder="?" onkeydown="if(event.key==='Enter')chkFrac()">
+          </div>
+        </div>
+        <button class="go-btn" id="goBtn" onclick="chkFrac()">Tarkista ✓</button>
+      </div>`;
+  }
+  else if(q.type==='komato'){
+    body=`<div class="q-text">${q.q}</div>${buildKomato(q)}
+      <div style="display:flex;justify-content:center;margin-bottom:8px">
+        <button class="go-btn" id="goBtn" onclick="chkKomato()">Tarkista kaikki ✓</button>
+      </div>`;
+  }
+
+  return `<div class="qcard">
+    <div class="qcard-stripe stripe-${q.t}"></div>
+    ${meta}${emo}${body}
+    <div id="fb"></div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════
+// KOMATO BUILDER
+// ════════════════════════════════════════════════════════
+function buildKomato(q){
+  const vals=calcKomato(q.start,q.ops);
+  const[sn,sd]=q.start.split('/');
+  let h=`<div class="komato-wrap">`;
+  h+=`<div class="kseg val">${fr(sn,sd,'sm')}</div>`;
+  q.ops.forEach((op,i)=>{
+    const s=op[0]; const rest=op.slice(1);
+    const[on,od]=rest.split('/');
+    h+=`<div class="kseg op">${s}${fr(on,od,'sm')}</div>`;
+    const v=vals[i+1];
+    h+=`<div class="kseg blank" id="ks${i}">
+      <input type="number" class="k-inp" id="kn${i}" placeholder="?" data-cn="${v.n}">
+      <div class="k-bar"></div>
+      <input type="number" class="k-inp" id="kd${i}" placeholder="?" data-cd="${v.d}">
+    </div>`;
+  });
+  h+=`<div class="kseg head">🐛</div></div>`;
+  return h;
+}
+
+// ════════════════════════════════════════════════════════
+// CHECK FUNCTIONS
+// ════════════════════════════════════════════════════════
+function chkMC(btn,sel,ans){
+  document.querySelectorAll('.ch').forEach(b=>b.disabled=true);
+  // mark correct
+  document.querySelectorAll('.ch').forEach(b=>{
+    const onclick=b.getAttribute('onclick')||'';
+    if(onclick.includes(`'${esc(ans)}'`)) b.classList.add('ok');
+  });
+  const ok=sel===ans;
+  if(!ok) btn.classList.add('bad');
+  ok?doOK():doErr();
+  showFB(ok, ans);
+}
+
+function chkPie(sel,correct,idx){
+  if(document.getElementById('fb').innerHTML) return;
+  const ok=sel===correct;
+  document.querySelectorAll('.pie-pick').forEach(el=>el.style.pointerEvents='none');
+  document.getElementById('pp'+idx).classList.add(ok?'ok':'bad');
+  if(!ok){
+    // highlight correct
+    document.querySelectorAll('.pie-pick').forEach(el=>{
+      const lbl=el.querySelector('.label');
+      if(lbl){
+        const txt=lbl.textContent.trim().replace(/\s/g,'');
+        const cmp=correct.replace('/','');
+        if(txt.includes(cmp)||lbl.innerHTML.includes(correct.split('/')[0])){
+          el.classList.add('ok');
+        }
+      }
+    });
+  }
+  ok?doOK():doErr();
+  showFB(ok, correct);
+}
+
+function chkOp(btn,sel,ans){
+  document.querySelectorAll('.op-btn').forEach(b=>b.disabled=true);
+  const ok=sel===ans;
+  btn.classList.add(ok?'ok':'bad');
+  // show correct
+  if(!ok){
+    document.querySelectorAll('.op-btn').forEach(b=>{
+      const oc=b.getAttribute('onclick')||'';
+      if(oc.includes(`'${ans}'`)) b.classList.add('ok');
+    });
+  }
+  ok?doOK():doErr();
+  showFB(ok, ans);
+}
+
+function chkFrac(){
+  const btn=document.getElementById('goBtn');
+  if(!btn||btn.disabled) return;
+  btn.disabled=true;
+  const q=pool[qi];
+  const nEl=document.getElementById('iNum');
+  const dEl=document.getElementById('iDen');
+  if(!nEl||!dEl) return;
+  const nv=nEl.value.trim(), dv=dEl.value.trim();
+  const ok=(nv===String(q.ans.n)&&dv===String(q.ans.d));
+  nEl.classList.add(nv===String(q.ans.n)?'ok':'bad');
+  dEl.classList.add(dv===String(q.ans.d)?'ok':'bad');
+  ok?doOK():doErr();
+  showFB(ok, q.ans.n+'/'+q.ans.d);
+}
+
+function chkKomato(){
+  const btn=document.getElementById('goBtn');
+  if(btn) btn.disabled=true;
+  const q=pool[qi];
+  let allOk=true;
+  for(let i=0;i<q.ops.length;i++){
+    const nn=document.getElementById('kn'+i);
+    const nd=document.getElementById('kd'+i);
+    const seg=document.getElementById('ks'+i);
+    if(!nn||!nd) continue;
+    const ok=nn.value.trim()===nn.dataset.cn && nd.value.trim()===nd.dataset.cd;
+    if(seg) seg.classList.add(ok?'ok':'bad');
+    if(!ok) allOk=false;
+  }
+  allOk?doOK():doErr();
+  showFB(allOk,'Katso oikeat arvot yllä!');
+}
+
+// ════════════════════════════════════════════════════════
+// SCORING
+// ════════════════════════════════════════════════════════
+function doOK(){
+  okCount++; streak++;
+  if(okCount%3===0){
+    const a=prizes[collected.length%prizes.length];
+    collected.push(a); showReward(a);
+  } else { confetti(); }
+  updateStatus();
+}
+function doErr(){ streak=0; updateStatus(); }
+
+function showFB(ok,correct){
+  const q=pool[qi];
+  const okMsgs=['Oikein! 🎉','Mahtavaa! ⭐','Loistavaa! 🌟','Aivan oikein! 🦁','Täydellinen! 🌈'];
+  const errMsgs=['Ei ihan oikein. 🙈','Lähellä! Katso vihje. 💡','Harjoittele lisää! 🌿'];
+  const fb=document.getElementById('fb');
+  if(ok){
+    fb.className='feedback ok';
+    fb.textContent=okMsgs[Math.floor(Math.random()*okMsgs.length)];
+    setBuddy(q.t, okMsgs[Math.floor(Math.random()*okMsgs.length)]);
+  } else {
+    fb.className='feedback bad';
+    fb.innerHTML=errMsgs[Math.floor(Math.random()*errMsgs.length)]+
+      `<br><span class="answer-reveal">💡 Vihje: ${q.tip}</span>`;
+    setBuddy(q.t, '💡 '+q.tip);
+  }
+  const nb=document.createElement('button');
+  nb.className='next-btn';
+  nb.textContent=qi<pool.length-1?'Seuraava kysymys →':'Katso tulokset! 🏆';
+  nb.onclick=()=>{qi++;showQ();};
+  fb.after(nb);
+}
+
+// ════════════════════════════════════════════════════════
+// REWARD
+// ════════════════════════════════════════════════════════
+function showReward(a){
+  confetti();
+  const msgs=[['Hienoa!','Uusi metsäkaveri! 🎁'],['Mahtavaa!','3 oikein! 🌟'],['Upea!','Jatka samaan malliin! 🚀']];
+  const m=msgs[Math.floor(Math.random()*msgs.length)];
+  document.getElementById('rEmo').textContent=a;
+  document.getElementById('rTitle').textContent=m[0];
+  document.getElementById('rSub').textContent=m[1];
+  document.getElementById('overlay').classList.add('on');
+  document.getElementById('rewardBox').classList.add('on');
+}
+function closeReward(){
+  document.getElementById('overlay').classList.remove('on');
+  document.getElementById('rewardBox').classList.remove('on');
+}
+
+function confetti(){
+  const cols=['#ffd84d','#6fcf3f','#4ab3d4','#ff6b9d','#ff8c2a','#9b5de5'];
+  for(let i=0;i<16;i++) setTimeout(()=>{
+    const c=document.createElement('div'); c.className='cfl';
+    c.style.left=Math.random()*100+'vw'; c.style.top='-20px';
+    c.style.background=cols[0|Math.random()*cols.length];
+    c.style.animationDuration=(1.3+Math.random()*.7)+'s';
+    c.style.animationDelay=(Math.random()*.3)+'s';
+    document.body.appendChild(c); setTimeout(()=>c.remove(),2500);
+  },i*45);
+}
+
+// ════════════════════════════════════════════════════════
+// FINAL
+// ════════════════════════════════════════════════════════
+function showFinal(){
+  const tot=pool.length, pct=tot?Math.round(okCount/tot*100):0;
+  let medal='📚',msg='Harjoittele lisää!';
+  if(pct>=90){medal='🥇';msg='Täydellinen! Olet Murtolukumetsän mestari!';}
+  else if(pct>=70){medal='🥈';msg='Hienoa! Melkein mestari!';}
+  else if(pct>=50){medal='🥉';msg='Hyvin menee! Harjoittele vielä vähän.';}
+  document.getElementById('area').innerHTML=`
+    <div class="final">
+      <span class="trophy">${medal}</span>
+      <h2>${msg}</h2>
+      <p style="font-size:1.15rem;font-weight:800;margin:8px 0;color:var(--forest)">✅ ${okCount}/${tot} oikein &nbsp; 📊 ${pct}%</p>
+      <p style="color:#777;font-weight:700;margin-bottom:4px">Keräämäsi metsäkaverit:</p>
+      <div class="animals">${collected.length?collected.join(' '):'–'}</div>
+      <button class="play-again" onclick="restart()">🔄 Pelaa uudelleen!</button>
+      <button class="play-again" onclick="goMenu()" style="background:linear-gradient(135deg,var(--water),#0088aa)">🌿 Valitse aihe</button>
+    </div>`;
+}
+function restart(){ okCount=0;streak=0;pool=getPool(curTab);qi=0;updateStatus();showQ(); }
+function goMenu(){ document.getElementById('area').innerHTML=''; }
+
+// ════════════════════════════════════════════════════════
+// START
+// ════════════════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
