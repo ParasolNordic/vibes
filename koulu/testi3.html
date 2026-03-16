@@ -1,1 +1,1301 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🐾 Saksan Superoppilas!</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fff9f0;
+    --card: #ffffff;
+    --primary: #ff6b6b;
+    --secondary: #ffd93d;
+    --accent: #6bcb77;
+    --blue: #4d96ff;
+    --purple: #c77dff;
+    --text: #2d2d2d;
+    --muted: #888;
+    --radius: 20px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.10);
+  }
 
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Floating stars background */
+  body::before {
+    content: '⭐ 🌟 ✨ 💫 ⭐ 🌟 ✨ 💫 ⭐ 🌟';
+    position: fixed;
+    top: -20px; left: 0; right: 0;
+    font-size: 1.5rem;
+    letter-spacing: 4rem;
+    white-space: nowrap;
+    opacity: 0.12;
+    animation: floatStars 20s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes floatStars {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  #app {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 20px 16px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .game-header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .game-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.6rem;
+    color: var(--primary);
+    text-shadow: 3px 3px 0 #ffcdd2;
+    line-height: 1;
+  }
+
+  .game-subtitle {
+    font-size: 1rem;
+    color: var(--muted);
+    margin-top: 4px;
+    font-weight: 600;
+  }
+
+  /* Score bar */
+  .score-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    border-radius: 50px;
+    padding: 10px 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .score-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
+  }
+
+  .score-item .icon { font-size: 1.3rem; }
+
+  .progress-bar {
+    height: 12px;
+    background: #f0f0f0;
+    border-radius: 50px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--blue));
+    border-radius: 50px;
+    transition: width 0.5s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  /* Cards */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+    animation: slideIn 0.4s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(30px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .task-type-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 4px 12px;
+    border-radius: 50px;
+    margin-bottom: 14px;
+  }
+
+  .badge-vocab { background: #fff3e0; color: #e65100; }
+  .badge-grammar { background: #e8f5e9; color: #1b5e20; }
+  .badge-conjugate { background: #e3f2fd; color: #0d47a1; }
+  .badge-text { background: #f3e5f5; color: #4a148c; }
+  .badge-fill { background: #fce4ec; color: #880e4f; }
+  .badge-match { background: #e0f7fa; color: #006064; }
+
+  .task-question {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 20px;
+    line-height: 1.4;
+  }
+
+  .task-hint {
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-bottom: 16px;
+    font-style: italic;
+  }
+
+  /* Multiple choice */
+  .choices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .choice-btn {
+    padding: 14px 16px;
+    border: 3px solid #eee;
+    border-radius: 14px;
+    background: white;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .choice-btn:hover:not(:disabled) {
+    border-color: var(--blue);
+    background: #e8f4ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(77,150,255,0.2);
+  }
+
+  .choice-btn.correct {
+    border-color: var(--accent);
+    background: #e8f5e9;
+    color: #1b5e20;
+    animation: popCorrect 0.4s ease;
+  }
+
+  .choice-btn.wrong {
+    border-color: var(--primary);
+    background: #ffebee;
+    color: #b71c1c;
+    animation: shake 0.4s ease;
+  }
+
+  @keyframes popCorrect {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  /* Text input */
+  .text-input-wrap {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .text-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 14px 18px;
+    border: 3px solid #eee;
+    border-radius: 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    outline: none;
+    transition: border-color 0.2s;
+    color: var(--text);
+  }
+
+  .text-input:focus { border-color: var(--blue); }
+  .text-input.correct { border-color: var(--accent); background: #e8f5e9; }
+  .text-input.wrong { border-color: var(--primary); background: #ffebee; }
+
+  .submit-btn {
+    padding: 14px 24px;
+    background: linear-gradient(135deg, var(--blue), var(--purple));
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(77,150,255,0.3);
+  }
+
+  .submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(77,150,255,0.4);
+  }
+
+  /* Fill blanks */
+  .fill-sentence {
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 2;
+    color: var(--text);
+  }
+
+  .blank {
+    display: inline-block;
+    width: 100px;
+    border-bottom: 3px solid var(--blue);
+    padding: 0 4px;
+    font-size: 1rem;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    text-align: center;
+    outline: none;
+    background: transparent;
+    color: var(--blue);
+  }
+
+  /* Matching */
+  .match-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .match-col { display: flex; flex-direction: column; gap: 8px; }
+
+  .match-item {
+    padding: 10px 14px;
+    border: 3px solid #eee;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+    background: white;
+    color: var(--text);
+  }
+
+  .match-item:hover:not(.matched):not(:disabled) {
+    border-color: var(--purple);
+    background: #f3e5f5;
+  }
+
+  .match-item.selected {
+    border-color: var(--blue);
+    background: #e3f2fd;
+    color: var(--blue);
+  }
+
+  .match-item.matched {
+    border-color: var(--accent);
+    background: #e8f5e9;
+    color: #1b5e20;
+    cursor: default;
+  }
+
+  .match-item.wrong-match {
+    border-color: var(--primary);
+    background: #ffebee;
+    animation: shake 0.4s ease;
+  }
+
+  /* Feedback */
+  .feedback {
+    display: none;
+    margin-top: 16px;
+    padding: 14px 18px;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 1rem;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .feedback.show { display: block; }
+  .feedback.good { background: #e8f5e9; color: #1b5e20; border: 2px solid #a5d6a7; }
+  .feedback.bad { background: #ffebee; color: #b71c1c; border: 2px solid #ef9a9a; }
+
+  /* Animal reward */
+  .animal-reward {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    animation: bounceIn 0.5s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  .animal-reward.show { display: block; }
+
+  @keyframes bounceIn {
+    from { opacity: 0; transform: scale(0.3); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .animal-emoji {
+    font-size: 6rem;
+    display: block;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.15));
+    animation: wobble 1s ease infinite;
+  }
+
+  @keyframes wobble {
+    0%,100% { transform: rotate(-5deg) scale(1); }
+    50% { transform: rotate(5deg) scale(1.1); }
+  }
+
+  .animal-name {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.6rem;
+    color: var(--primary);
+    margin-top: 8px;
+  }
+
+  .animal-fact {
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin-top: 6px;
+    font-weight: 600;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Next button */
+  .next-btn {
+    display: none;
+    margin-top: 16px;
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--primary), #ff9a9e);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(255,107,107,0.35);
+  }
+
+  .next-btn.show { display: block; animation: slideIn 0.3s ease; }
+  .next-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,107,107,0.45); }
+
+  /* Conjugation table */
+  .conj-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 1rem;
+  }
+
+  .conj-table td {
+    padding: 10px 12px;
+    border-bottom: 2px solid #f0f0f0;
+    font-weight: 700;
+  }
+
+  .conj-table td:first-child { color: var(--muted); width: 40%; }
+  .conj-table td:last-child { color: var(--blue); }
+
+  .conj-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid #eee;
+    border-radius: 10px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    outline: none;
+    color: var(--text);
+  }
+
+  .conj-input:focus { border-color: var(--blue); }
+  .conj-input.correct { border-color: var(--accent); background: #e8f5e9; }
+  .conj-input.wrong { border-color: var(--primary); background: #ffebee; }
+
+  /* End screen */
+  .end-screen {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+    animation: bounceIn 0.6s cubic-bezier(.34,1.56,.64,1);
+  }
+
+  .end-screen.show { display: block; }
+
+  .end-trophy { font-size: 5rem; animation: spin 2s ease; }
+
+  @keyframes spin {
+    from { transform: rotate(-20deg) scale(0.5); }
+    to { transform: rotate(0deg) scale(1); }
+  }
+
+  .end-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.4rem;
+    color: var(--primary);
+    margin: 12px 0 8px;
+  }
+
+  .end-score {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--blue);
+  }
+
+  .end-msg {
+    font-size: 1.1rem;
+    color: var(--muted);
+    font-weight: 600;
+    margin: 10px 0 24px;
+  }
+
+  .stars-row { font-size: 2.5rem; margin: 10px 0; }
+
+  .restart-btn {
+    padding: 16px 40px;
+    background: linear-gradient(135deg, var(--accent), var(--blue));
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.3rem;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(107,203,119,0.35);
+    transition: all 0.2s;
+  }
+
+  .restart-btn:hover { transform: scale(1.05); }
+
+  .collected-animals {
+    margin-top: 24px;
+    background: white;
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+
+  .collected-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .animals-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .animal-chip {
+    background: #f8f9fa;
+    border-radius: 50px;
+    padding: 6px 14px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  /* Confetti */
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    animation: confettiFall 2s ease forwards;
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  @keyframes confettiFall {
+    0% { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Start screen */
+  .start-screen {
+    text-align: center;
+    padding: 30px 20px;
+  }
+
+  .start-animals {
+    font-size: 3.5rem;
+    letter-spacing: 8px;
+    margin: 20px 0;
+    animation: wave 2s ease infinite;
+  }
+
+  @keyframes wave {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .start-btn {
+    padding: 18px 50px;
+    background: linear-gradient(135deg, var(--primary), var(--purple));
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.5rem;
+    cursor: pointer;
+    box-shadow: 0 6px 24px rgba(255,107,107,0.4);
+    transition: all 0.2s;
+    margin-top: 10px;
+  }
+
+  .start-btn:hover { transform: scale(1.06) translateY(-2px); }
+
+  .info-box {
+    background: white;
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin: 20px auto;
+    max-width: 400px;
+    box-shadow: var(--shadow);
+    text-align: left;
+  }
+
+  .info-box p { font-weight: 700; color: var(--text); margin-bottom: 6px; font-size: 0.95rem; }
+  .info-box ul { padding-left: 18px; color: var(--muted); font-size: 0.9rem; line-height: 1.8; }
+
+  @media (max-width: 480px) {
+    .game-title { font-size: 2rem; }
+    .choices { grid-template-columns: 1fr; }
+    .match-container { grid-template-columns: 1fr 1fr; }
+    .card { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="game-header">
+    <div class="game-title">🐾 Saksan Superoppilas!</div>
+    <div class="game-subtitle">Lektion 10 & 11 • Koetreeni</div>
+  </div>
+  <div id="main-content"></div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+
+const ANIMALS = [
+  { emoji: '🐶', name: 'Hund – Koira', fact: 'Koirat ymmärtävät yli 150 sanaa!' },
+  { emoji: '🐱', name: 'Katze – Kissa', fact: 'Kissat nukkuvat 16 tuntia päivässä.' },
+  { emoji: '🐰', name: 'Hase – Pupu', fact: 'Puput voivat hypätä 3 metriä!' },
+  { emoji: '🦊', name: 'Fuchs – Kettu', fact: 'Kettu osaa jopa 40 eri ääntä.' },
+  { emoji: '🐻', name: 'Bär – Karhu', fact: 'Karhu voi juosta 55 km/h!' },
+  { emoji: '🦁', name: 'Löwe – Leijona', fact: 'Leijonan karjunta kuuluu 8 km päähän.' },
+  { emoji: '🐘', name: 'Elefant – Norsu', fact: 'Norsut muistavat kaiken 70 vuoden ajan.' },
+  { emoji: '🦒', name: 'Giraffe – Kirahvi', fact: 'Kirahvin zunge on 50 cm pitkä!' },
+  { emoji: '🐧', name: 'Pinguin – Pingviini', fact: 'Pingviinit ovat uskollisia kumppanilleen.' },
+  { emoji: '🦋', name: 'Schmetterling – Perhonen', fact: 'Perhonen maistaa jaloillaan!' },
+  { emoji: '🐬', name: 'Delfin – Delfiini', fact: 'Delfiinit nukkuvat silmä auki!' },
+  { emoji: '🦜', name: 'Papagei – Papukaija', fact: 'Papukaijat elävät yli 80 vuotta!' },
+];
+
+const VOCAB_L10 = [
+  { de: 'der Hund', fi: 'koira' },
+  { de: 'die Katze', fi: 'kissa' },
+  { de: 'das Pferd', fi: 'hevonen' },
+  { de: 'der Vogel', fi: 'lintu' },
+  { de: 'die Schlange', fi: 'käärme' },
+  { de: 'der Fisch', fi: 'kala' },
+  { de: 'groß', fi: 'iso / suuri' },
+  { de: 'klein', fi: 'pieni' },
+  { de: 'schnell', fi: 'nopea' },
+  { de: 'langsam', fi: 'hidas' },
+  { de: 'lustig', fi: 'hauska' },
+  { de: 'süß', fi: 'söpö / makea' },
+  { de: 'gefährlich', fi: 'vaarallinen' },
+  { de: 'klug', fi: 'älykäs' },
+  { de: 'der Geburtstag', fi: 'syntymäpäivä' },
+  { de: 'die Einladung', fi: 'kutsu' },
+  { de: 'das Geschenk', fi: 'lahja' },
+  { de: 'die Party', fi: 'juhlat' },
+];
+
+const VOCAB_L11 = [
+  { de: 'möchten', fi: 'haluaisi' },
+  { de: 'müssen', fi: 'täytyy' },
+  { de: 'können', fi: 'osaa / pystyy' },
+  { de: 'sein', fi: 'olla' },
+  { de: 'haben', fi: 'omistaa' },
+  { de: 'das Tier', fi: 'eläin' },
+  { de: 'der Zoo', fi: 'eläintarha' },
+  { de: 'fressen', fi: 'syödä (eläin)' },
+  { de: 'fliegen', fi: 'lentää' },
+  { de: 'schwimmen', fi: 'uida' },
+  { de: 'laufen', fi: 'juosta / kulkea' },
+  { de: 'klettern', fi: 'kiivetä' },
+];
+
+const CONJ_DATA = {
+  regular: {
+    spielen: { ich: 'spiele', du: 'spielst', 'er/sie': 'spielt', wir: 'spielen', ihr: 'spielt', sie: 'spielen' },
+    machen: { ich: 'mache', du: 'machst', 'er/sie': 'macht', wir: 'machen', ihr: 'macht', sie: 'machen' },
+    lernen: { ich: 'lerne', du: 'lernst', 'er/sie': 'lernt', wir: 'lernen', ihr: 'lernt', sie: 'lernen' },
+  },
+  irregular: {
+    sein: { ich: 'bin', du: 'bist', 'er/sie': 'ist', wir: 'sind', ihr: 'seid', sie: 'sind' },
+    haben: { ich: 'habe', du: 'hast', 'er/sie': 'hat', wir: 'haben', ihr: 'habt', sie: 'haben' },
+    können: { ich: 'kann', du: 'kannst', 'er/sie': 'kann', wir: 'können', ihr: 'könnt', sie: 'können' },
+    müssen: { ich: 'muss', du: 'musst', 'er/sie': 'muss', wir: 'müssen', ihr: 'müsst', sie: 'müssen' },
+    möchten: { ich: 'möchte', du: 'möchtest', 'er/sie': 'möchte', wir: 'möchten', ihr: 'möchtet', sie: 'möchten' },
+  },
+  separable: {
+    'anrufen': { ich: 'rufe an', du: 'rufst an', 'er/sie': 'ruft an', wir: 'rufen an', ihr: 'ruft an', sie: 'rufen an' },
+    'aufmachen': { ich: 'mache auf', du: 'machst auf', 'er/sie': 'macht auf', wir: 'machen auf', ihr: 'macht auf', sie: 'machen auf' },
+  }
+};
+
+const IMPERATIVE_DATA = [
+  { inf: 'kommen', du: 'Komm!', ihr: 'Kommt!' },
+  { inf: 'machen', du: 'Mach!', ihr: 'Macht!' },
+  { inf: 'schreiben', du: 'Schreib!', ihr: 'Schreibt!' },
+  { inf: 'lesen', du: 'Lies!', ihr: 'Lest!' },
+  { inf: 'trinken', du: 'Trink!', ihr: 'Trinkt!' },
+  { inf: 'gehen', du: 'Geh!', ihr: 'Geht!' },
+  { inf: 'kaufen', du: 'Kauf!', ihr: 'Kauft!' },
+];
+
+// Distractors that are PLAUSIBLE but wrong – same verb, wrong form, or similar-looking word
+const FILL_SENTENCES = [
+  {
+    sentence: 'Das ist ___ Hund. Er heißt Max.',
+    blanks: ['mein'],
+    hint: 'ich → ___e / ___  (Possessivpronomen, Maskulinum)',
+  },
+  {
+    sentence: 'Ich ___ einen Hund haben.',
+    blanks: ['möchte'],
+    hint: 'Modalverb: ich-muoto (haluaisi)',
+  },
+  {
+    sentence: 'Sie ___ jeden Tag laufen.',
+    blanks: ['muss'],
+    hint: 'Modalverb: sie/er-muoto (täytyy)',
+  },
+  {
+    sentence: 'Wir kaufen ein Geschenk ___ dich.',
+    blanks: ['für'],
+    hint: 'Prepositio + Akkusativ (suomeksi: sinulle)',
+  },
+  {
+    sentence: 'Ich sehe ___ . (Hund, mask.)',
+    blanks: ['ihn'],
+    hint: 'Akkusatiivi: mask. → ihn / sie / es ?',
+  },
+  {
+    sentence: '___ Tier magst du am liebsten?',
+    blanks: ['Welches'],
+    hint: 'Kysymyssana + das Tier → Welche___ ?',
+  },
+  {
+    sentence: 'Mein Geburtstag ist am ___ Januar.',
+    blanks: ['ersten'],
+    hint: 'Järjestysluku am + datiivimuoto (1.)',
+  },
+  {
+    sentence: 'Kannst du ___ helfen? (ich)',
+    blanks: ['mir'],
+    hint: 'Datiivi: ich → mir / mich / mein ?',
+  },
+  {
+    sentence: 'Der Hund ___ sehr schnell laufen.',
+    blanks: ['kann'],
+    hint: 'Modalverb (osaa) – er/sie-muoto',
+  },
+];
+
+const PRONOUN_SENTENCES = [
+  { q: 'Ich sehe den Hund.\n→ Ich sehe ___', answer: 'ihn', others: ['ihm', 'sie', 'es'] },
+  { q: 'Ich sehe die Katze.\n→ Ich sehe ___', answer: 'sie', others: ['ihn', 'ihr', 'es'] },
+  { q: 'Ich sehe das Pferd.\n→ Ich sehe ___', answer: 'es', others: ['ihn', 'sie', 'ihm'] },
+  { q: 'Magst du mich?\n→ Ja, ich mag ___', answer: 'dich', others: ['dir', 'sie', 'ihn'] },
+  { q: 'Kennst du Anna?\n→ Ja, ich kenne ___', answer: 'sie', others: ['ihn', 'ihr', 'es'] },
+  { q: 'Siehst du den Vogel?\n→ Ja, ich sehe ___', answer: 'ihn', others: ['ihm', 'es', 'sie'] },
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  screen: 'start', // start | game | end
+  questionIndex: 0,
+  questions: [],
+  score: 0,
+  streak: 0,
+  answeredCorrect: 0,
+  collectedAnimals: [],
+  usedAnimalIndexes: [],
+};
+
+// ============================================================
+// QUESTION GENERATOR
+// ============================================================
+
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function pickRandom(arr, n = 1) {
+  const s = shuffle(arr);
+  return n === 1 ? s[0] : s.slice(0, n);
+}
+
+function getRandomAnimal() {
+  const avail = ANIMALS.map((a, i) => i).filter(i => !state.usedAnimalIndexes.includes(i));
+  if (avail.length === 0) { state.usedAnimalIndexes = []; return getRandomAnimal(); }
+  const idx = avail[Math.floor(Math.random() * avail.length)];
+  state.usedAnimalIndexes.push(idx);
+  return ANIMALS[idx];
+}
+
+function generateQuestions() {
+  const qs = [];
+
+  // 1. Vocab FI→DE multiple choice (4 items)
+  const vocabPool = shuffle([...VOCAB_L10, ...VOCAB_L11]);
+  for (let i = 0; i < 4; i++) {
+    const correct = vocabPool[i];
+    const wrong = shuffle(vocabPool.filter(v => v !== correct)).slice(0, 3);
+    const opts = shuffle([correct, ...wrong]);
+    qs.push({
+      type: 'vocab-fi-de',
+      badge: 'vocab',
+      badgeLabel: '📚 Sanasto',
+      question: `Mikä on saksaksi: "${correct.fi}"?`,
+      choices: opts.map(o => o.de),
+      answer: correct.de,
+    });
+  }
+
+  // 2. Vocab DE→FI multiple choice (4 items)
+  const vocabPool2 = shuffle([...VOCAB_L10, ...VOCAB_L11]);
+  for (let i = 0; i < 4; i++) {
+    const correct = vocabPool2[i];
+    const wrong = shuffle(vocabPool2.filter(v => v !== correct)).slice(0, 3);
+    const opts = shuffle([correct, ...wrong]);
+    qs.push({
+      type: 'vocab-de-fi',
+      badge: 'vocab',
+      badgeLabel: '📚 Sanasto',
+      question: `Mitä tarkoittaa: "${correct.de}"?`,
+      choices: opts.map(o => o.fi),
+      answer: correct.fi,
+    });
+  }
+
+  // 3. Conjugation – 3 MC exercises with plausible distractors from OTHER verbs
+  const allConjEntries = [
+    ...Object.entries(CONJ_DATA.irregular),
+    ...Object.entries(CONJ_DATA.regular),
+    ...Object.entries(CONJ_DATA.separable),
+  ];
+  const selectedVerbs = shuffle(allConjEntries).slice(0, 3);
+  const pronouns = ['ich', 'du', 'er/sie', 'wir', 'ihr', 'sie'];
+  selectedVerbs.forEach(([verb, conj]) => {
+    const pronoun = pickRandom(pronouns);
+    const correct = conj[pronoun];
+    // Wrong answers: same pronoun slot from OTHER verbs (much harder!)
+    const wrongPool = allConjEntries
+      .filter(([v]) => v !== verb)
+      .map(([, c]) => c[pronoun])
+      .filter(f => f && f !== correct);
+    const wrong = shuffle([...new Set(wrongPool)]).slice(0, 3);
+    const opts = shuffle([correct, ...wrong]);
+    qs.push({
+      type: 'mc',
+      badge: 'conjugate',
+      badgeLabel: '✏️ Konjugaatio',
+      question: `Taivuta: "${verb}"\n${pronoun} ___`,
+      choices: opts,
+      answer: correct,
+    });
+  });
+
+  // 4. Imperative MC – distractors include BOTH du and ihr forms of other verbs
+  const selectedImps = shuffle(IMPERATIVE_DATA).slice(0, 2);
+  selectedImps.forEach(imp => {
+    const form = Math.random() > 0.5 ? 'du' : 'ihr';
+    const correct = imp[form];
+    // Wrong answers: mix of du and ihr from other verbs → genuinely confusing
+    const wrongPool = IMPERATIVE_DATA
+      .filter(i => i !== imp)
+      .flatMap(i => [i.du, i.ihr])
+      .filter(f => f !== correct);
+    const wrong = shuffle([...new Set(wrongPool)]).slice(0, 3);
+    const opts = shuffle([correct, ...wrong]);
+    qs.push({
+      type: 'mc',
+      badge: 'grammar',
+      badgeLabel: '🗣️ Imperatiivi',
+      question: `Muodosta imperatiivi (${form === 'du' ? 'sinä' : 'te'}-muoto)\nverbistä "${imp.inf}":`,
+      choices: opts,
+      answer: correct,
+    });
+  });
+
+  // 5. Pronouns Akkusativ (2) – no hints
+  const selectedPronouns = shuffle(PRONOUN_SENTENCES).slice(0, 2);
+  selectedPronouns.forEach(p => {
+    const opts = shuffle([p.answer, ...p.others]);
+    qs.push({
+      type: 'mc',
+      badge: 'grammar',
+      badgeLabel: '🔤 Pronominit',
+      question: p.q,
+      choices: opts,
+      answer: p.answer,
+    });
+  });
+
+  // 6. Fill in the blank (3 items) – sentence must NOT contain the answer
+  const selectedFill = shuffle(FILL_SENTENCES).slice(0, 3);
+  selectedFill.forEach(f => {
+    const displayed = f.sentence.replace(/_+/g, '______');
+    qs.push({
+      type: 'fill',
+      badge: 'fill',
+      badgeLabel: '✍️ Täydennä',
+      question: displayed,
+      hint: f.hint,
+      inputType: 'text',
+      answer: f.blanks[0],
+    });
+  });
+
+  // 7. Matching vocab (1 set of 4)
+  const matchVocab = shuffle([...VOCAB_L10, ...VOCAB_L11]).slice(0, 4);
+  qs.push({
+    type: 'matching',
+    badge: 'match',
+    badgeLabel: '🔗 Yhdistä',
+    question: 'Yhdistä saksa–suomi! Klikkaa ensin saksa, sitten suomi.',
+    pairs: matchVocab.map(v => ({ de: v.de, fi: v.fi })),
+  });
+
+  // 8. Possessive pronomen MC (2) – no answer hints in question
+  const possPairs = [
+    { q: 'Das ist ___ Katze. (ich)', answer: 'meine', choices: ['meine', 'meinen', 'meiner', 'mein'], badge: 'grammar', badgeLabel: '👑 Possessiv' },
+    { q: 'Ist das ___ Buch? (du)', answer: 'dein', choices: ['dein', 'deinen', 'deine', 'deiner'], badge: 'grammar', badgeLabel: '👑 Possessiv' },
+    { q: 'Das ist ___ Hund. (er)', answer: 'sein', choices: ['sein', 'seine', 'seinen', 'ihrer'], badge: 'grammar', badgeLabel: '👑 Possessiv' },
+    { q: 'Wo ist ___ Vogel? (wir)', answer: 'unser', choices: ['unser', 'unsere', 'euer', 'ihr'], badge: 'grammar', badgeLabel: '👑 Possessiv' },
+    { q: 'Das ist ___ Pferd. (sie, Pl.)', answer: 'ihr', choices: ['ihr', 'ihre', 'ihren', 'sein'], badge: 'grammar', badgeLabel: '👑 Possessiv' },
+    { q: 'Wo ist ___ Geschenk? (du)', answer: 'dein', choices: ['dein', 'deine', 'deinen', 'mein'], badge: 'grammar', badgeLabel: '👑 Possessiv' },
+  ];
+  shuffle(possPairs).slice(0, 2).forEach(p => {
+    qs.push({ type: 'mc', badge: p.badge, badgeLabel: p.badgeLabel, question: p.q, choices: shuffle(p.choices), answer: p.answer });
+  });
+
+  // 9. Ordnungszahlen (2) – no answer in hint
+  const ordDataReal = [
+    { q: 'Mein Geburtstag ist am ___ Januar.', answer: 'ersten', choices: ['ersten', 'erste', 'erster', 'erstes'] },
+    { q: 'Heute ist der ___ März.', answer: 'dritte', choices: ['dritte', 'dritten', 'dritter', 'drittes'] },
+    { q: 'Das ist mein ___ Hund.', answer: 'zweiter', choices: ['zweiter', 'zweite', 'zweiten', 'zweites'] },
+    { q: 'Sie wohnt im ___ Stock.', answer: 'vierten', choices: ['vierten', 'vierte', 'vierter', 'viertes'] },
+    { q: 'Das ist das ___ Mal.', answer: 'erste', choices: ['erste', 'ersten', 'erster', 'erstes'] },
+  ];
+  shuffle(ordDataReal).slice(0, 2).forEach(o => {
+    qs.push({ type: 'mc', badge: 'grammar', badgeLabel: '🔢 Järjestysluvut', question: o.q, choices: shuffle(o.choices), answer: o.answer });
+  });
+
+  return shuffle(qs);
+}
+
+// ============================================================
+// RENDER
+// ============================================================
+
+function render() {
+  const el = document.getElementById('main-content');
+  if (state.screen === 'start') { el.innerHTML = renderStart(); return; }
+  if (state.screen === 'end') { el.innerHTML = renderEnd(); return; }
+
+  const total = state.questions.length;
+  const pct = (state.questionIndex / total) * 100;
+
+  el.innerHTML = `
+    <div class="score-bar">
+      <div class="score-item"><span class="icon">⭐</span> ${state.score} pistettä</div>
+      <div class="score-item"><span class="icon">🔥</span> ${state.streak} putki</div>
+      <div class="score-item"><span class="icon">📝</span> ${state.questionIndex + 1}/${total}</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    ${renderQuestion(state.questions[state.questionIndex])}
+  `;
+  attachListeners();
+}
+
+function renderStart() {
+  return `
+    <div class="start-screen card">
+      <div class="start-animals">🐶 🐱 🐰 🦊 🐻</div>
+      <div class="game-title" style="font-size:2rem">Koetreeni</div>
+      <p style="margin-top:12px;color:var(--muted);font-weight:600;font-size:1rem">Lektion 10 & 11</p>
+      <div class="info-box">
+        <p>🎯 Mitä harjoitellaan:</p>
+        <ul>
+          <li>Vokabeln (sanasto)</li>
+          <li>Konjugaatio – säännölliset, epäsäännölliset, erotettavat verbit</li>
+          <li>sein, haben, können, möchten, müssen</li>
+          <li>für + Akkusativ • mich/dich/ihn/sie</li>
+          <li>Possessivpronomen & Imperatiivi</li>
+          <li>Ordnungszahlen 🔢</li>
+        </ul>
+      </div>
+      <p style="font-size:0.9rem;color:var(--muted);font-weight:600">Oikeista vastauksista saat söpöjä eläinkuvia! 🐾</p>
+      <button class="start-btn" onclick="startGame()">Aloita peli! 🚀</button>
+    </div>
+  `;
+}
+
+function renderQuestion(q) {
+  if (!q) return '';
+  switch (q.type) {
+    case 'vocab-fi-de':
+    case 'vocab-de-fi':
+    case 'pronoun':
+    case 'imperative':
+    case 'mc':
+      return renderMC(q);
+    case 'conjugation':
+    case 'fill':
+      return renderTextInput(q);
+    case 'matching':
+      return renderMatching(q);
+    default:
+      return renderMC(q);
+  }
+}
+
+function renderMC(q) {
+  return `
+    <div class="card" id="question-card">
+      <span class="task-type-badge badge-${q.badge}">${q.badgeLabel}</span>
+      <div class="task-question">${q.question.replace(/\n/g, '<br>')}</div>
+      <div class="choices" id="choices">
+        ${q.choices.map((c, i) => `<button class="choice-btn" data-index="${i}" data-value="${c}">${c}</button>`).join('')}
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <div class="animal-reward" id="animal-reward"></div>
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">Seuraava tehtävä ➡️</button>
+    </div>
+  `;
+}
+
+function renderTextInput(q) {
+  return `
+    <div class="card" id="question-card">
+      <span class="task-type-badge badge-${q.badge}">${q.badgeLabel}</span>
+      <div class="task-question">${q.question.replace(/\n/g, '<br>')}</div>
+      <div class="task-hint" id="prehint" style="display:none">💡 ${q.hint}</div>
+      <div class="text-input-wrap">
+        <input class="text-input" id="text-answer" type="text" placeholder="Kirjoita vastauksesi..." autocomplete="off" />
+        <button class="submit-btn" id="submit-btn" onclick="submitText()">Tarkista ✅</button>
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <div class="animal-reward" id="animal-reward"></div>
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">Seuraava tehtävä ➡️</button>
+    </div>
+  `;
+}
+
+function renderMatching(q) {
+  const shuffledFi = shuffle(q.pairs.map(p => p.fi));
+  return `
+    <div class="card" id="question-card">
+      <span class="task-type-badge badge-match">${q.badgeLabel}</span>
+      <div class="task-question">${q.question}</div>
+      <div class="match-container" id="match-container">
+        <div class="match-col" id="col-de">
+          ${q.pairs.map((p, i) => `<div class="match-item" id="de-${i}" data-de="${p.de}" data-fi="${p.fi}" onclick="selectDE(this)">${p.de}</div>`).join('')}
+        </div>
+        <div class="match-col" id="col-fi">
+          ${shuffledFi.map((fi, i) => `<div class="match-item" id="fi-${i}" data-fi="${fi}" onclick="selectFI(this)">${fi}</div>`).join('')}
+        </div>
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <div class="animal-reward" id="animal-reward"></div>
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">Seuraava tehtävä ➡️</button>
+    </div>
+  `;
+}
+
+function renderEnd() {
+  const total = state.questions.length;
+  const pct = Math.round((state.answeredCorrect / total) * 100);
+  let msg, stars;
+  if (pct >= 90) { msg = 'Olet todellinen saksanmestari! 🏆'; stars = '⭐⭐⭐'; }
+  else if (pct >= 70) { msg = 'Hienosti tehty! Vielä vähän treeniä ja olet unschlagbar!'; stars = '⭐⭐'; }
+  else if (pct >= 50) { msg = 'Hyvä yritys! Käy läpi sanat uudelleen ja yritä uudelleen!'; stars = '⭐'; }
+  else { msg = 'Ei hätää! Harjoitus tekee mestarin. Yritä uudelleen! 💪'; stars = '⭐'; }
+
+  const animalGrid = state.collectedAnimals.map(a =>
+    `<div class="animal-chip">${a.emoji} <span style="font-size:0.8rem">${a.name.split('–')[1]?.trim() || a.name}</span></div>`
+  ).join('');
+
+  return `
+    <div class="end-screen show card">
+      <div class="end-trophy">🏆</div>
+      <div class="end-title">Peli ohi!</div>
+      <div class="end-score">${state.score} pistettä</div>
+      <div class="stars-row">${stars}</div>
+      <div class="end-msg">${pct}% oikein (${state.answeredCorrect}/${total}) — ${msg}</div>
+      ${state.collectedAnimals.length > 0 ? `
+        <div class="collected-animals">
+          <div class="collected-title">🐾 Keräämäsi eläimet (${state.collectedAnimals.length}):</div>
+          <div class="animals-grid">${animalGrid}</div>
+        </div>
+      ` : ''}
+      <button class="restart-btn" onclick="startGame()" style="margin-top:20px">Pelaa uudelleen! 🔄</button>
+    </div>
+  `;
+}
+
+// ============================================================
+// GAME LOGIC
+// ============================================================
+
+function startGame() {
+  state = {
+    screen: 'game',
+    questionIndex: 0,
+    questions: generateQuestions(),
+    score: 0,
+    streak: 0,
+    answeredCorrect: 0,
+    collectedAnimals: [],
+    usedAnimalIndexes: [],
+  };
+  render();
+}
+
+function attachListeners() {
+  // MC choices
+  document.querySelectorAll('.choice-btn').forEach(btn => {
+    btn.addEventListener('click', () => selectChoice(btn));
+  });
+  // Text input enter
+  const ti = document.getElementById('text-answer');
+  if (ti) ti.addEventListener('keydown', e => { if (e.key === 'Enter') submitText(); });
+}
+
+function normalize(s) {
+  return s.trim().toLowerCase();
+}
+
+function selectChoice(btn) {
+  const q = state.questions[state.questionIndex];
+  const value = btn.dataset.value;
+  const correct = q.answer === value;
+  document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+  if (correct) {
+    btn.classList.add('correct');
+    handleCorrect();
+  } else {
+    btn.classList.add('wrong');
+    // show correct
+    document.querySelectorAll('.choice-btn').forEach(b => {
+      if (b.dataset.value === q.answer) b.classList.add('correct');
+    });
+    handleWrong(q.answer);
+  }
+}
+
+function submitText() {
+  const input = document.getElementById('text-answer');
+  const btn = document.getElementById('submit-btn');
+  if (!input || input.disabled) return;
+  const q = state.questions[state.questionIndex];
+  const val = normalize(input.value);
+  const correct = normalize(q.answer);
+  input.disabled = true;
+  btn.disabled = true;
+  if (val === correct) {
+    input.classList.add('correct');
+    handleCorrect();
+  } else {
+    input.classList.add('wrong');
+    handleWrong(q.answer);
+  }
+}
+
+// Matching state
+let matchSelectedDE = null;
+let matchCorrect = 0;
+let matchTotal = 0;
+
+function selectDE(el) {
+  if (el.classList.contains('matched')) return;
+  document.querySelectorAll('#col-de .match-item').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+  matchSelectedDE = el;
+}
+
+function selectFI(el) {
+  if (el.classList.contains('matched') || !matchSelectedDE) return;
+  const deEl = matchSelectedDE;
+  const expectedFI = deEl.dataset.fi;
+  if (el.dataset.fi === expectedFI) {
+    deEl.classList.remove('selected');
+    deEl.classList.add('matched');
+    el.classList.add('matched');
+    matchSelectedDE = null;
+    matchCorrect++;
+    matchTotal = document.querySelectorAll('#col-de .match-item').length;
+    if (matchCorrect === matchTotal) {
+      handleCorrect();
+    }
+  } else {
+    deEl.classList.add('wrong-match');
+    el.classList.add('wrong-match');
+    matchSelectedDE = null;
+    setTimeout(() => {
+      deEl.classList.remove('wrong-match', 'selected');
+      el.classList.remove('wrong-match');
+    }, 600);
+    handleWrong(null, true);
+  }
+}
+
+function handleCorrect(bonus = false) {
+  state.streak++;
+  const points = 10 + (state.streak >= 3 ? 5 : 0);
+  state.score += points;
+  state.answeredCorrect++;
+
+  const fb = document.getElementById('feedback');
+  const streakMsg = state.streak >= 3 ? ` 🔥 ${state.streak} putki! +${points}` : `+${points}`;
+  const msgs = ['Hienoa! 🎉', 'Oikein! ✅', 'Mahtavaa! 💪', 'Bravo! 🌟', 'Super! ⭐'];
+  fb.textContent = msgs[Math.floor(Math.random() * msgs.length)] + ' ' + streakMsg;
+  fb.className = 'feedback show good';
+
+  // Show animal reward
+  const animal = getRandomAnimal();
+  state.collectedAnimals.push(animal);
+  const ar = document.getElementById('animal-reward');
+  ar.innerHTML = `
+    <span class="animal-emoji">${animal.emoji}</span>
+    <div class="animal-name">${animal.name}</div>
+    <div class="animal-fact">${animal.fact}</div>
+  `;
+  ar.className = 'animal-reward show';
+
+  confettiBurst();
+  showNext();
+}
+
+function handleWrong(correctAnswer, isPartial = false) {
+  if (!isPartial) state.streak = 0;
+  const fb = document.getElementById('feedback');
+  if (!isPartial && correctAnswer) {
+    fb.textContent = `Ei ihan oikein. Oikea vastaus: ${correctAnswer} 😅`;
+    // Reveal the hint NOW (only after wrong answer)
+    const prehint = document.getElementById('prehint');
+    const q = state.questions[state.questionIndex];
+    if (prehint && q.hint) {
+      prehint.style.display = 'block';
+    }
+  } else if (isPartial) {
+    fb.textContent = 'Ei täsmää! Yritä uudelleen... 🔄';
+    return;
+  }
+  fb.className = 'feedback show bad';
+  showNext();
+}
+
+function showNext() {
+  const nb = document.getElementById('next-btn');
+  if (nb) nb.className = 'next-btn show';
+}
+
+function nextQuestion() {
+  matchSelectedDE = null;
+  matchCorrect = 0;
+  state.questionIndex++;
+  if (state.questionIndex >= state.questions.length) {
+    state.screen = 'end';
+    render();
+    confettiBurst(true);
+    return;
+  }
+  render();
+}
+
+// ============================================================
+// CONFETTI
+// ============================================================
+function confettiBurst(big = false) {
+  const colors = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#c77dff', '#ffadad'];
+  const count = big ? 60 : 20;
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.cssText = `
+      left: ${Math.random() * 100}vw;
+      top: -10px;
+      background: ${colors[Math.floor(Math.random() * colors.length)]};
+      width: ${6 + Math.random() * 8}px;
+      height: ${6 + Math.random() * 8}px;
+      border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+      animation-delay: ${Math.random() * 0.5}s;
+      animation-duration: ${1.5 + Math.random()}s;
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2500);
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+render();
+</script>
+</body>
+</html>
