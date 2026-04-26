@@ -1,1 +1,688 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uskonnon Koealue – s. 34–45</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--gold:#FFD700;--orange:#FF8C00;--sky:#29B6F6;--green:#66BB6A;--purple:#7C4DFF;--bg:#FFF8E7;--text:#22223b;--wrong:#FF5252;--right:#00C853;--bible:#8B6914;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);min-height:100vh;color:var(--text);}
+header{background:linear-gradient(135deg,#5C35C5,#29B6F6);padding:26px 20px 18px;text-align:center;position:relative;overflow:hidden;}
+header::before{content:'✨⭐🌟✨⭐🌟✨⭐🌟✨';position:absolute;top:5px;left:0;right:0;font-size:13px;opacity:.4;letter-spacing:5px;}
+header h1{font-family:'Fredoka One',cursive;font-size:clamp(1.5rem,4.5vw,2.7rem);color:#fff;text-shadow:3px 3px 0 rgba(0,0,0,.2);margin-bottom:5px;}
+header p{color:rgba(255,255,255,.9);font-size:.95rem;font-weight:700;}
+#pw{background:rgba(255,255,255,.3);border-radius:20px;height:15px;margin:12px auto 0;max-width:420px;}
+#pb{background:var(--gold);border-radius:20px;height:100%;width:0%;transition:width .5s;}
+#sb{text-align:center;padding:9px;font-weight:800;font-size:1.05rem;color:var(--purple);background:#fff;border-bottom:3px solid var(--gold);}
+#sb span{color:var(--orange);}
+main{max-width:720px;margin:0 auto;padding:22px 15px 70px;}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:22px;justify-content:center;}
+.tab-btn{font-family:'Fredoka One',cursive;background:#fff;border:3px solid transparent;border-radius:28px;padding:7px 15px;font-size:.9rem;cursor:pointer;transition:all .2s;box-shadow:0 3px 8px rgba(0,0,0,.1);}
+.tab-btn:hover{transform:translateY(-2px);}
+.tab-btn.active{color:#fff;transform:translateY(-2px);}
+.tab-btn[data-tab="0"].active{background:var(--orange);border-color:var(--orange);}
+.tab-btn[data-tab="1"].active{background:var(--purple);border-color:var(--purple);}
+.tab-btn[data-tab="2"].active{background:#D4900A;border-color:#D4900A;}
+.tab-btn[data-tab="3"].active{background:var(--green);border-color:var(--green);}
+.tab-btn[data-tab="4"].active{background:var(--bible);border-color:var(--bible);}
+.section{display:none;}
+.section.active{display:block;animation:fi .4s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.stitle{font-family:'Fredoka One',cursive;font-size:1.6rem;margin-bottom:14px;text-align:center;}
+.sicon{font-size:2.2rem;display:block;margin-bottom:4px;}
+.bib-box{background:linear-gradient(135deg,#FFF8E1,#FFF3CD);border:3px solid var(--bible);border-radius:18px;padding:16px 18px;margin-bottom:18px;font-style:italic;font-weight:700;color:var(--bible);font-size:.93rem;line-height:1.5;}
+.bib-ref{font-size:.78rem;margin-top:6px;text-align:right;font-style:normal;color:#a07800;}
+.qcard{background:#fff;border-radius:20px;padding:20px;margin-bottom:18px;box-shadow:0 5px 18px rgba(0,0,0,.08);border-left:6px solid var(--purple);position:relative;overflow:hidden;}
+.qcard::after{content:attr(data-emoji);position:absolute;right:14px;top:12px;font-size:1.7rem;opacity:.13;}
+.qnum{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--purple);margin-bottom:7px;}
+.qtext{font-size:1rem;font-weight:700;margin-bottom:13px;line-height:1.45;}
+.hint{font-size:.78rem;color:#999;font-weight:600;margin-top:5px;font-style:italic;}
+.choices{display:flex;flex-direction:column;gap:8px;}
+.cbtn{background:#F3F4F6;border:3px solid transparent;border-radius:13px;padding:10px 14px;font-family:'Nunito',sans-serif;font-size:.9rem;font-weight:700;cursor:pointer;text-align:left;transition:all .2s;}
+.cbtn:hover:not(:disabled){background:#EDE7F6;border-color:var(--purple);transform:translateX(4px);}
+.cbtn.correct{background:#E8F5E9;border-color:var(--right);color:#1B5E20;}
+.cbtn.wrong{background:#FFEBEE;border-color:var(--wrong);color:#B71C1C;}
+.cgrp{display:flex;flex-direction:column;gap:8px;}
+.clbl{display:flex;align-items:center;gap:10px;background:#F3F4F6;border:3px solid transparent;border-radius:13px;padding:10px 14px;cursor:pointer;font-weight:700;font-size:.9rem;transition:all .2s;}
+.clbl:hover{background:#EDE7F6;border-color:var(--purple);}
+.clbl input{width:20px;height:20px;cursor:pointer;accent-color:var(--purple);}
+.clbl.correct{background:#E8F5E9;border-color:var(--right);}
+.clbl.wrong{background:#FFEBEE;border-color:var(--wrong);}
+.fb{margin-top:12px;padding:11px 15px;border-radius:13px;font-weight:700;font-size:.9rem;display:none;}
+.fb.show{display:block;animation:pop .3s ease;}
+@keyframes pop{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+.fb.good{background:#E8F5E9;color:#1B5E20;border:2px solid var(--right);}
+.fb.bad{background:#FFEBEE;color:#B71C1C;border:2px solid var(--wrong);}
+.go-btn{font-family:'Fredoka One',cursive;font-size:1rem;padding:10px 24px;border:none;border-radius:28px;cursor:pointer;color:#fff;transition:all .2s;box-shadow:0 4px 12px rgba(0,0,0,.15);}
+.go-btn:hover{transform:translateY(-2px);}
+.go-btn.pur{background:linear-gradient(135deg,var(--purple),#5C35C5);}
+.go-btn.grn{background:linear-gradient(135deg,var(--green),#2E7D32);}
+.go-btn.org{background:linear-gradient(135deg,var(--orange),#E65100);}
+.go-btn.bib{background:linear-gradient(135deg,var(--bible),#6B5000);}
+.fb-in{border:none;border-bottom:3px solid var(--purple);background:transparent;font-family:'Nunito',sans-serif;font-weight:700;font-size:.97rem;color:var(--text);width:100px;outline:none;text-align:center;padding:2px 3px;}
+.fb-in.ok{border-color:var(--right);color:var(--right);}
+.fb-in.nope{border-color:var(--wrong);color:var(--wrong);}
+.mwrap{display:flex;gap:10px;flex-wrap:wrap;}
+.mcol{flex:1;min-width:130px;display:flex;flex-direction:column;gap:7px;}
+.mit{background:#F3F4F6;border:3px solid transparent;border-radius:12px;padding:9px 11px;font-weight:700;font-size:.85rem;cursor:pointer;text-align:center;transition:all .2s;line-height:1.3;}
+.mit:hover{background:#EDE7F6;border-color:var(--purple);}
+.mit.sel{border-color:var(--purple);background:#EDE7F6;}
+.mit.ok{border-color:var(--right);background:#E8F5E9;color:#1B5E20;cursor:default;}
+.mit.nope{border-color:var(--wrong);background:#FFEBEE;animation:sh .3s;}
+@keyframes sh{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.olist{display:flex;flex-direction:column;gap:7px;}
+.oit{background:#EDE7F6;border:3px solid var(--purple);border-radius:12px;padding:9px 12px;font-weight:700;cursor:grab;display:flex;align-items:center;gap:9px;transition:all .2s;font-size:.9rem;user-select:none;}
+.oit.dragging{opacity:.35;}
+.oit.ok{background:#E8F5E9;border-color:var(--right);}
+.tr{display:flex;gap:9px;flex-wrap:wrap;}
+.tin{border:3px solid #E0E0E0;border-radius:13px;padding:10px 14px;font-family:'Nunito',sans-serif;font-size:.96rem;font-weight:700;outline:none;transition:border-color .2s;min-width:180px;flex:1;}
+.tin:focus{border-color:var(--purple);}
+.tin.ok{border-color:var(--right);background:#E8F5E9;}
+.tin.nope{border-color:var(--wrong);background:#FFEBEE;}
+#rov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:999;align-items:center;justify-content:center;}
+#rov.show{display:flex;animation:fi .3s;}
+.rbox{background:#fff;border-radius:28px;padding:26px 22px;text-align:center;max-width:350px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);border:6px solid var(--gold);}
+.rbox h2{font-family:'Fredoka One',cursive;font-size:1.8rem;color:var(--orange);margin-bottom:7px;}
+.rbox p{font-weight:700;margin-bottom:12px;font-size:1rem;}
+.rbox img{width:100%;max-width:250px;border-radius:16px;margin-bottom:12px;}
+.stars{font-size:2.1rem;margin-bottom:6px;}
+#cr{font-family:'Fredoka One',cursive;background:linear-gradient(135deg,var(--gold),var(--orange));color:#fff;border:none;border-radius:28px;padding:10px 28px;font-size:1.1rem;cursor:pointer;}
+#cr:hover{transform:scale(1.05);}
+#fin{display:none;background:#fff;border-radius:22px;padding:30px 20px;text-align:center;margin-top:26px;box-shadow:0 8px 30px rgba(0,0,0,.12);border:4px solid var(--gold);}
+#fin h2{font-family:'Fredoka One',cursive;font-size:2rem;color:var(--purple);}
+#fin p{font-size:1.05rem;margin:8px 0;font-weight:700;}
+#fin img{width:190px;border-radius:16px;margin:12px auto;display:block;}
+#rst{font-family:'Fredoka One',cursive;font-size:1.1rem;background:linear-gradient(135deg,var(--purple),var(--sky));color:#fff;border:none;border-radius:28px;padding:12px 32px;cursor:pointer;margin-top:12px;}
+@media(max-width:480px){.mwrap{flex-direction:column;}header h1{font-size:1.4rem;}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🌟 Vanhan Testamentin Sankarit 🌟</h1>
+  <p>Koealue s. 34–45 · Luvut 10–13 · Oppikirja mukana ✓</p>
+  <div id="pw"><div id="pb"></div></div>
+</header>
+<div id="sb">Pisteet: <span id="sc">0</span> / <span id="tot">0</span> ⭐</div>
 
+<main>
+<div class="tabs">
+  <button class="tab-btn active" data-tab="0">🏕️ Luku 10: Abraham</button>
+  <button class="tab-btn" data-tab="1">👥 Luku 11: Jakob &amp; Esau</button>
+  <button class="tab-btn" data-tab="2">🌈 Luku 12: Joosef</button>
+  <button class="tab-btn" data-tab="3">⚡ Luku 13: Mooses</button>
+  <button class="tab-btn" data-tab="4">📖 Raamattu-kohdat</button>
+</div>
+
+<!-- OSIO 0: ABRAHAM -->
+<div class="section active" id="section-0">
+  <div class="stitle"><span class="sicon">🏕️</span>Luku 10 – Abraham lähtee luvattuun maahan (s. 34–35)</div>
+  <div class="bib-box">
+    "Jumala käski minua. Hän käski meidän lähteä tästä isäni maalta. Hän lupasi antaa meille lapsia ja tehdä meistä suuren kansan."
+    <div class="bib-ref">— Abraham kertoo · 1. Moos. 12</div>
+  </div>
+
+  <div class="qcard" data-emoji="🌍" style="border-color:var(--orange)">
+    <div class="qnum">Kysymys 1 – Monivalinta</div>
+    <div class="qtext">Mistä kaupungista Abraham oli kotoisin, ja minne Jumala käski häntä muuttamaan?</div>
+    <div class="choices">
+      <button class="cbtn" onclick="mc(this,false)">Egyptistä → Kanaaniin</button>
+      <button class="cbtn" onclick="mc(this,true)">Babyloniasta → Kanaanin maahan</button>
+      <button class="cbtn" onclick="mc(this,false)">Kanaanista → Egyptiin</button>
+      <button class="cbtn" onclick="mc(this,false)">Roomasta → Israeliin</button>
+    </div>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="👨‍👩‍👦" style="border-color:var(--orange)">
+    <div class="qnum">Kysymys 2 – Rastita kaikki oikeat väittämät (s. 34–35)</div>
+    <div class="qtext">Mitkä seuraavista pitävät paikkansa Abrahamista?</div>
+    <div class="cgrp" id="c0">
+      <label class="clbl"><input type="checkbox" value="true"> Abraham on juutalaisuuden, kristinuskon JA islamin patriarkka</label>
+      <label class="clbl"><input type="checkbox" value="false"> Abraham syntyi Egyptissä ja eli siellä koko elämänsä</label>
+      <label class="clbl"><input type="checkbox" value="true"> Saara nauroi, kun enkeli lupasi heille pojan heidän vanhuudessaan</label>
+      <label class="clbl"><input type="checkbox" value="true"> Jumala lupasi Abrahamille jälkeläisiä kuin tähtiä taivaalla</label>
+      <label class="clbl"><input type="checkbox" value="false"> Abraham sai pojan nimeltä Ismael vaimoltaan Saaralta</label>
+      <label class="clbl"><input type="checkbox" value="true"> Abrahamille ja Saaralle syntyi poika Iisak heidän vanhuudessaan</label>
+    </div>
+    <br><button class="go-btn pur" onclick="cbx('c0',this)">Tarkista ✓</button>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="✍️" style="border-color:var(--orange)">
+    <div class="qnum">Kysymys 3 – Täytä aukot</div>
+    <div class="qtext">
+      Abraham muutti <input class="fb-in" id="f1" placeholder="???"> maahan. Jumala lupasi hänelle jälkeläisiä kuin <input class="fb-in" id="f2" placeholder="???"> taivaalla. Abrahamia kutsutaan uskon <input class="fb-in" id="f3" placeholder="???".
+    </div>
+    <p class="hint">Vihjeet: Kanaan · tähdet · isäksi</p>
+    <br><button class="go-btn pur" onclick="mf([['f1',['kanaan','kanaanin']],['f2',['tähdet','tähtien','tähtiä']],['f3',['isäksi','isä']]],this)">Tarkista!</button>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="😄" style="border-color:var(--orange)">
+    <div class="qnum">Kysymys 4 – Miksi Saara nauroi?</div>
+    <div class="qtext">Enkeli lupasi Saaralle poikaa. Miksi hän nauroi?</div>
+    <div class="choices">
+      <button class="cbtn" onclick="mc(this,false)">Koska enkeli näytti hauskalta</button>
+      <button class="cbtn" onclick="mc(this,true)">Koska he olivat jo hyvin vanhoja — tuntui mahdottomalta saada lapsi</button>
+      <button class="cbtn" onclick="mc(this,false)">Koska hän ei halunnut lasta</button>
+      <button class="cbtn" onclick="mc(this,false)">Koska Abraham nauroi ensin</button>
+    </div>
+    <div class="fb"></div>
+  </div>
+</div>
+
+<!-- OSIO 1: JAKOB & ESAU -->
+<div class="section" id="section-1">
+  <div class="stitle"><span class="sicon">👥</span>Luku 11 – Jaakobin ja Esaun riita (s. 36–37)</div>
+  <div class="bib-box">
+    "Isä! Onko sinulla vain yksi siunaus? Siunaa myös minua, isä!"
+    <div class="bib-ref">— Esau huutaa Iisakille · 1. Moos. 27:38</div>
+  </div>
+
+  <div class="qcard" data-emoji="👶" style="border-color:var(--purple)">
+    <div class="qnum">Kysymys 5 – Monivalinta</div>
+    <div class="qtext">Kumpi kaksosista syntyi ensin ja mikä merkitys sillä oli?</div>
+    <div class="choices">
+      <button class="cbtn" onclick="mc(this,false)">Jakob syntyi ensin ja sai isän siunauksen</button>
+      <button class="cbtn" onclick="mc(this,true)">Esau syntyi ensin — hän oli esikoinen ja hänelle kuuluisi isän siunaus</button>
+      <button class="cbtn" onclick="mc(this,false)">He syntyivät samaan aikaan — ei ollut merkitystä</button>
+      <button class="cbtn" onclick="mc(this,false)">Esau syntyi ensin mutta luopui siunauksesta vapaaehtoisesti</button>
+    </div>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="🍲" style="border-color:var(--purple)">
+    <div class="qnum">Kysymys 6 – Linssikeitto ja esikoisoikeus</div>
+    <div class="qtext">Miten Jakob sai Esaun luovuttamaan esikoisoikeutensa?</div>
+    <div class="choices">
+      <button class="cbtn" onclick="mc(this,false)">Tarjosi hänelle rahaa ja lampaita</button>
+      <button class="cbtn" onclick="mc(this,true)">Antoi nälkäiselle Esaulle linssikeittoa metsästyksestä paluun jälkeen</button>
+      <button class="cbtn" onclick="mc(this,false)">Voitti hänet painikilpailussa</button>
+      <button class="cbtn" onclick="mc(this,false)">Äiti Rebekka pakotti Esaun</button>
+    </div>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="🎭" style="border-color:var(--purple)">
+    <div class="qnum">Kysymys 7 – Rastita oikeat (s. 36–37)</div>
+    <div class="qtext">Mitkä väittämät pitävät paikkansa?</div>
+    <div class="cgrp" id="c1">
+      <label class="clbl"><input type="checkbox" value="true"> Esau oli taitava metsästäjä ja eräihminen</label>
+      <label class="clbl"><input type="checkbox" value="true"> Jakob pukeutui Esauksi pettääkseen sokean isänsä Iisakin ja varastamaan siunauksen</label>
+      <label class="clbl"><input type="checkbox" value="false"> Jakob pakeni Egyptiin Esaun vihan takia</label>
+      <label class="clbl"><input type="checkbox" value="true"> Jakob oli poissa lähes 20 vuotta setänsä Labanin luona</label>
+      <label class="clbl"><input type="checkbox" value="true"> Palatessaan Jakob ja Esau sopivat ja halasivat toisiaan</label>
+      <label class="clbl"><input type="checkbox" value="false"> Esau kosti eikä koskaan antanut anteeksi</label>
+    </div>
+    <br><button class="go-btn pur" onclick="cbx('c1',this)">Tarkista ✓</button>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="🔗" style="border-color:var(--purple)">
+    <div class="qnum">Kysymys 8 – Yhdistä henkilö ja kuvaus</div>
+    <div class="qtext">Napauta ensin vasemmalta, sitten oikealta.</div>
+    <div class="mwrap">
+      <div class="mcol" id="ml0">
+        <div class="mit" onclick="mc2(this,'jakob','m0')">Jakob</div>
+        <div class="mit" onclick="mc2(this,'esau','m0')">Esau</div>
+      </div>
+      <div class="mcol" id="mr0">
+        <div class="mit" onclick="mc2(this,'mets','m0')">🏹 Taitava metsästäjä, karkeakarvainen, vanhempi</div>
+        <div class="mit" onclick="mc2(this,'nok','m0')">🧠 Nokkela, asui kotona äidin kanssa, nuorempi</div>
+      </div>
+    </div>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="💡" style="border-color:var(--purple)">
+    <div class="qnum">Kysymys 9 – Tarina opettaa... Rastita sopivat.</div>
+    <div class="qtext">Mitä Jaakobin ja Esaun tarina opettaa?</div>
+    <div class="cgrp" id="c2">
+      <label class="clbl"><input type="checkbox" value="true"> Hetken halu voi saada luopumaan tärkeistä asioista</label>
+      <label class="clbl"><input type="checkbox" value="false"> Petos on hyväksyttävää jos se hyödyttää itseä</label>
+      <label class="clbl"><input type="checkbox" value="true"> Anteeksianto on mahdollista, vaikka riita olisi ollut pitkä</label>
+      <label class="clbl"><input type="checkbox" value="true"> Kateus ja petos johtavat ongelmiin, mutta asiat voivat korjautua</label>
+    </div>
+    <br><button class="go-btn pur" onclick="cbx('c2',this)">Tarkista ✓</button>
+    <div class="fb"></div>
+  </div>
+</div>
+
+<!-- OSIO 2: JOOSEF -->
+<div class="section" id="section-2">
+  <div class="stitle"><span class="sicon">🌈</span>Luku 12 – Joosef antaa anteeksi (s. 38–41)</div>
+  <div class="bib-box">
+    "Näin unta, jossa teidän lyhteenne kumarsivat minun lyhteeni edessä!"
+    <div class="bib-ref">— Joosefin uni · 1. Moos. 37:7</div>
+  </div>
+
+  <div class="qcard" data-emoji="🧥" style="border-color:#D4900A">
+    <div class="qnum">Kysymys 10 – Monivalinta</div>
+    <div class="qtext">Mikä teko herätti Joosefin kahdentoista veljen kateuden isäänsä Jaakobia kohtaan?</div>
+    <div class="choices">
+      <button class="cbtn" onclick="mc(this,false)">Isä opetti vain Joosefia lukemaan</button>
+      <button class="cbtn" onclick="mc(this,true)">Isä antoi Joosefille kauniin pitkähihaisen puvun — muut eivät saaneet sellaista</button>
+      <button class="cbtn" onclick="mc(this,false)">Joosef sai syödä pöydässä isän kanssa yksin</button>
+      <button class="cbtn" onclick="mc(this,false)">Isä antoi Joosefille oman talon</button>
+    </div>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="📜" style="border-color:#D4900A">
+    <div class="qnum">Kysymys 11 – Laahaa tapahtumat oikeaan järjestykseen</div>
+    <div class="qtext">Järjestä Joosefin tarinan tapahtumat oikein! (s. 38–41)</div>
+    <div class="olist" id="ord0">
+      <div class="oit" draggable="true" data-order="3"><span>☰</span> Veljet myyvät Joosefin orjakaravaaanille</div>
+      <div class="oit" draggable="true" data-order="5"><span>☰</span> Joosef tulkitsee Faraon unet: 7 hyvää + 7 nälkävuotta</div>
+      <div class="oit" draggable="true" data-order="1"><span>☰</span> Joosef näkee unia — veljet kumartavat hänelle</div>
+      <div class="oit" draggable="true" data-order="6"><span>☰</span> Joosef nousee Egyptin toiseksi valtijaksi</div>
+      <div class="oit" draggable="true" data-order="2"><span>☰</span> Veljet heittävät Joosefin kaivoon</div>
+      <div class="oit" draggable="true" data-order="4"><span>☰</span> Joosef joutuu vankilaan Egyptissä</div>
+      <div class="oit" draggable="true" data-order="7"><span>☰</span> Joosef antaa anteeksi veljilleen</div>
+    </div>
+    <br><button class="go-btn pur" onclick="ord('ord0',this)">Tarkista järjestys!</button>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="💭" style="border-color:#D4900A">
+    <div class="qnum">Kysymys 12 – Täytä aukot</div>
+    <div class="qtext">
+      Joosef osasi selittää <input class="fb-in" id="f4" placeholder="???">. Faraon unessa ensin tuli <input class="fb-in" id="f5" placeholder="???"> hyvää vuotta ja sitten <input class="fb-in" id="f6" placeholder="???"> nälkävuotta. Hyvinä vuosina Joosef keräsi <input class="fb-in" id="f7" placeholder="???"> varastoihin.
+    </div>
+    <p class="hint">Vihjeet: unia · seitsemän · seitsemän · viljaa</p>
+    <br><button class="go-btn pur" onclick="mf([['f4',['unia','unet','unta']],['f5',['seitsemän','7']],['f6',['seitsemän','7']],['f7',['viljaa','vilja']]],this)">Tarkista!</button>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="🤝" style="border-color:#D4900A">
+    <div class="qnum">Kysymys 13 – Rastita oikeat (s. 38–41)</div>
+    <div class="qtext">Mitkä väittämät pitävät paikkansa Joosefista?</div>
+    <div class="cgrp" id="c3">
+      <label class="clbl"><input type="checkbox" value="true"> Joosef oli Jaakobin lempilapsi ja sai kauniin puvun</label>
+      <label class="clbl"><input type="checkbox" value="false"> Joosef tappoi egyptiläisen vartiajan ja joutui pakoon</label>
+      <label class="clbl"><input type="checkbox" value="true"> Veljet eivät aluksi tunnistaneet Joosefia Egyptissä</label>
+      <label class="clbl"><input type="checkbox" value="true"> Joosef paljasti itsensä veljilleen ja itki onnesta</label>
+      <label class="clbl"><input type="checkbox" value="false"> Joosef kosti veljilleen heidän pahateon</label>
+      <label class="clbl"><input type="checkbox" value="true"> Joosef sanoi Jumalan kääntäneen pahanteon hyvään tarkoitukseen</label>
+    </div>
+    <br><button class="go-btn pur" onclick="cbx('c3',this)">Tarkista ✓</button>
+    <div class="fb"></div>
+  </div>
+</div>
+
+<!-- OSIO 3: MOOSES -->
+<div class="section" id="section-3">
+  <div class="stitle"><span class="sicon">⚡</span>Luku 13 – Mooses saa tehtävän (s. 42–45)</div>
+  <div class="bib-box">
+    "Mooses! Minä olen sinun Jumalasi. Mene faaraon luo. Israelilaiset on vapautettava Egyptistä!"
+    <div class="bib-ref">— Jumala palavassa pensaassa · 2. Moos. 3:4–10</div>
+  </div>
+
+  <div class="qcard" data-emoji="👶" style="border-color:var(--green)">
+    <div class="qnum">Kysymys 14 – Mooseksen lapsuus</div>
+    <div class="qtext">Miten Mooses selvisi faraon käskystä tappaa israelilaispoikavauvoat?</div>
+    <div class="choices">
+      <button class="cbtn" onclick="mc(this,false)">Äiti piilotti hänet luolaan vuorilla</button>
+      <button class="cbtn" onclick="mc(this,true)">Äiti laittoi hänet koriin Niilille — faraon tytär löysi ja otti prinsiksi</button>
+      <button class="cbtn" onclick="mc(this,false)">Perhe pakeni heti Kanaaniin</button>
+      <button class="cbtn" onclick="mc(this,false)">Mooses piilotettiin temppeliin</button>
+    </div>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="🌿" style="border-color:var(--green)">
+    <div class="qnum">Kysymys 15 – Palava pensas</div>
+    <div class="qtext">Missä ja miten Jumala kutsui Mooseksen tehtävään?</div>
+    <div class="choices">
+      <button class="cbtn" onclick="mc(this,false)">Temppelistä — käski rakentaa arkin</button>
+      <button class="cbtn" onclick="mc(this,false)">Vuoren huipulta ukkosen äänellä</button>
+      <button class="cbtn" onclick="mc(this,true)">Palavassa pensaassa autiomaassa — paimenen töissä — käski johtaa israelilaiset pois Egyptistä</button>
+      <button class="cbtn" onclick="mc(this,false)">Unessa öisin — antoi kymmenen käskyä</button>
+    </div>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="🔗" style="border-color:var(--green)">
+    <div class="qnum">Kysymys 16 – Yhdistä Mooseksen tapahtumat</div>
+    <div class="qtext">Napauta ensin vasemmalta, sitten oikealta.</div>
+    <div class="mwrap">
+      <div class="mcol" id="ml1">
+        <div class="mit" onclick="mc2(this,'kori','m1')">Kori Niilillä</div>
+        <div class="mit" onclick="mc2(this,'pensas','m1')">Palava pensas</div>
+        <div class="mit" onclick="mc2(this,'meri','m1')">Punainen meri</div>
+        <div class="mit" onclick="mc2(this,'taulut','m1')">Kivitaulut</div>
+      </div>
+      <div class="mcol" id="mr1">
+        <div class="mit" onclick="mc2(this,'ka','m1')">📜 Kymmenen käskyä Jumalalta</div>
+        <div class="mit" onclick="mc2(this,'he','m1')">🌊 Israelilaiset pääsivät pakoon</div>
+        <div class="mit" onclick="mc2(this,'ku','m1')">🔥 Jumala kutsui Mooseksen tehtävään</div>
+        <div class="mit" onclick="mc2(this,'pe','m1')">👶 Mooses pelastui ja kasvoi prinssiksi</div>
+      </div>
+    </div>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="🐸" style="border-color:var(--green)">
+    <div class="qnum">Kysymys 17 – Kymmenen vitsausta Egyptissä</div>
+    <div class="qtext">Egyptiläiset saivat 10 kauhaa ennen kuin faraao antoi luvan lähteä. Mitkä seuraavista olivat oikeita vitsauksia? Rastita!</div>
+    <div class="cgrp" id="c4">
+      <label class="clbl"><input type="checkbox" value="true"> Vesi muuttui vereksi</label>
+      <label class="clbl"><input type="checkbox" value="true"> Heinäsirkat söivät kaiken kasvavan</label>
+      <label class="clbl"><input type="checkbox" value="false"> Vuoret romahtivat</label>
+      <label class="clbl"><input type="checkbox" value="true"> Egyptiläisten esikoiset kuolivat</label>
+      <label class="clbl"><input type="checkbox" value="false"> Piramiidit hajosivat</label>
+      <label class="clbl"><input type="checkbox" value="true"> Pimeys peitti koko maan</label>
+    </div>
+    <br><button class="go-btn grn" onclick="cbx('c4',this)">Tarkista ✓</button>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="📜" style="border-color:var(--green)">
+    <div class="qnum">Kysymys 18 – Täytä aukot</div>
+    <div class="qtext">
+      Mooses toi israelilaisille <input class="fb-in" id="f8" placeholder="???"> käskyä kivitauluissa. Israelilaiset vaelsivat erämaassa <input class="fb-in" id="f9" placeholder="???"> vuotta ennen luvattuun maahan pääsyä. Mooseksen sisar oli <input class="fb-in" id="f10" placeholder="???"> ja veli <input class="fb-in" id="f11" placeholder="???">.
+    </div>
+    <p class="hint">Vihjeet: kymmenen · 40 · Mirjam · Aaron</p>
+    <br><button class="go-btn grn" onclick="mf([['f8',['kymmenen','10']],['f9',['40','neljäkymmentä']],['f10',['mirjam','miriam']],['f11',['aaron']]],this)">Tarkista!</button>
+    <div class="fb"></div>
+  </div>
+</div>
+
+<!-- OSIO 4: RAAMATTU-KOHDAT -->
+<div class="section" id="section-4">
+  <div class="stitle"><span class="sicon">📖</span>Raamattu-kohtien hakeminen</div>
+  <p style="text-align:center;font-weight:700;color:var(--bible);margin-bottom:16px;">Testissä pitää osata hakea eri kohtia Vanhasta Testamentista. Harjoitellaan!</p>
+
+  <div class="qcard" data-emoji="📖" style="border-color:var(--bible)">
+    <div class="qnum">Kysymys 19 – Raamatun rakenne</div>
+    <div class="qtext">Mikä on Vanhan Testamentin ensimmäinen kirja ja mikä on sen toinen nimi?</div>
+    <div class="choices">
+      <button class="cbtn" onclick="mc(this,false)">Psalmit (Lauluja)</button>
+      <button class="cbtn" onclick="mc(this,true)">1. Mooseksen kirja — latinaksi Genesis</button>
+      <button class="cbtn" onclick="mc(this,false)">Jesajan kirja</button>
+      <button class="cbtn" onclick="mc(this,false)">Ruutin kirja</button>
+    </div>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="🔢" style="border-color:var(--bible)">
+    <div class="qnum">Kysymys 20 – Miten viite luetaan?</div>
+    <div class="qtext">Mitä tarkoittaa raamatunviite <strong>2. Moos. 3:1–5</strong>?</div>
+    <div class="choices">
+      <button class="cbtn" onclick="mc(this,false)">Toinen raamattu, versio 3, sivut 1–5</button>
+      <button class="cbtn" onclick="mc(this,true)">2. Mooseksen kirja, luku 3, jakeet 1–5</button>
+      <button class="cbtn" onclick="mc(this,false)">2. Mooseksen kirja, sivu 3, kohta 1–5</button>
+      <button class="cbtn" onclick="mc(this,false)">Kirja 2, osasto Mooses, kappale 3, rivi 1–5</button>
+    </div>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="🔎" style="border-color:var(--bible)">
+    <div class="qnum">Kysymys 21 – Mistä kirjasta löytyy?</div>
+    <div class="qtext">Joosefin koko tarina löytyy kirjasta:</div>
+    <div class="choices">
+      <button class="cbtn" onclick="mc(this,false)">2. Mooseksen kirja (Exodus) luvuista 1–10</button>
+      <button class="cbtn" onclick="mc(this,true)">1. Mooseksen kirja (Genesis) luvuista 37–50</button>
+      <button class="cbtn" onclick="mc(this,false)">Tuomarien kirjasta</button>
+      <button class="cbtn" onclick="mc(this,false)">Danielin kirjasta</button>
+    </div>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="🗺️" style="border-color:var(--bible)">
+    <div class="qnum">Kysymys 22 – Yhdistä henkilö ja raamattukirja</div>
+    <div class="qtext">Napauta ensin vasemmalta, sitten oikealta.</div>
+    <div class="mwrap">
+      <div class="mcol" id="ml2">
+        <div class="mit" onclick="mc2(this,'abr','m2')">Abrahamin tarina</div>
+        <div class="mit" onclick="mc2(this,'mos','m2')">Mooseksen tarina</div>
+        <div class="mit" onclick="mc2(this,'jos','m2')">Joosefin tarina</div>
+      </div>
+      <div class="mcol" id="mr2">
+        <div class="mit" onclick="mc2(this,'g37','m2')">1. Moos. luvut 37–50</div>
+        <div class="mit" onclick="mc2(this,'exo','m2')">2. Moos. (Exodus)</div>
+        <div class="mit" onclick="mc2(this,'g12','m2')">1. Moos. luvut 12–25</div>
+      </div>
+    </div>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="✏️" style="border-color:var(--bible)">
+    <div class="qnum">Kysymys 23 – Kirjoita vastaus</div>
+    <div class="qtext">Missä raamatunkirjassa kerrotaan Mooseksen johtamasta vapautumisesta Egyptistä?</div>
+    <p class="hint">Vihje: Exodus tai 2. Moos...</p>
+    <div class="tr">
+      <input class="tin" id="t1" type="text" placeholder="Kirjoita tähän...">
+      <button class="go-btn bib" onclick="sf('t1',['exodus','2. moos','2 moos','toinen mooseksen'],this)">Tarkista!</button>
+    </div>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="📚" style="border-color:var(--bible)">
+    <div class="qnum">Kysymys 24 – Rastita oikeat väittämät raamatunviitteistä</div>
+    <div class="cgrp" id="c5">
+      <label class="clbl"><input type="checkbox" value="true"> 1. Moos. 12 kertoo Abrahamin lähdöstä Kanaaniin</label>
+      <label class="clbl"><input type="checkbox" value="false"> Psalmit kertoo Mooseksen tarinan kokonaan</label>
+      <label class="clbl"><input type="checkbox" value="true"> 1. Moos. 37 aloittaa Joosefin tarinan</label>
+      <label class="clbl"><input type="checkbox" value="true"> Vanha Testamentti sisältää monta eri kirjaa</label>
+      <label class="clbl"><input type="checkbox" value="false"> Jokainen raamatunkirja koostuu vain yhdestä luvusta</label>
+      <label class="clbl"><input type="checkbox" value="true"> 2. Moos. 3 kertoo palavasta pensaasta</label>
+    </div>
+    <br><button class="go-btn bib" onclick="cbx('c5',this)">Tarkista ✓</button>
+    <div class="fb"></div>
+  </div>
+
+  <div class="qcard" data-emoji="🏆" style="border-color:var(--bible)">
+    <div class="qnum">Kysymys 25 – SUURI LOPPUKERTAUS (luvut 10–13)</div>
+    <div class="qtext">Rastita KAIKKI oikeat väittämät!</div>
+    <div class="cgrp" id="c6">
+      <label class="clbl"><input type="checkbox" value="true"> Abraham on juutalaisuuden, kristinuskon JA islamin esi-isä</label>
+      <label class="clbl"><input type="checkbox" value="true"> Esau myi esikoisoikeutensa linssikeittoa vastaan</label>
+      <label class="clbl"><input type="checkbox" value="false"> Joosef kosti veljiensä petoksen</label>
+      <label class="clbl"><input type="checkbox" value="true"> Mooses sai kymmenen käskyä kivitauluissa</label>
+      <label class="clbl"><input type="checkbox" value="true"> Israelilaiset vaelsivat erämaassa 40 vuotta</label>
+      <label class="clbl"><input type="checkbox" value="false"> Jakob ja Esau eivät koskaan sopineet riitaansa</label>
+      <label class="clbl"><input type="checkbox" value="true"> Joosefin tarina löytyy 1. Mooseksen kirjasta luvuista 37–50</label>
+      <label class="clbl"><input type="checkbox" value="true"> Mooseksen tarina on pääosin 2. Mooseksen kirjassa (Exodus)</label>
+    </div>
+    <br><button class="go-btn org" onclick="cbx('c6',this)">Tarkista suuri kertaus! 🌟</button>
+    <div class="fb"></div>
+  </div>
+</div>
+
+<div id="fin">
+  <div class="stars" id="fst">⭐⭐⭐</div>
+  <h2 id="fti"></h2>
+  <p id="fms"></p>
+  <img id="fdo" src="" alt="Palkintokuva!">
+  <p id="fsc"></p>
+  <button id="rst" onclick="location.reload()">🔄 Aloita alusta!</button>
+</div>
+</main>
+
+<div id="rov">
+  <div class="rbox">
+    <div class="stars" id="rst2">⭐</div>
+    <h2 id="rti"></h2>
+    <p id="rms"></p>
+    <img id="rdo" src="" alt="" onerror="this.style.display='none'">
+    <br><button id="cr" onclick="closeR()">Jatka! 🐾</button>
+  </div>
+</div>
+
+<script>
+let score=0,answered=0;
+const TOTAL=25;
+const dogs=['https://images.dog.ceo/breeds/retriever-golden/n02099601_100.jpg','https://images.dog.ceo/breeds/husky/n02110185_10047.jpg','https://images.dog.ceo/breeds/beagle/n02088364_11136.jpg','https://images.dog.ceo/breeds/corgi-cardigan/n02113186_10475.jpg','https://images.dog.ceo/breeds/samoyed/n02111889_4.jpg','https://images.dog.ceo/breeds/pug/n02110958_15929.jpg','https://images.dog.ceo/breeds/shiba/shiba-8.jpg','https://images.dog.ceo/breeds/labrador/n02099712_3121.jpg'];
+const OK=['Aivan oikein! 🎉','Täydellinen! ⭐','Loistavaa! 🏆','Wow, oikein! 🌟','Hienoa! 🐾','Bravo! 👑','Kyllä! Upea! 🎊','Mestari! ✨'];
+const BAD=['Ei ihan oikein 😅 – katso kirjasta!','Hmm, ei mennyt nappiin 🤔','Lähes! Mutta ei vielä ✊','Oho, tarkista oppikirjasta!'];
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+const dog=()=>dogs[Math.floor(Math.random()*dogs.length)];
+
+function upd(){
+  document.getElementById('sc').textContent=score;
+  document.getElementById('tot').textContent=answered;
+  document.getElementById('pb').style.width=(answered/TOTAL*100)+'%';
+  if(answered>=TOTAL)showFin();
+}
+function showR(ok,msg){
+  const ov=document.getElementById('rov');
+  document.getElementById('rti').textContent=ok?'🎉 Oikein!':'😅 Ei ihan...';
+  document.getElementById('rms').textContent=msg;
+  const img=document.getElementById('rdo');
+  if(ok){img.src=dog();img.style.display='block';}else img.style.display='none';
+  document.getElementById('rst2').textContent=ok?'⭐⭐⭐':'💪';
+  ov.classList.add('show');
+}
+function closeR(){document.getElementById('rov').classList.remove('show');}
+function setfb(card,ok,msg){const el=card.querySelector('.fb');el.className='fb show '+(ok?'good':'bad');el.textContent=(ok?'✅ ':'❌ ')+msg;}
+
+function mc(btn,ok){
+  const card=btn.closest('.qcard');
+  const btns=card.querySelectorAll('.cbtn');
+  if(btns[0].disabled)return;
+  btns.forEach(b=>b.disabled=true);
+  if(ok)btn.classList.add('correct');
+  else{btn.classList.add('wrong');btns.forEach(b=>{if(b.onclick.toString().includes('mc(this,true)'))b.classList.add('correct');});}
+  const msg=ok?rnd(OK):rnd(BAD);
+  setfb(card,ok,msg);showR(ok,msg);
+  if(ok)score++;answered++;upd();
+}
+
+function cbx(id,btn){
+  const g=document.getElementById(id);
+  const card=btn.closest('.qcard');
+  if(btn.disabled)return;
+  btn.disabled=true;
+  let all=true;
+  g.querySelectorAll('.clbl').forEach(lbl=>{
+    const inp=lbl.querySelector('input');inp.disabled=true;
+    const ok2=inp.value==='true';
+    if(ok2&&inp.checked)lbl.classList.add('correct');
+    else if(!ok2&&inp.checked){lbl.classList.add('wrong');all=false;}
+    else if(ok2&&!inp.checked){lbl.classList.add('correct');all=false;}
+  });
+  const msg=all?rnd(OK):rnd(BAD);
+  setfb(card,all,msg);showR(all,msg);
+  if(all)score++;answered++;upd();
+}
+
+function mf(pairs,btn){
+  const card=btn.closest('.qcard');
+  if(btn.disabled)return;btn.disabled=true;
+  let all=true;
+  pairs.forEach(([id,ans])=>{
+    const inp=document.getElementById(id);inp.disabled=true;
+    const val=inp.value.trim().toLowerCase();
+    const ok2=ans.some(a=>val.includes(a));
+    inp.classList.add(ok2?'ok':'nope');
+    if(!ok2)all=false;
+  });
+  const msg=all?rnd(OK):rnd(BAD);
+  setfb(card,all,msg);showR(all,msg);
+  if(all)score++;answered++;upd();
+}
+
+function sf(id,ans,btn){mf([[id,ans]],btn);}
+
+// MATCHING
+const mpairs={
+  m0:{jakob:'nok',esau:'mets'},
+  m1:{kori:'pe',pensas:'ku',meri:'he',taulut:'ka'},
+  m2:{abr:'g12',mos:'exo',jos:'g37'}
+};
+let msel={},mdone={};
+function mc2(el,key,mid){
+  const card=el.closest('.qcard');
+  if(el.classList.contains('ok'))return;
+  const isL=!!el.closest('[id^="ml"]');
+  if(!msel[mid])msel[mid]={};
+  const side=isL?'L':'R';
+  card.querySelectorAll(isL?'[id^="ml"] .mit':'[id^="mr"] .mit').forEach(i=>{if(!i.classList.contains('ok'))i.classList.remove('sel');});
+  el.classList.add('sel');
+  msel[mid][side]={el,key};
+  const s=msel[mid];
+  if(s.L&&s.R){
+    const ok2=mpairs[mid][s.L.key]===s.R.key;
+    if(ok2){
+      s.L.el.classList.replace('sel','ok');s.R.el.classList.replace('sel','ok');
+      s.L.el.onclick=null;s.R.el.onclick=null;
+      card.querySelector('.fb').className='fb show good';
+      card.querySelector('.fb').textContent='✅ Oikein yhdistetty!';
+      const tot=Object.keys(mpairs[mid]).length;
+      const matched=card.querySelectorAll('.mit.ok').length/2;
+      if(matched>=tot&&!mdone[mid]){
+        mdone[mid]=true;score++;showR(true,rnd(OK));answered++;upd();
+      }
+    }else{
+      s.L.el.classList.add('nope');s.R.el.classList.add('nope');
+      setTimeout(()=>{s.L.el.classList.remove('nope','sel');s.R.el.classList.remove('nope','sel');},700);
+      card.querySelector('.fb').className='fb show bad';
+      card.querySelector('.fb').textContent='❌ Ei täsmää — yritä uudelleen!';
+    }
+    msel[mid]={};
+  }
+}
+
+// DRAG ORDER
+(function initDrags(){
+  const list=document.getElementById('ord0');
+  list.querySelectorAll('.oit').forEach(item=>{
+    item.addEventListener('dragstart',()=>{window._dr=item;item.classList.add('dragging');});
+    item.addEventListener('dragend',()=>item.classList.remove('dragging'));
+    item.addEventListener('dragover',e=>e.preventDefault());
+    item.addEventListener('drop',e=>{
+      e.preventDefault();
+      if(window._dr&&window._dr!==item){
+        const all=[...list.querySelectorAll('.oit')];
+        const si=all.indexOf(window._dr),ti=all.indexOf(item);
+        if(si<ti)list.insertBefore(window._dr,item.nextSibling);
+        else list.insertBefore(window._dr,item);
+      }
+    });
+  });
+})();
+
+function ord(lid,btn){
+  const list=document.getElementById(lid);
+  const card=btn.closest('.qcard');
+  if(btn.disabled)return;btn.disabled=true;
+  const items=list.querySelectorAll('.oit');
+  let ok2=true;
+  items.forEach((it,i)=>{if(parseInt(it.dataset.order)!==i+1)ok2=false;});
+  if(ok2)items.forEach(i=>i.classList.add('ok'));
+  const msg=ok2?rnd(OK):'❌ Järjestys ei ole oikein. Oikea: uni → kaivo → karaavaani → vankila → Faraon unet → valtias → anteeksianto';
+  setfb(card,ok2,ok2?rnd(OK):msg);showR(ok2,ok2?rnd(OK):rnd(BAD));
+  if(ok2)score++;answered++;upd();
+}
+
+// TABS
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('section-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+function showFin(){
+  const pct=score/TOTAL*100;
+  let stars='⭐',title='Hyvä yritys!',msg='Lue vielä luvut 10–13 oppikirjasta!';
+  if(pct>=88){stars='⭐⭐⭐🏆';title='Raamatun Mestari!';msg='Hämmästyttävää — olet täysin valmis kokeeseen! 🎉';}
+  else if(pct>=70){stars='⭐⭐⭐';title='Mahtavaa!';msg='Erinomaisesti! Olet lähes valmis kokeeseen! 🌟';}
+  else if(pct>=50){stars='⭐⭐';title='Hyvä!';msg='Melko hyvin — kertaa vielä heikommat kohdat 💪';}
+  document.getElementById('fst').textContent=stars;
+  document.getElementById('fti').textContent=title;
+  document.getElementById('fms').textContent=msg;
+  document.getElementById('fsc').textContent='Pisteitäsi: '+score+' / '+TOTAL+' ('+Math.round(pct)+'%)';
+  document.getElementById('fdo').src=dog();
+  const el=document.getElementById('fin');
+  el.style.display='block';
+  setTimeout(()=>el.scrollIntoView({behavior:'smooth'}),200);
+}
+</script>
+</body>
+</html>
